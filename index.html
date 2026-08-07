@@ -253,6 +253,7 @@
     }
 
     /* ✨ 炫光的持久效果 */
+    /* ✨ 選對：金色/青色炫光 */
     .symbol-card.glowing {
       transform: scale(1.08);
       border-color: #facc15 !important;
@@ -260,6 +261,16 @@
       background: rgba(51, 65, 85, 0.98) !important;
       z-index: 10;
     }
+
+    /* 🚨 新增：選錯：紅色警告發光 (保持微放大 transform: scale(1.08)) */
+    .symbol-card.glowing-wrong {
+    transform: scale(1.08);
+    border-color: #ef4444 !important; /* 警告紅邊框 */
+    box-shadow: 0 0 30px #ef4444, 0 0 15px #f87171 !important; /* 紅色外發光 */
+    background: rgba(127, 29, 29, 0.95) !important; /* 深紅底色 */
+    z-index: 10;
+    }
+
     .symbol-card.disabled { opacity: 0.25; pointer-events: none; border-color: #1e293b; filter: grayscale(100%); box-shadow: none; }
 
     /* ---------------- ⏳ 載入緩衝黑屏 Modal ---------------- */
@@ -331,14 +342,12 @@
     <div class="overlay"></div>
     <div class="content-layer" style="justify-content: center;">
       <div class="menu-card">
-        <h2>⚔️ 選擇冒險模式 ⚔️</h2>
+        <h2>選擇冒險模式</h2>
         <button class="menu-btn" onclick="playClickAndGo('screen-2-2')">
-          🎯 一般模式
-          <span class="sub-text">20 題關卡 / 評等星級</span>
+         🧭 一般模式
         </button>
         <button class="menu-btn" style="background: linear-gradient(135deg, #059669, #047857);" onclick="playClickAndStartEndless()">
-          ♾️ 無限模式
-          <span class="sub-text">3次心 / 動態選項 / Combo加成</span>
+          ⚔️ 無限模式
         </button>
         <button class="menu-btn" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);" onclick="playClickAndShowBoard()">
           🏆 冒險紀錄 (前 5 名)
@@ -356,15 +365,15 @@
         <h2>🌟 選擇探險路線 🌟</h2>
         <button class="menu-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="playClickAndStartNormal('easy')">
           🌱 草原探險
-          <span class="sub-text">新手路線 (2 個選項)</span>
+          <span class="sub-text">菜鳥</span>
         </button>
         <button class="menu-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);" onclick="playClickAndStartNormal('normal')">
           🌲 叢林冒險
-          <span class="sub-text">進階路線 (4 個選項)</span>
+          <span class="sub-text">冒險者</span>
         </button>
         <button class="menu-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="playClickAndStartNormal('hard')">
           🏜️ 荒地探勘
-          <span class="sub-text">高手路線 (6 個選項)</span>
+          <span class="sub-text">開路先鋒</span>
         </button>
         <button class="back-btn" onclick="playClickAndGo('screen-2')">↩️ 返回模式選擇</button>
       </div>
@@ -402,7 +411,7 @@
   <!-- 📊 第一階段：本次結算 Modal -->
   <div id="modal-result" class="modal">
     <div class="modal-content">
-      <h2 id="result-title">🎉 冒險完成！</h2>
+      <h2 id="result-title">🎉 冒險完成 🎉</h2>
       <div id="result-stars" style="font-size: 2.2rem; margin: 15px 0;"></div>
       <p id="result-desc" style="font-size: 1.1rem; line-height: 1.6; color: #cbd5e1;"></p>
       <button class="menu-btn" style="margin-top: 20px;" onclick="playDing(); closeModal('modal-result'); showLeaderboard();">🏆 查看冒險紀錄</button>
@@ -412,7 +421,7 @@
   <!-- 🏆 第二階段：冒險紀錄排行榜 Modal -->
   <div id="modal-leaderboard" class="modal">
     <div class="modal-content">
-      <h2 style="font-size: 1.5rem; color: #facc15;">🏆 冒險紀錄殿堂</h2>
+      <h2 style="font-size: 1.5rem; color: #facc15;">🏆 冒險紀錄殿堂 🏆</h2>
       <div style="text-align: left; margin: 15px 0; font-size: 0.95rem; line-height: 1.8;">
         <h4 style="color: #38bdf8; border-bottom: 1px solid #475569; padding-bottom: 4px; margin-bottom: 8px;">🎯 一般模式 (最高分 1000)</h4>
         <div id="list-normal" style="color: #cbd5e1; margin-bottom: 15px;"></div>
@@ -556,7 +565,7 @@
       setTimeout(() => {
         callback();
         loader.classList.remove('active');
-      }, 1500);
+      }, 2500);
     }
 
     function nextQuestion() {
@@ -602,22 +611,20 @@
       speak(state.currentAnswer);
     }
 
-    // ✨ 答題邏輯（延長發光特效停留時間）
-    function handleAnswer(selectedSymbol, btnElem) {
+    // ✨ 答題邏輯（正確金/青光，錯誤紅光）
+  function handleAnswer(selectedSymbol, btnElem) {
       if (state.isLocking) return; // 鎖定狀態下防止重複點擊
 
-      // 觸發發光 Class
-      btnElem.classList.add('glowing');
-
       if (selectedSymbol === state.currentAnswer) {
-        state.isLocking = true; // 正確時鎖定點擊，確保炫光能展示完整
+        // ----------------- 🎯 答對情況 -----------------
+        state.isLocking = true;
+        btnElem.classList.add('glowing'); // 觸發金色/青色發光
         playSfx('correct');
 
         if (state.mode === 'normal') {
           let earned = Math.max(0, 50 - (state.attempts * 10));
           state.score += earned;
 
-          // 延長停留時間至 650ms，讓玩家欣賞發光炫光後才進下一題/結算
           setTimeout(() => {
             btnElem.classList.remove('glowing');
             if (state.questionCount >= 20) {
@@ -640,11 +647,14 @@
           }, 650);
         }
 
-      } else {
+    } else {
+        // ----------------- ❌ 答錯情況 -----------------
+        btnElem.classList.add('glowing-wrong'); // 觸發紅色發光
         playSfx('wrong');
-        // 答錯時發光維持 350ms 後變灰停用
+
+        // 紅光維持 350ms 後，移除紅光並變灰停用
         setTimeout(() => {
-          btnElem.classList.remove('glowing');
+          btnElem.classList.remove('glowing-wrong');
           btnElem.classList.add('disabled');
         }, 350);
 
@@ -692,10 +702,10 @@
       const desc = document.getElementById('result-desc');
 
       if (state.mode === 'normal') {
-        title.innerText = '🎉 冒險完成！';
+        title.innerText = '🎉 冒險完成 🎉';
         let starStr = '⭐️';
         if (state.score === 1000) starStr = '👑 ⭐️⭐️⭐️⭐️⭐️';
-        else if (state.score >= 850) starStr = '⭐️⭐️⭐️';
+        else if (state.score >= 900) starStr = '⭐️⭐️⭐️';
         else if (state.score >= 700) starStr = '⭐️⭐️';
 
         stars.innerText = starStr;
