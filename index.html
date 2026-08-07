@@ -71,7 +71,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 3vh 20px 2vh 20px; /* 底部 Padding 縮小，釋放空間給按鈕往下靠 */
+      padding: 3vh 20px 2vh 20px;
     }
 
     /* 🎈 標題：向上懸停飄浮動畫 */
@@ -96,19 +96,19 @@
       50% { transform: translateY(-28px); }
     }
 
-    /* 🔘 「開始冒險」按鈕（位置進一步下移） */
+    /* 🔘 「開始冒險」按鈕 */
     .start-btn-container {
-      margin-top: auto; /* 自動將按鈕組推至容器最底部 */
-      margin-bottom: -100px; /* 貼近螢幕邊緣 */
+      margin-top: auto;
+      margin-bottom: -100px;
       display: flex;
       justify-content: center;
       width: 100%;
     }
 
     .start-btn-img {
-      max-width: 420px;  /* 1. 電腦或大螢幕上的「最大寬度上限」 */
-      width: 90vw;             /* 2. 手機/平板螢幕上的「視窗寬度比例」 */
-      height: auto;            /* 3. 高度自動按比例縮放（保持圖片不變形） */
+      max-width: 420px;
+      width: 90vw;
+      height: auto;
       cursor: pointer;
       filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.6));
       transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -192,6 +192,53 @@
       letter-spacing: 2px;
     }
 
+    /* ⏱️ 倒數計時器 UI 樣式 */
+    #timer-container {
+      width: 100%;
+      max-width: 520px;
+      margin-top: 10px;
+      display: none; /* 僅無限模式顯示 */
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .timer-text {
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: #38bdf8;
+      text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+      transition: color 0.3s;
+    }
+    .timer-text.warning {
+      color: #ef4444;
+      text-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+      animation: pulseText 0.5s infinite alternate;
+    }
+    .timer-bar-outer {
+      width: 100%;
+      height: 14px;
+      background: rgba(30, 41, 59, 0.8);
+      border: 2px solid #475569;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .timer-bar-inner {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #3b82f6);
+      border-radius: 8px;
+      transition: width 0.1s linear, background 0.3s;
+    }
+    .timer-bar-inner.warning {
+      background: linear-gradient(90deg, #f59e0b, #ef4444);
+    }
+
+    @keyframes pulseText {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.1); }
+    }
+
     #combo-display-area {
       height: 38px;
       display: flex;
@@ -237,7 +284,7 @@
     .grid-4 { grid-template-columns: repeat(2, 1fr); }
     .grid-6 { grid-template-columns: repeat(3, 1fr); }
 
-    /* ✨ 注音卡片發光與點擊回饋特效（延長發光狀態） */
+    /* ✨ 注音卡片發光與點擊回饋特效 */
     .symbol-card {
       background: rgba(30, 41, 59, 0.9);
       border: 3px solid #475569;
@@ -249,10 +296,9 @@
       text-align: center;
       cursor: pointer;
       box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-      transition: all 0.3s ease-out; /* 平滑過渡 */
+      transition: all 0.3s ease-out;
     }
 
-    /* ✨ 炫光的持久效果 */
     /* ✨ 選對：金色/青色炫光 */
     .symbol-card.glowing {
       transform: scale(1.08);
@@ -262,13 +308,13 @@
       z-index: 10;
     }
 
-    /* 🚨 新增：選錯：紅色警告發光 (保持微放大 transform: scale(1.08)) */
+    /* 🚨 選錯：紅色警告發光 */
     .symbol-card.glowing-wrong {
-    transform: scale(1.08);
-    border-color: #ef4444 !important; /* 警告紅邊框 */
-    box-shadow: 0 0 30px #ef4444, 0 0 15px #f87171 !important; /* 紅色外發光 */
-    background: rgba(127, 29, 29, 0.95) !important; /* 深紅底色 */
-    z-index: 10;
+      transform: scale(1.08);
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 30px #ef4444, 0 0 15px #f87171 !important;
+      background: rgba(127, 29, 29, 0.95) !important;
+      z-index: 10;
     }
 
     .symbol-card.disabled { opacity: 0.25; pointer-events: none; border-color: #1e293b; filter: grayscale(100%); box-shadow: none; }
@@ -330,7 +376,6 @@
   <div id="screen-1" class="screen active">
     <div class="screen-1-container">
       <img src="./pics/title.png" alt="小小注音冒險家" class="title-img" onerror="this.style.display='none'">
-      <!-- 調整後的按鈕包覆層（確保下移至底部） -->
       <div class="start-btn-container">
         <img src="./pics/start_button.png" alt="開始冒險" class="start-btn-img" onclick="handleStartBtnClick()">
       </div>
@@ -344,7 +389,7 @@
       <div class="menu-card">
         <h2>選擇冒險模式</h2>
         <button class="menu-btn" onclick="playClickAndGo('screen-2-2')">
-         🧭 一般模式
+          🧭 一般模式
         </button>
         <button class="menu-btn" style="background: linear-gradient(135deg, #059669, #047857);" onclick="playClickAndStartEndless()">
           ⚔️ 無限模式
@@ -389,6 +434,14 @@
         <span id="info-progress">題目：1/20</span>
         <span id="info-lives" class="info-center-lives"></span>
         <span id="info-score" style="color: #38bdf8;">得分：0</span>
+      </div>
+
+      <!-- ⏱️ 倒數計時條 UI -->
+      <div id="timer-container">
+        <div class="timer-text" id="timer-text">⏳ 5.0 秒</div>
+        <div class="timer-bar-outer">
+          <div class="timer-bar-inner" id="timer-bar-inner"></div>
+        </div>
       </div>
 
       <!-- 🔥 獨立 Combo 顯示區塊 -->
@@ -455,6 +508,11 @@
       isLocking: false // 防止連續點擊鎖
     };
 
+    // ⏱️ 計時器控制變數
+    let timerInterval = null;
+    let timerMaxDuration = 5000; // 當前題目的總時間 (ms)
+    let timerRemainingTime = 5000; // 剩餘時間 (ms)
+
     let bgmAudio = null;
     let isAudioInitialized = false;
 
@@ -501,6 +559,7 @@
     }
 
     function goToScreen(screenId) {
+      stopTimer(); // 切換畫面時停止計時器
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
 
@@ -539,6 +598,7 @@
         else if (diff === 'normal') screen3.style.backgroundImage = "url('./pics/bg_jungle.png')";
         else if (diff === 'hard') screen3.style.backgroundImage = "url('./pics/bg_wasteland.png')";
 
+        document.getElementById('timer-container').style.display = 'none'; // 一般模式隱藏計時條
         goToScreen('screen-3');
         nextQuestion();
       });
@@ -554,6 +614,7 @@
         state.combo = 0;
         
         document.getElementById('screen-3').style.backgroundImage = "url('./pics/bg_endless.png')";
+        document.getElementById('timer-container').style.display = 'flex'; // 無限模式顯示計時條
         goToScreen('screen-3');
         nextQuestion();
       });
@@ -566,6 +627,92 @@
         callback();
         loader.classList.remove('active');
       }, 2500);
+    }
+
+    // ⏱️ 計時器邏輯（無限模式時間階梯修正）
+function startTimer() {
+  stopTimer();
+  if (state.mode !== 'endless') return;
+
+  const timerContainer = document.getElementById('timer-container');
+
+  // 無限模式時間階梯判斷：1-50 題無時間限制
+  if (state.questionCount <= 50) {
+    if (timerContainer) timerContainer.style.display = 'none';
+    return; // 不啟動計時器
+  } else if (state.questionCount <= 60) {
+    timerMaxDuration = 5000;   // 51-60 題：5 秒
+  } else if (state.questionCount <= 70) {
+    timerMaxDuration = 3000;   // 61-70 題：3 秒
+  } else if (state.questionCount <= 80) {
+    timerMaxDuration = 1500;   // 71-80 題：1.5 秒
+  } else {
+    timerMaxDuration = 1000;   // 81 題以上：1 秒
+  }
+
+  // 超過 50 題時顯示倒數計時 UI 並開始倒數
+  if (timerContainer) timerContainer.style.display = 'flex';
+
+  timerRemainingTime = timerMaxDuration;
+  updateTimerUI();
+
+  const step = 100; // 每 100ms 刷新一次 UI
+  timerInterval = setInterval(() => {
+    timerRemainingTime -= step;
+    if (timerRemainingTime <= 0) {
+      timerRemainingTime = 0;
+      updateTimerUI();
+      handleTimeout();
+    } else {
+      updateTimerUI();
+    }
+  }, step);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+    function updateTimerUI() {
+      const timerText = document.getElementById('timer-text');
+      const timerBar = document.getElementById('timer-bar-inner');
+      
+      const secondsSec = (timerRemainingTime / 1000).toFixed(1);
+      timerText.innerText = `⏳ ${secondsSec} 秒`;
+
+      const pct = (timerRemainingTime / timerMaxDuration) * 100;
+      timerBar.style.width = `${pct}%`;
+
+      // 剩餘時間小於等於 1.5 秒或 30% 時觸發紅光警示
+      if (timerRemainingTime <= 1500 || pct <= 30) {
+        timerText.classList.add('warning');
+        timerBar.classList.add('warning');
+      } else {
+        timerText.classList.remove('warning');
+        timerBar.classList.remove('warning');
+      }
+    }
+
+    // 超時懲罰邏輯
+    function handleTimeout() {
+      stopTimer();
+      playSfx('wrong');
+      
+      state.lives--;
+      state.combo = 0;
+      updateUI();
+
+      if (state.lives <= 0) {
+        state.isLocking = true;
+        setTimeout(() => endGame(), 650);
+      } else {
+        // 超時後直接進入下一題
+        state.questionCount++;
+        nextQuestion();
+      }
     }
 
     function nextQuestion() {
@@ -605,6 +752,9 @@
       });
 
       setTimeout(() => speak(state.currentAnswer), 250);
+
+      // 開始當前題目倒數
+      startTimer();
     }
 
     function replayAudio() {
@@ -612,12 +762,13 @@
     }
 
     // ✨ 答題邏輯（正確金/青光，錯誤紅光）
-  function handleAnswer(selectedSymbol, btnElem) {
+    function handleAnswer(selectedSymbol, btnElem) {
       if (state.isLocking) return; // 鎖定狀態下防止重複點擊
 
       if (selectedSymbol === state.currentAnswer) {
         // ----------------- 🎯 答對情況 -----------------
         state.isLocking = true;
+        stopTimer(); // 答對立即凍結倒數時間條
         btnElem.classList.add('glowing'); // 觸發金色/青色發光
         playSfx('correct');
 
@@ -647,8 +798,9 @@
           }, 650);
         }
 
-    } else {
+      } else {
         // ----------------- ❌ 答錯情況 -----------------
+        // 選錯時不暫停倒數計時，時間繼續流逝！
         btnElem.classList.add('glowing-wrong'); // 觸發紅色發光
         playSfx('wrong');
 
@@ -666,6 +818,7 @@
           updateUI();
           if (state.lives <= 0) {
             state.isLocking = true;
+            stopTimer(); // 扣光生命時才停止計時
             setTimeout(() => endGame(), 650);
           }
         }
@@ -695,6 +848,7 @@
     }
 
     function endGame() {
+      stopTimer(); // 結束遊戲時徹底停止計時器
       saveScore(state.mode, state.score);
 
       const title = document.getElementById('result-title');
