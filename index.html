@@ -400,7 +400,7 @@
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 1.0e</div>
+      <div class="version-tag">v 1.0f</div>
     </div>
   </div>
 
@@ -529,6 +529,37 @@
       attempts: 0,
       isLocking: false // 防止連續點擊鎖
     };
+
+
+window.addEventListener('popstate', (event) => {
+  const currentScreen = document.querySelector('.screen.active');
+  const screenId = currentScreen ? currentScreen.id : '';
+
+  if (screenId === 'screen-3') {
+    // ⚔️ 在遊戲挑戰中 (screen-3)：跳出確認視窗，避免誤觸放棄遊戲
+    if (confirm('遊戲正在進行中，確定要放棄並離開嗎？')) {
+      goToScreen('screen-1'); // 確定放棄就退回首頁
+    } else {
+      history.pushState({ page: 'game' }, '', location.href); // 取消則重新鎖住
+    }
+  } else if (screenId === 'screen-2-2') {
+    // ↩️ 在子頁面 (screen-2-2)：自動退回 screen-2
+    goToScreen('screen-2');
+    history.pushState({ page: 'game' }, '', location.href);
+  } else if (screenId === 'screen-2') {
+    // ↩️ 在選擇關卡頁 (screen-2)：自動退回首頁 screen-1
+    goToScreen('screen-1');
+    history.pushState({ page: 'game' }, '', location.href);
+  } else {
+    // 🚪 在首頁 (screen-1)：提示是否要徹底退出 App
+    if (confirm('確定要離開「小小注音冒險家」嗎？')) {
+      history.back(); // 確定離開才退出 App
+    } else {
+      history.pushState({ page: 'game' }, '', location.href);
+    }
+  }
+});
+
 
     // ⏱️ 計時器控制變數
     let timerInterval = null;
