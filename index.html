@@ -413,7 +413,7 @@
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 2.0a</div>
+      <div class="version-tag">v 2.0b</div>
     </div>
   </div>
 
@@ -545,52 +545,56 @@
 
 
 
+
 /* =========================================================
-   📱 Android 返回鍵防護與攔截機制（首頁完美修復版）
+   📱 Android 返回鍵終極防護（雙層 Stack 解決連續按返回鍵閃退）
    ========================================================= */
 
-// 1. 推入歷史防護紀錄
+// 🛡️ 一次推入 2 個虛擬歷史紀錄，打造雙重防護網
 function initHistoryGuard() {
-  history.pushState({ page: 'guard' }, '', location.href);
+  history.pushState({ page: 'guard1' }, '', location.href);
+  history.pushState({ page: 'guard2' }, '', location.href);
 }
 
-// 頁面初次載入時，直接推入紀錄
+// 1. 頁面載入時預設推入雙層防護
 window.addEventListener('load', () => {
   initHistoryGuard();
 });
 
-// 2. 監聽系統返回鍵
+// 2. 只要玩家在畫面上點擊任何地方，就偷偷幫防護網補滿（確保永遠有雙保險）
+document.addEventListener('click', () => {
+  history.pushState({ page: 'guard_active' }, '', location.href);
+}, { passive: true });
+
+// 3. 攔截系統返回鍵
 window.addEventListener('popstate', (event) => {
   const currentScreen = document.querySelector('.screen.active');
   const screenId = currentScreen ? currentScreen.id : '';
 
   if (screenId === 'screen-3') {
-    // ⚔️ 在遊戲挑戰中 (screen-3)：提示是否放棄遊戲回到首頁
+    // ⚔️ 遊戲中 (screen-3)
     if (confirm('遊戲正在進行中，確定要放棄並離開嗎？')) {
       goToScreen('screen-1');
     }
-    // 不論點「確定」或「取消」，都立刻補上防護墊鎖住返回鍵
-    initHistoryGuard();
+    initHistoryGuard(); // 重新疊加雙層防護
 
   } else if (screenId === 'screen-2-2') {
-    // ↩️ 在子頁面 (screen-2-2)：自動退回 screen-2
+    // ↩️ 子頁面 (screen-2-2)
     goToScreen('screen-2');
     initHistoryGuard();
 
   } else if (screenId === 'screen-2') {
-    // ↩️ 在選擇關卡頁 (screen-2)：自動退回首頁 screen-1
+    // ↩️ 關卡頁 (screen-2)
     goToScreen('screen-1');
     initHistoryGuard();
 
   } else {
-    // 🚪 在首頁 (screen-1) 或其他頁面：提示是否徹底離開 App
-    const userWantsToLeave = confirm('確定要離開「小小注音冒險家」嗎？');
-
-    if (userWantsToLeave) {
-      // 玩家確定要離開：不再補防護，連續後退直接退出 App / 關閉分頁
-      history.go(-2);
+    // 🚪 首頁 (screen-1)
+    if (confirm('確定要離開「小小注音冒險家」嗎？')) {
+      // 確定離開：清空所有歷史紀錄並退出 App
+      history.go(-10);
     } else {
-      // 玩家選擇留在遊戲：立刻重新補滿防護墊！
+      // 取消離開：重新補滿雙層防護
       initHistoryGuard();
     }
   }
