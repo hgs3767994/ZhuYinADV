@@ -54,7 +54,7 @@ function playSfx(type) {
   if (type === 'correct' && typeof SOUND_SUCCESS_BASE64 !== 'undefined') {
     playFromPool(SOUND_SUCCESS_BASE64, 0.4);
   } else if (type === 'wrong' && typeof SOUND_WRONG_BASE64 !== 'undefined') {
-    playFromPool(SOUND_WRONG_BASE64, 0.7);
+    playFromPool(SOUND_WRONG_BASE64, 0.8);
   }
 }
 
