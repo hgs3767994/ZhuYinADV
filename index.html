@@ -541,6 +541,27 @@
       }
     }
 
+
+// 🎧 監聽頁面可見性變化（切換頁面/縮小視窗時自動暫停與接續播放）
+document.addEventListener('visibilitychange', () => {
+  // 只有在 Audio 已初始化（玩家點擊過畫面）的前提下才執行
+  if (!isAudioInitialized || !bgmAudio) return;
+
+  if (document.hidden) {
+    // 🚪 頁面被隱藏（切到桌面、切換分頁、手機螢幕鎖定）
+    bgmAudio.pause();
+  } else {
+    // 🏠 頁面重新回到畫面上
+    // 注意：如果玩家目前正處於「遊戲挑戰中(screen-3)」，依原本規則是不放 BGM 的
+    const currentScreen = document.querySelector('.screen.active');
+    if (currentScreen && currentScreen.id !== 'screen-3') {
+      bgmAudio.play().catch(e => console.log('BGM resume blocked:', e));
+    }
+  }
+});
+
+
+
     function playBgm() {
       if (bgmAudio) bgmAudio.play().catch(e => console.log(e));
     }
