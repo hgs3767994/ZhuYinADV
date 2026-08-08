@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>小小注音冒險家</title>
+  <!-- 📱 PWA 設定與 iOS 支援 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="注音冒險">
+  <link rel="apple-touch-icon" href="./pics/icon-192.png">
   <style>
     /* ---------------- 全域基本設定 ---------------- */
     * {
@@ -393,7 +400,7 @@
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 1.0b</div>
+      <div class="version-tag">v 1.0c</div>
     </div>
   </div>
 
@@ -941,6 +948,15 @@ function stopTimer() {
       if (confirm('確定要放棄這次的冒險返回選單嗎？')) {
         goToScreen('screen-2');
       }
+    }
+
+    // 🚀 註冊 PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('PWA Service Worker 註冊成功！範疇：', reg.scope))
+          .catch(err => console.log('PWA Service Worker 註冊失敗：', err));
+      });
     }
   </script>
 </body>
