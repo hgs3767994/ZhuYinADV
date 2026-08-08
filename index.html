@@ -13,6 +13,19 @@
   <link rel="apple-touch-icon" href="./pics/icon-192.png">
   <style>
     /* ---------------- 全域基本設定 ---------------- */
+
+    /* 🚀 精準 GPU 硬體加速：省電、降溫、順暢不掉幀 */
+       button, 
+       .animated-element, 
+       .card-glow, 
+       .btn-hover {
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
+          transform: translateZ(0);
+          will-change: transform, opacity;
+       }
+
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -400,7 +413,7 @@
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 1.0f</div>
+      <div class="version-tag">v 2.0</div>
     </div>
   </div>
 
