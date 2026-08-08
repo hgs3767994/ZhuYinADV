@@ -574,7 +574,7 @@ document.addEventListener('visibilitychange', () => {
     function playDing() {
       if (typeof DING_SOUND !== 'undefined') {
         const a = new Audio(DING_SOUND);
-        a.volume = 0.6;
+        a.volume = 0.3;
         a.play().catch(e => console.log(e));
       }
     }
@@ -589,9 +589,9 @@ document.addEventListener('visibilitychange', () => {
 
     function playSfx(type) {
       if (type === 'correct' && typeof SOUND_SUCCESS_BASE64 !== 'undefined') {
-        const a = new Audio(SOUND_SUCCESS_BASE64); a.volume = 0.5; a.play();
+        const a = new Audio(SOUND_SUCCESS_BASE64); a.volume = 0.4; a.play();
       } else if (type === 'wrong' && typeof SOUND_WRONG_BASE64 !== 'undefined') {
-        const a = new Audio(SOUND_WRONG_BASE64); a.volume = 0.5; a.play();
+        const a = new Audio(SOUND_WRONG_BASE64); a.volume = 0.7; a.play();
       }
     }
 
