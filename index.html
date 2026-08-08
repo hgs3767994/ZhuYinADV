@@ -180,7 +180,7 @@
       justify-content: space-between;
       align-items: center;
       font-weight: bold;
-      font-size: 1.55rem;
+      font-size: 1.3rem;
       border: 3px solid rgba(255, 255, 255, 0.2);
       box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
@@ -363,6 +363,18 @@
       border: 2px solid #475569;
       box-shadow: 0 15px 30px rgba(0,0,0,0.6);
     }
+
+    /* 🏷️ 首頁右下角版本號 */
+    .version-tag {
+      position: absolute;
+      bottom: 12px;
+      right: 16px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: rgba(255, 255, 255, 0.6); /* 半透明白色 */
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      pointer-events: none; /* 避免擋到點擊事件 */
+    }
   </style>
 </head>
 <body onclick="initAudioOnFirstTouch()">
@@ -379,6 +391,9 @@
       <div class="start-btn-container">
         <img src="./pics/start_button.png" alt="開始冒險" class="start-btn-img" onclick="handleStartBtnClick()">
       </div>
+
+       <!-- 💡 新增這行：右下角版本號 -->
+      <div class="version-tag">v1.0</div>
     </div>
   </div>
 
