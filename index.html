@@ -413,7 +413,7 @@
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 2.0</div>
+      <div class="version-tag">v 2.0a</div>
     </div>
   </div>
 
@@ -544,34 +544,51 @@
     };
 
 
+/* =========================================================
+   📱 Android 返回鍵防護與攔截機制
+   ========================================================= */
+
+// 1. 關鍵：進網頁時主動推入歷史紀錄，創造一個「虛擬上一頁」
+function initHistoryGuard() {
+  history.pushState({ page: 'guard' }, '', location.href);
+}
+window.addEventListener('load', initHistoryGuard);
+
+// 2. 當切換畫面 (goToScreen) 時，也重新補滿防護牆，確保每一頁都能攔截
+// (建議在您的 goToScreen 函數結尾處加上 initHistoryGuard(); )
+
+// 3. 監聽系統返回鍵
 window.addEventListener('popstate', (event) => {
   const currentScreen = document.querySelector('.screen.active');
   const screenId = currentScreen ? currentScreen.id : '';
 
   if (screenId === 'screen-3') {
-    // ⚔️ 在遊戲挑戰中 (screen-3)：跳出確認視窗，避免誤觸放棄遊戲
+    // ⚔️ 在遊戲挑戰中 (screen-3)：跳出確認視窗
     if (confirm('遊戲正在進行中，確定要放棄並離開嗎？')) {
-      goToScreen('screen-1'); // 確定放棄就退回首頁
+      goToScreen('screen-1');
+      initHistoryGuard(); // 退回首頁後重新補滿防護
     } else {
-      history.pushState({ page: 'game' }, '', location.href); // 取消則重新鎖住
+      initHistoryGuard(); // 取消則重新鎖住
     }
   } else if (screenId === 'screen-2-2') {
     // ↩️ 在子頁面 (screen-2-2)：自動退回 screen-2
     goToScreen('screen-2');
-    history.pushState({ page: 'game' }, '', location.href);
+    initHistoryGuard();
   } else if (screenId === 'screen-2') {
     // ↩️ 在選擇關卡頁 (screen-2)：自動退回首頁 screen-1
     goToScreen('screen-1');
-    history.pushState({ page: 'game' }, '', location.href);
+    initHistoryGuard();
   } else {
     // 🚪 在首頁 (screen-1)：提示是否要徹底退出 App
     if (confirm('確定要離開「小小注音冒險家」嗎？')) {
-      history.back(); // 確定離開才退出 App
+      // 玩家確認要離開：不再推入紀錄，直接退回上一頁結束
+      history.go(-2); 
     } else {
-      history.pushState({ page: 'game' }, '', location.href);
+      initHistoryGuard(); // 取消離開，繼續鎖住
     }
   }
 });
+
 
 
     // ⏱️ 計時器控制變數
@@ -660,6 +677,7 @@ document.addEventListener('visibilitychange', () => {
       } else {
         playBgm();
       }
+      initHistoryGuard();
     }
 
     function handleStartBtnClick() {
