@@ -544,50 +544,58 @@
     };
 
 
+
 /* =========================================================
-   📱 Android 返回鍵防護與攔截機制
+   📱 Android 返回鍵防護與攔截機制（首頁完美修復版）
    ========================================================= */
 
-// 1. 關鍵：進網頁時主動推入歷史紀錄，創造一個「虛擬上一頁」
+// 1. 推入歷史防護紀錄
 function initHistoryGuard() {
   history.pushState({ page: 'guard' }, '', location.href);
 }
-window.addEventListener('load', initHistoryGuard);
 
-// 2. 當切換畫面 (goToScreen) 時，也重新補滿防護牆，確保每一頁都能攔截
-// (建議在您的 goToScreen 函數結尾處加上 initHistoryGuard(); )
+// 頁面初次載入時，直接推入紀錄
+window.addEventListener('load', () => {
+  initHistoryGuard();
+});
 
-// 3. 監聽系統返回鍵
+// 2. 監聽系統返回鍵
 window.addEventListener('popstate', (event) => {
   const currentScreen = document.querySelector('.screen.active');
   const screenId = currentScreen ? currentScreen.id : '';
 
   if (screenId === 'screen-3') {
-    // ⚔️ 在遊戲挑戰中 (screen-3)：跳出確認視窗
+    // ⚔️ 在遊戲挑戰中 (screen-3)：提示是否放棄遊戲回到首頁
     if (confirm('遊戲正在進行中，確定要放棄並離開嗎？')) {
       goToScreen('screen-1');
-      initHistoryGuard(); // 退回首頁後重新補滿防護
-    } else {
-      initHistoryGuard(); // 取消則重新鎖住
     }
+    // 不論點「確定」或「取消」，都立刻補上防護墊鎖住返回鍵
+    initHistoryGuard();
+
   } else if (screenId === 'screen-2-2') {
     // ↩️ 在子頁面 (screen-2-2)：自動退回 screen-2
     goToScreen('screen-2');
     initHistoryGuard();
+
   } else if (screenId === 'screen-2') {
     // ↩️ 在選擇關卡頁 (screen-2)：自動退回首頁 screen-1
     goToScreen('screen-1');
     initHistoryGuard();
+
   } else {
-    // 🚪 在首頁 (screen-1)：提示是否要徹底退出 App
-    if (confirm('確定要離開「小小注音冒險家」嗎？')) {
-      // 玩家確認要離開：不再推入紀錄，直接退回上一頁結束
-      history.go(-2); 
+    // 🚪 在首頁 (screen-1) 或其他頁面：提示是否徹底離開 App
+    const userWantsToLeave = confirm('確定要離開「小小注音冒險家」嗎？');
+
+    if (userWantsToLeave) {
+      // 玩家確定要離開：不再補防護，連續後退直接退出 App / 關閉分頁
+      history.go(-2);
     } else {
-      initHistoryGuard(); // 取消離開，繼續鎖住
+      // 玩家選擇留在遊戲：立刻重新補滿防護墊！
+      initHistoryGuard();
     }
   }
 });
+
 
 
 
