@@ -118,16 +118,16 @@
 
     /* 🔘 「開始冒險」按鈕 */
     .start-btn-container {
-      margin-top: auto;
-      margin-bottom: -100px;
+      margin-top: 0;
+      margin-bottom: 100px;
       display: flex;
       justify-content: center;
       width: 100%;
     }
 
     .start-btn-img {
-      max-width: 420px;
-      width: 90vw;
+      max-width: 230px;
+      width: 60vw;
       height: auto;
       cursor: pointer;
       filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.6));
@@ -391,7 +391,7 @@
       right: 16px;
       font-size: 0.9rem;
       font-weight: bold;
-      color: rgba(255, 255, 255, 0.6); /* 半透明白色 */
+      color: rgba(255, 255, 255, 0.8); /* 半透明白色 */
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
       pointer-events: none; /* 避免擋到點擊事件 */
     }
@@ -413,7 +413,7 @@
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 2.0.03</div>
+      <div class="version-tag">v 2.0.04</div>
     </div>
   </div>
 
@@ -492,7 +492,7 @@
       <div id="options-container" class="options-grid"></div>
 
       <!-- 放棄按鈕 -->
-      <button class="back-btn" style="margin-bottom: 10px;" onclick="confirmQuit()">🚪 放棄冒險</button>
+      <button class="back-btn" style="margin-bottom: 10px;" onclick="confirmQuit()">💦 放棄冒險</button>
     </div>
   </div>
 
@@ -584,7 +584,7 @@ window.addEventListener('popstate', (event) => {
     // 🚪 在首頁 (screen-1)：提示是否要徹底退出 App
     if (confirm('確定要離開「小小注音冒險家」嗎？')) {
       // 玩家確認要離開：不再推入紀錄，直接退回上一頁結束
-      history.go(-2); 
+      history.back(); 
     } else {
       initHistoryGuard(); // 取消離開，繼續鎖住
     }
@@ -751,17 +751,17 @@ function startTimer() {
   const timerContainer = document.getElementById('timer-container');
 
   // 無限模式時間階梯判斷：1-50 題無時間限制
-  if (state.questionCount <= 50) {
+  if (state.questionCount <= 30) {
     if (timerContainer) timerContainer.style.display = 'none';
     return; // 不啟動計時器
-  } else if (state.questionCount <= 60) {
-    timerMaxDuration = 5000;   // 51-60 題：5 秒
+  } else if (state.questionCount <= 50) {
+    timerMaxDuration = 10000;   // 31-50 題：10 秒
   } else if (state.questionCount <= 70) {
-    timerMaxDuration = 3000;   // 61-70 題：3 秒
-  } else if (state.questionCount <= 80) {
-    timerMaxDuration = 1500;   // 71-80 題：1.5 秒
+    timerMaxDuration = 5000;   // 51-70 題：5 秒
+  } else if (state.questionCount <= 90) {
+    timerMaxDuration = 3000;   // 71-90 題：3 秒
   } else {
-    timerMaxDuration = 1000;   // 81 題以上：1 秒
+    timerMaxDuration = 2000;   // 91 題以上：2 秒
   }
 
   // 超過 50 題時顯示倒數計時 UI 並開始倒數
@@ -979,7 +979,7 @@ function stopTimer() {
         stars.innerText = starStr;
         desc.innerText = `最終得分：${state.score} 分\n成功突破 20 題考驗！`;
       } else {
-        title.innerText = '💥 冒險結束！';
+        title.innerText = '👍 冒險結束！';
         stars.innerText = '🏆';
         desc.innerText = `最終得分：${state.score} 分\n總共答對前進了 ${state.questionCount - 1} 題！`;
       }
