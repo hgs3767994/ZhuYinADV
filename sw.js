@@ -1,4 +1,5 @@
-const CACHE_NAME = 'zhuyin-adventure-v1';
+// 每次更新程式碼上傳 GitHub 時，記得把這裡的版本號 +1
+const CACHE_NAME = 'zhuyin-adventure-v2.0.01';// 👈 修改這裡 (例如 v1 -> v2)
 
 // 離線需要快取的資源檔案清單
 const ASSETS_TO_CACHE = [
