@@ -119,7 +119,7 @@
     /* 🔘 「開始冒險」按鈕 */
     .start-btn-container {
       margin-top: 0;
-      margin-bottom: 100px;
+      margin-bottom: 30px;
       display: flex;
       justify-content: center;
       width: 100%;
@@ -413,7 +413,7 @@
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 2.0.04</div>
+      <div class="version-tag">v 2.0.05</div>
     </div>
   </div>
 
@@ -581,13 +581,10 @@ window.addEventListener('popstate', (event) => {
     goToScreen('screen-1');
     initHistoryGuard();
   } else {
-    // 🚪 在首頁 (screen-1)：提示是否要徹底退出 App
-    if (confirm('確定要離開「小小注音冒險家」嗎？')) {
-      // 玩家確認要離開：不再推入紀錄，直接退回上一頁結束
+    // 🚪 在首頁 (screen-1)：提示是否要徹底退
+   
       history.back(); 
-    } else {
-      initHistoryGuard(); // 取消離開，繼續鎖住
-    }
+    
   }
 });
 
