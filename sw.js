@@ -1,5 +1,5 @@
 // 每次更新程式碼上傳 GitHub 時，記得把這裡的版本號 +1
-const CACHE_NAME = 'zhuyin-adventure-v2.0.05';// 👈 修改這裡 (例如 v1 -> v2)
+const CACHE_NAME = 'zhuyin-adventure-v2.1.01';// 👈 修改這裡 (例如 v1 -> v2)
 
 // 離線需要快取的資源檔案清單
 const ASSETS_TO_CACHE = [
@@ -15,7 +15,11 @@ const ASSETS_TO_CACHE = [
   './pics/bg_wasteland.png',
   './pics/bg_endless.png',
   './pics/icon-192.png',
-  './pics/icon-512.png'
+  './pics/icon-512.png',
+  './pics/normal_mode_button.png',
+  './pics/infinity_mode_button.png',
+  './pics/record_button.png',
+
 ];
 
 // 1. 安裝 Service Worker 並快取檔案

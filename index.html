@@ -68,17 +68,18 @@
       background: rgba(15, 23, 42, 0.45);
       z-index: 1;
     }
-    .content-layer {
-      position: relative;
-      z-index: 2;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px;
-    }
+
+.content-layer {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* 👈 改為 center，讓按鈕群在畫面垂直居中 */
+  padding: 20px;
+}
 
     /* ---------------- 🎬 畫面 1：歡迎頁動畫與排版 ---------------- */
     #screen-1 {
@@ -137,21 +138,51 @@
     .start-btn-img:active { transform: scale(0.92) translateY(4px); }
 
     /* ---------------- 🎯 畫面 2 & 2-2：選單與難度 ---------------- */
-    .menu-card {
-      background: rgba(30, 41, 59, 0.85);
-      backdrop-filter: blur(8px);
-      border: 2px solid #334155;
-      border-radius: 24px;
-      padding: 30px 20px;
-      width: 90%;
-      max-width: 400px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-    h2 { font-size: 1.8rem; color: #facc15; text-shadow: 0 2px 8px rgba(0,0,0,0.5); margin-bottom: 5px; }
+/* 簡化後的容器：拿掉深色卡片背景，純粹用來排版圖片按鈕 */
+.menu-card {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px; /* 按鈕之間的上下間距 */
+}
+
+/* 🔘 全新：圖片按鈕專用樣式 */
+.img-menu-btn {
+  background: none !important;
+  border: none !important;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* 🔘 全新：圖片本體點擊感與陰影 */
+.menu-btn-img {
+  width: 100%;
+  max-width: 340px; /* 控制按鈕在手機上的最佳寬度 */
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.menu-btn-img.back-btn-img {
+  max-width: 204px; /* 340px 的 60% */
+  margin-top: 25px;      /* 👈 往下推開 15px（可自由調整為 10px ~ 30px） */
+}
+
+.menu-btn-img:hover {
+  transform: scale(1.03);
+}
+
+.menu-btn-img:active {
+  transform: scale(0.94) translateY(3px); /* 點擊時的下壓物理反饋 */
+}
 
     .menu-btn {
       width: 100%;
@@ -413,49 +444,67 @@
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 2.0.05</div>
+      <div class="version-tag">v 2.1.01</div>
     </div>
   </div>
 
-  <!-- 🎮 畫面 2：模式選擇畫面 -->
-  <div id="screen-2" class="screen" style="background-image: url('./pics/start_banner.png');">
-    <div class="overlay"></div>
-    <div class="content-layer" style="justify-content: center;">
-      <div class="menu-card">
-        <h2>選擇冒險模式</h2>
-        <button class="menu-btn" onclick="playClickAndGo('screen-2-2')">
-          🧭 一般模式
-        </button>
-        <button class="menu-btn" style="background: linear-gradient(135deg, #059669, #047857);" onclick="playClickAndStartEndless()">
-          ⚔️ 無限模式
-        </button>
-        <button class="menu-btn" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);" onclick="playClickAndShowBoard()">
-          🏆 冒險紀錄 (前 5 名)
-        </button>
-        <button class="back-btn" onclick="playClickAndGo('screen-1')">↩️ 返回首頁</button>
-      </div>
+<!-- 🎮 畫面 2：模式選擇畫面 -->
+<div id="screen-2" class="screen" style="background-image: url('./pics/start_banner.png');">
+  <div class="overlay"></div>
+  <div class="content-layer">
+    <div class="menu-card">
+      
+      <!-- 一般模式按鈕 -->
+      <button class="img-menu-btn" onclick="playClickAndGo('screen-2-2')">
+        <img src="./pics/normal_mode_button.png" alt="一般模式" class="menu-btn-img">
+      </button>
+
+      <!-- 無限模式按鈕 -->
+      <button class="img-menu-btn" onclick="playClickAndStartEndless()">
+        <img src="./pics/infinity_mode_button.png" alt="無限模式" class="menu-btn-img">
+      </button>
+
+      <!-- 冒險紀錄按鈕 -->
+      <button class="img-menu-btn" onclick="playClickAndShowBoard()">
+        <img src="./pics/record_button.png" alt="冒險紀錄" class="menu-btn-img">
+      </button>
+
+      <!-- 返回首頁 -->
+      <button class="img-menu-btn" onclick="playClickAndGo('screen-1')">
+        <img src="./pics/Backward_button.png" alt="返回首頁" class="menu-btn-img back-btn-img">
+      </button>
+
     </div>
   </div>
+</div>
 
   <!-- 🗺️ 畫面 2-2：難度選擇畫面 -->
   <div id="screen-2-2" class="screen" style="background-image: url('./pics/start_banner.png');">
     <div class="overlay"></div>
-    <div class="content-layer" style="justify-content: center;">
+    <div class="content-layer">
       <div class="menu-card">
-        <h2>🌟 選擇探險路線 🌟</h2>
-        <button class="menu-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="playClickAndStartNormal('easy')">
-          🌱 草原探險
-          <span class="sub-text">菜鳥</span>
-        </button>
-        <button class="menu-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);" onclick="playClickAndStartNormal('normal')">
-          🌲 叢林冒險
-          <span class="sub-text">冒險者</span>
-        </button>
-        <button class="menu-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="playClickAndStartNormal('hard')">
-          🏜️ 荒地探勘
-          <span class="sub-text">開路先鋒</span>
-        </button>
-        <button class="back-btn" onclick="playClickAndGo('screen-2')">↩️ 返回模式選擇</button>
+
+      <!-- 簡單模式按鈕 -->
+      <button class="img-menu-btn" onclick="playClickAndStartNormal('easy')">
+        <img src="./pics/Newbie_button.png" alt="簡單模式" class="menu-btn-img">
+      </button>
+
+      <!-- 進階模式按鈕 -->
+      <button class="img-menu-btn" onclick="playClickAndStartNormal('normal')">
+        <img src="./pics/Expert_button.png" alt="進階模式" class="menu-btn-img">
+      </button>
+
+      <!-- 困難模式按鈕 -->
+      <button class="img-menu-btn" onclick="playClickAndStartNormal('hard')">
+        <img src="./pics/Elite_button.png" alt="困難模式" class="menu-btn-img">
+      </button>
+
+      <!-- 返回上頁 -->
+      <button class="img-menu-btn" onclick="playClickAndGo('screen-2')">
+        <img src="./pics/Backward_button.png" alt="返回上頁" class="menu-btn-img back-btn-img">
+      </button>
+
+
       </div>
     </div>
   </div>
@@ -463,7 +512,7 @@
   <!-- ⚔️ 畫面 3：遊戲挑戰畫面 -->
   <div id="screen-3" class="screen">
     <div class="overlay"></div>
-    <div class="content-layer">
+    <div class="content-layer" style="justify-content: space-between;">
       <!-- 頂部資訊列 -->
       <div id="game-info-bar">
         <span id="info-progress">題目：1/20</span>
