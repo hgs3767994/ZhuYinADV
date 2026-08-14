@@ -22,19 +22,12 @@
   ],
   "screenshots": [
     {
-      "src": "./pics/screenshot1.jpg",
-      "sizes": "1280x2447",
-      "type": "image/jpg",
+      "src": "./pics/screenshot.png",
+      "sizes": "1080x2065",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "主選單畫面"
     },
-    {
-      "src": "./pics/screenshot2.jpg",
-      "sizes": "1280x2447",
-      "type": "image/jpg",
-      "form_factor": "narrow",
-      "label": "難度選擇畫面"
-    }
   ],
   "id": "app.netlify.zhuyinadv.twa",
   "lang": "zh"
