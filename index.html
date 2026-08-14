@@ -168,13 +168,7 @@
   height: auto;
   display: block;
   filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
-  transition: transform 0.1s ease-out;
-}
-
-/* 🔘 全新：透過 JS 強制觸發的點擊下壓狀態 */
-.menu-btn-img.pressed {
-  transform: scale(0.92) translateY(4px) !important;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)) !important;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .menu-btn-img.back-btn-img {
@@ -450,7 +444,7 @@
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 2.1.02</div>
+      <div class="version-tag">v 2.1.03</div>
     </div>
   </div>
 
@@ -736,40 +730,38 @@ document.addEventListener('visibilitychange', () => {
       initHistoryGuard();
     }
 
-    function handleStartBtnClick() {
-      playDing();
-      goToScreen('screen-2');
-    }
-
-// 🎮 通用按鈕點擊與切換函數（含 180ms 視覺動畫延遲）
-function playClickAndGo(screenId) {
-  // 1. 播放音效
+function animateAndDo(callback) {
   playDing();
-
-  // 2. 抓取當前被點擊的按鈕圖片元素 (event.currentTarget 會拿到綁定 onclick 的 <button>)
   const btn = event.currentTarget;
   const img = btn.querySelector('img') || btn;
-
-  // 3. 強制加上下壓樣式
+  
   img.classList.add('pressed');
-
-  // 4. 延遲 180 毫秒：讓玩家肉眼完整看到按壓回饋，再執行畫面切換
   setTimeout(() => {
-    // 移除下壓樣式（避免下次切換回來時按鈕還處於被按下的狀態）
     img.classList.remove('pressed');
-    
-    // 執行原有的跳轉邏輯
-    goToScreen(screenId);
+    callback();
   }, 180);
 }
 
+    function handleStartBtnClick() {
+      animateAndDo(() => {
+      goToScreen('screen-2');
+      });
+    }
+
+    function playClickAndGo(screenId) {
+      animateAndDo(() => {
+      goToScreen(screenId);
+      });
+    }
+
     function playClickAndShowBoard() {
-      playDing();
+      animateAndDo(() => {
       showLeaderboard();
+      });
     }
 
     function playClickAndStartNormal(diff) {
-      playDing();
+      animateAndDo(() => {
       showLoadingAndStart(() => {
         state.mode = 'normal';
         state.diff = diff;
@@ -785,10 +777,11 @@ function playClickAndGo(screenId) {
         goToScreen('screen-3');
         nextQuestion();
       });
+      });
     }
 
     function playClickAndStartEndless() {
-      playDing();
+      animateAndDo(() => {
       showLoadingAndStart(() => {
         state.mode = 'endless';
         state.score = 0;
@@ -800,6 +793,7 @@ function playClickAndGo(screenId) {
         document.getElementById('timer-container').style.display = 'flex'; // 無限模式顯示計時條
         goToScreen('screen-3');
         nextQuestion();
+      });
       });
     }
 
