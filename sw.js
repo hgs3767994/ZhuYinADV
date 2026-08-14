@@ -19,6 +19,11 @@ const ASSETS_TO_CACHE = [
   './pics/normal_mode_button.png',
   './pics/infinity_mode_button.png',
   './pics/record_button.png',
+  './pics/Backward_button.png',
+  './pics/start_button.png',
+  './pics/Newbie_button.png',
+  './pics/Expert_button.png',
+  './pics/Elite_button.png',
 
 ];
 
