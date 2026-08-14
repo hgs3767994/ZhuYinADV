@@ -27,7 +27,7 @@
       "type": "image/png",
       "form_factor": "narrow",
       "label": "主選單畫面"
-    },
+    }
   ],
   "id": "app.netlify.zhuyinadv.twa",
   "lang": "zh"
