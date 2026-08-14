@@ -16,7 +16,24 @@
     {
       "src": "./pics/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "./pics/screenshot1.jpg",
+      "sizes": "1280x2447",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "主選單畫面"
+    },
+    {
+      "src": "./pics/screenshot2.jpg",
+      "sizes": "1280x2447",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "難度選擇畫面"
     }
   ],
   "id": "app.netlify.zhuyinadv.twa",
