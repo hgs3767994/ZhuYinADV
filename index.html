@@ -168,7 +168,13 @@
   height: auto;
   display: block;
   filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
-  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.1s ease-out;
+}
+
+/* 🔘 全新：透過 JS 強制觸發的點擊下壓狀態 */
+.menu-btn-img.pressed {
+  transform: scale(0.92) translateY(4px) !important;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)) !important;
 }
 
 .menu-btn-img.back-btn-img {
@@ -735,10 +741,27 @@ document.addEventListener('visibilitychange', () => {
       goToScreen('screen-2');
     }
 
-    function playClickAndGo(screenId) {
-      playDing();
-      goToScreen(screenId);
-    }
+// 🎮 通用按鈕點擊與切換函數（含 180ms 視覺動畫延遲）
+function playClickAndGo(screenId) {
+  // 1. 播放音效
+  playDing();
+
+  // 2. 抓取當前被點擊的按鈕圖片元素 (event.currentTarget 會拿到綁定 onclick 的 <button>)
+  const btn = event.currentTarget;
+  const img = btn.querySelector('img') || btn;
+
+  // 3. 強制加上下壓樣式
+  img.classList.add('pressed');
+
+  // 4. 延遲 180 毫秒：讓玩家肉眼完整看到按壓回饋，再執行畫面切換
+  setTimeout(() => {
+    // 移除下壓樣式（避免下次切換回來時按鈕還處於被按下的狀態）
+    img.classList.remove('pressed');
+    
+    // 執行原有的跳轉邏輯
+    goToScreen(screenId);
+  }, 180);
+}
 
     function playClickAndShowBoard() {
       playDing();
