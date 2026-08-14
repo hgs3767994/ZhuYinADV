@@ -3,7 +3,7 @@
   "short_name": "小小注音冒險家",
   "description": "適合小朋友的兒童注音符號練習遊戲",
   "start_url": "./index.html",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
