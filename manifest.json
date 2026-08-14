@@ -23,7 +23,7 @@
   "screenshots": [
     {
       "src": "./pics/screenshot.png",
-      "sizes": "1080x2065",
+      "sizes": "540x1033",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "主選單畫面"
