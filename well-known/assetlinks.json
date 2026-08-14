@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "app.netlify.zhuyinadv.twa",
-        "sha256_cert_fingerprints": ["0B:9E:C7:A5:4A:61:87:F3:AA:3C:4B:D7:7F:CF:CF:EF:D3:BE:8D:D4:8D:0B:E3:42:45:61:B5:00:52:A9:BE:AA"]
-      }
-    }]
