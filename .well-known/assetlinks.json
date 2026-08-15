@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "app.netlify.zhuyinadv.twa",
-        "sha256_cert_fingerprints": ["99:15:F2:9D:9A:BF:79:D3:68:52:E9:35:47:FA:E3:A2:99:6D:CA:3B:20:90:7E:39:BD:26:59:AB:A9:D5:51:12"]
+        "sha256_cert_fingerprints": ["DD:0F:1D:C0:AA:24:EF:EB:07:80:D0:2F:58:19:F2:51:D7:F1:BA:46:2A:02:58:55:B9:E1:84:D1:8C:46:6B:90"]
       }
     }]
