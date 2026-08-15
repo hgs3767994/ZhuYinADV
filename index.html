@@ -471,7 +471,7 @@ body {
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 2.1.06</div>
+      <div class="version-tag">v 2.1.07</div>
     </div>
   </div>
 
@@ -1111,13 +1111,34 @@ function stopTimer() {
     }
 
     // 🚀 註冊 PWA Service Worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('PWA Service Worker 註冊成功！範疇：', reg.scope))
-          .catch(err => console.log('PWA Service Worker 註冊失敗：', err));
-      });
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then((reg) => {
+      // 監聽是否有新的 SW 在等待或安裝
+      reg.onupdatefound = () => {
+        const newWorker = reg.installing;
+        if (newWorker == null) return;
+
+        newWorker.onstatechange = () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('[PWA] 檢測到新版本，準備自動重新載入...');
+            // 當發現有新 SW 激活並接管時，自動刷新頁面載入最新資源
+            window.location.reload();
+          }
+        };
+      };
+    });
+  });
+
+  // 避免舊控制頁面殘留
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
     }
+  });
+}
   </script>
 </body>
 </html>

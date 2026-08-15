@@ -1,5 +1,5 @@
 // 每次更新程式碼上傳 GitHub 時，記得把這裡的版本號 +1
-const CACHE_NAME = 'zhuyin-adventure-v2.1.06';// 👈 修改這裡 (例如 v1 -> v2)
+const CACHE_NAME = 'zhuyin-adventure-v2.1.07';// 👈 修改這裡 (例如 v1 -> v2)
 
 // 離線需要快取的資源檔案清單
 const ASSETS_TO_CACHE = [
@@ -55,11 +55,27 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3. 攔截請求：優先使用離線快取
+// 3. 攔截請求：Stale-While-Revalidate 策略（先用快取，背景同步更新）
 self.addEventListener('fetch', (event) => {
+  // 僅處理 GET 請求
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(event.request).then((cachedResponse) => {
+        // 背景向網路抓取最新檔案並更新快取
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        }).catch(() => {
+          // 網路斷線時忽略錯誤，繼續使用快取
+        });
+
+        // 若有快取就先傳回快取，沒有就等網路回應
+        return cachedResponse || fetchPromise;
+      });
     })
   );
 });
