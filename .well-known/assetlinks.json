@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "app.netlify.zhuyinadv.twa",
+        "package_name": "io.github.hgs3767994.twa",
         "sha256_cert_fingerprints": ["DD:0F:1D:C0:AA:24:EF:EB:07:80:D0:2F:58:19:F2:51:D7:F1:BA:46:2A:02:58:55:B9:E1:84:D1:8C:46:6B:90"]
       }
     }]
