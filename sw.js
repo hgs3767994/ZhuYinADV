@@ -1,5 +1,5 @@
 // 每次更新程式碼上傳 GitHub 時，記得把這裡的版本號 +1
-const CACHE_NAME = 'zhuyin-adventure-v2.1.09';// 👈 修改這裡 (例如 v1 -> v2)
+const CACHE_NAME = 'zhuyin-adventure-v2.1.10';// 👈 修改這裡 (例如 v1 -> v2)
 
 // 離線需要快取的資源檔案清單
 const ASSETS_TO_CACHE = [
@@ -20,7 +20,6 @@ const ASSETS_TO_CACHE = [
   './pics/infinity_mode_button.png',
   './pics/record_button.png',
   './pics/Backward_button.png',
-  './pics/start_button.png',
   './pics/Newbie_button.png',
   './pics/Expert_button.png',
   './pics/Elite_button.png',
