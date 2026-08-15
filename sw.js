@@ -1,5 +1,5 @@
 // 每次更新程式碼上傳 GitHub 時，記得把這裡的版本號 +1
-const CACHE_NAME = 'zhuyin-adventure-v2.1.10';// 👈 修改這裡 (例如 v1 -> v2)
+const CACHE_NAME = 'zhuyin-adventure-v2.1.11';// 👈 修改這裡 (例如 v1 -> v2)
 
 // 離線需要快取的資源檔案清單
 const ASSETS_TO_CACHE = [
@@ -58,6 +58,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // 僅處理 GET 請求
   if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  if (!url.protocol.startsWith('http')) return;
+
 
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
