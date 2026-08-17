@@ -473,7 +473,7 @@ body {
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 2.1.12</div>
+      <div class="version-tag">v 2.1.13</div>
     </div>
   </div>
 
@@ -621,7 +621,23 @@ body {
       isLocking: false // 防止連續點擊鎖
     };
 
+// 檢查是否在 TWA / PWA standalone 模式下執行
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
+if (!isStandalone) {
+  // 若用普通瀏覽器開啟，直接清空頁面或轉址
+  document.body.innerHTML = "<h1>請透過官方 App 開啟遊戲</h1>";
+}
+
+// 停用右鍵選單
+document.addEventListener('contextmenu', event => event.preventDefault());
+
+// 停用 F12 與常見審查快捷鍵
+document.addEventListener('keydown', event => {
+  if (event.key === 'F12' || (event.ctrlKey && event.shiftKey && event.key === 'I')) {
+    event.preventDefault();
+  }
+});
 
 
 /* =========================================================
