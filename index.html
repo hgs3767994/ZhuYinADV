@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" href="./pics/icon-192.png">
   <link rel="icon" type="image/x-icon" href="./pics/icon-192.png">
   <style>
+
     /* ---------------- 全域基本設定 ---------------- */
 
     /* 🚀 精準 GPU 硬體加速：省電、降溫、順暢不掉幀 */
@@ -455,7 +456,34 @@ body {
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
       pointer-events: none; /* 避免擋到點擊事件 */
     }
+
   </style>
+
+<!-- 💡 環境檢查腳本：必須放在 CSS 之後、DOMContentLoaded 觸發前 -->
+  <script>
+    (function checkEnvironment() {
+      // 檢查是否有開發者測試後門 (?dev=true)
+      const isDevMode = new URLSearchParams(window.location.search).get('dev') === 'true';
+
+      // 檢查是否從 TWA / Standalone 開啟
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+                        || window.navigator.standalone 
+                        || document.referrer.includes('android-app://');
+
+      // 若非合法環境，立刻強制跳轉到提示頁面
+      if (!isStandalone && !isDevMode) {
+        document.addEventListener('DOMContentLoaded', () => {
+          document.body.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; padding:20px; font-family:sans-serif; background-color:#078;">
+              <h2>⚠️ 請透過官方 App 開啟遊戲</h2>
+              <p>為了確保最佳體驗，本遊戲僅支援官方 App 執行。</p>
+            </div>
+          `;
+        });
+      }
+    })();
+  </script>
+
 </head>
 <body onclick="initAudioOnFirstTouch()">
 
@@ -473,7 +501,7 @@ body {
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 2.1.13</div>
+      <div class="version-tag">v 2.1.14</div>
     </div>
   </div>
 
@@ -621,14 +649,6 @@ body {
       isLocking: false // 防止連續點擊鎖
     };
 
-// 檢查是否在 TWA / PWA standalone 模式下執行
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-
-if (!isStandalone) {
-  // 若用普通瀏覽器開啟，直接清空頁面或轉址
-  document.body.innerHTML = "<h1>請透過官方 App 開啟遊戲</h1>";
-}
-
 // 停用右鍵選單
 document.addEventListener('contextmenu', event => event.preventDefault());
 
@@ -638,7 +658,6 @@ document.addEventListener('keydown', event => {
     event.preventDefault();
   }
 });
-
 
 /* =========================================================
    📱 Android 返回鍵防護與攔截機制
@@ -1157,6 +1176,21 @@ if ('serviceWorker' in navigator) {
     }
   });
 }
+    // 停用右鍵選單
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    // 停用 F12 與常見審查快捷鍵 (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U)
+    document.addEventListener('keydown', event => {
+      if (
+        event.key === 'F12' || 
+        (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'i' || event.key === 'J' || event.key === 'j')) ||
+        (event.ctrlKey && (event.key === 'U' || event.key === 'u'))
+      ) {
+        event.preventDefault();
+      }
+    });
   </script>
+<!-- 💡 防右鍵與快捷鍵腳本：放在 body 底部 -->
+
 </body>
 </html>
