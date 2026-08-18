@@ -66,8 +66,8 @@ body {
   #app, .screen-container, body > div.screen {
     max-width: 430px;
     max-height: 900px;
-    height: 90vh; /* 在電腦上上下留白，呈現手機卡片感 */
-    border-radius: 20px; /* 電腦端加上圓角更像手機 */
+    height: 98vh; /* 在電腦上上下留白，呈現手機卡片感 */
+    border-radius: 10px; /* 電腦端加上圓角更像手機 */
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
   }
 }
@@ -458,35 +458,10 @@ body {
     }
 
   </style>
-
-<!-- 💡 環境檢查腳本：必須放在 CSS 之後、DOMContentLoaded 觸發前 -->
-  <script>
-    (function checkEnvironment() {
-      // 檢查是否有開發者測試後門 (?dev=true)
-      const isDevMode = new URLSearchParams(window.location.search).get('dev') === 'true';
-
-      // 檢查是否從 TWA / Standalone 開啟
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-                        || window.navigator.standalone 
-                        || document.referrer.includes('android-app://');
-
-      // 若非合法環境，立刻強制跳轉到提示頁面
-      if (!isStandalone && !isDevMode) {
-        document.addEventListener('DOMContentLoaded', () => {
-          document.body.innerHTML = `
-            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; padding:20px; font-family:sans-serif; background-color:#078;">
-              <h2>⚠️ 請透過官方 App 開啟遊戲</h2>
-              <p>為了確保最佳體驗，本遊戲僅支援官方 App 執行。</p>
-            </div>
-          `;
-        });
-      }
-    })();
-  </script>
-
 </head>
-<body onclick="initAudioOnFirstTouch()">
 
+
+<body onclick="initAudioOnFirstTouch()">
   <!-- ⏳ 載入緩衝黑屏 -->
   <div id="loading-overlay">
     <div class="loading-text">🎒 冒險準備中...</div>
@@ -501,7 +476,7 @@ body {
       </div>
 
        <!-- 💡 新增這行：右下角版本號 -->
-      <div class="version-tag">v 2.1.14</div>
+      <div class="version-tag">v 2.1.15</div>
     </div>
   </div>
 
