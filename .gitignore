@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+*.log
+agent.md
+初步工程統整及未來建議.txt
+原始程式框架/
