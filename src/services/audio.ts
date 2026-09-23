@@ -19,18 +19,19 @@ type SafariWindow = Window & typeof globalThis & {
 };
 
 class AudioService {
-  private readonly bgm = new Audio(assetUrl('assets/audio/bgm.mp3'));
+  private readonly bgm = new Audio();
   private readonly bufferPromises = new Map<string, Promise<AudioBuffer>>();
   private context: AudioContext | null = null;
   private activeVoice: AudioBufferSourceNode | null = null;
   private voiceRequestId = 0;
   private unlocked = false;
-  private preloading = false;
+  private bgmStartTimer: number | null = null;
 
   constructor() {
     this.bgm.loop = true;
     this.bgm.volume = 0.35;
-    this.bgm.preload = 'auto';
+    this.bgm.preload = 'none';
+    this.bgm.src = assetUrl('assets/audio/bgm.mp3');
   }
 
   unlock(): void {
@@ -38,15 +39,24 @@ class AudioService {
     const context = this.ensureContext();
     if (context?.state === 'suspended') void context.resume();
     this.playBgm();
-    this.preloadShortAudio();
   }
 
   playBgm(): void {
-    if (!this.unlocked || document.hidden) return;
-    this.bgm.play().catch(() => undefined);
+    if (!this.unlocked || document.hidden || this.bgmStartTimer !== null || !this.bgm.paused) {
+      return;
+    }
+    this.bgmStartTimer = window.setTimeout(() => {
+      this.bgmStartTimer = null;
+      if (!this.unlocked || document.hidden) return;
+      this.bgm.play().catch(() => undefined);
+    }, 800);
   }
 
   pauseBgm(): void {
+    if (this.bgmStartTimer !== null) {
+      window.clearTimeout(this.bgmStartTimer);
+      this.bgmStartTimer = null;
+    }
     this.bgm.pause();
   }
 
@@ -81,27 +91,6 @@ class AudioService {
     if (!AudioContextClass) return null;
     this.context = new AudioContextClass({ latencyHint: 'interactive' });
     return this.context;
-  }
-
-  private preloadShortAudio(): void {
-    if (this.preloading || !this.context) return;
-    this.preloading = true;
-    const sources = [
-      ...Object.values(SFX_FILES),
-      ...Object.values(ZHUYIN_AUDIO_FILES).map((file) =>
-        assetUrl(`assets/audio/zhuyin/${file}.mp3`)
-      )
-    ];
-    void this.preloadInBatches(sources);
-  }
-
-  private async preloadInBatches(sources: string[]): Promise<void> {
-    const batchSize = 4;
-    for (let index = 0; index < sources.length; index += batchSize) {
-      const batch = sources.slice(index, index + batchSize);
-      await Promise.allSettled(batch.map((source) => this.loadBuffer(source)));
-      await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
-    }
   }
 
   private loadBuffer(source: string): Promise<AudioBuffer> {

@@ -14,7 +14,7 @@ import type {
 } from './game/types';
 import { audioService } from './services/audio';
 import { resultRepository } from './services/resultsRepository';
-import { assetUrl } from './utils/assets';
+import { assetUrl, preloadImage } from './utils/assets';
 import {
   requestPortraitOrientation,
   type LockableScreenOrientation
@@ -78,6 +78,17 @@ export function App() {
     screenRef.current = screen;
     if (screen === 'game') audioService.pauseBgm();
     else audioService.playBgm();
+  }, [screen]);
+
+  useEffect(() => {
+    if (screen !== 'mode') return;
+    const timer = window.setTimeout(() => {
+      void Promise.all([
+        assetUrl('assets/images/bg_endless.webp'),
+        ...Object.values(DIFFICULTY_CONFIG).map((config) => config.background)
+      ].map(preloadImage));
+    }, 200);
+    return () => window.clearTimeout(timer);
   }, [screen]);
 
   useEffect(() => {
