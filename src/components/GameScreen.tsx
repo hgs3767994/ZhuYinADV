@@ -296,14 +296,14 @@ export function GameScreen({
           <button className="listen-button" onClick={() => audioService.speak(session.currentAnswer)}>
             <svg
               className="speaker-icon"
-              viewBox="0 0 64 64"
+              viewBox="0 0 52 40"
               aria-hidden="true"
               focusable="false"
             >
-              <rect x="9" y="25" width="12" height="14" rx="3" fill="#475569" />
-              <path d="M21 25 35 15v34L21 39Z" fill="#e2e8f0" />
+              <rect x="2" y="13" width="12" height="14" rx="3" fill="#475569" />
+              <path d="M14 13 28 3v34L14 27Z" fill="#e2e8f0" />
               <path
-                d="M40 24c4 4 4 12 0 16M45 18c8 8 8 20 0 28"
+                d="M33 12c4 4 4 12 0 16M38 6c8 8 8 20 0 28"
                 fill="none"
                 stroke="#38bdf8"
                 strokeWidth="4"

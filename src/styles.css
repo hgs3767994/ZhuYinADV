@@ -255,6 +255,10 @@ button:focus-visible {
 }
 
 .listen-area {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
 
@@ -268,19 +272,19 @@ button:focus-visible {
   display: grid;
   width: clamp(74px, 12vh, 92px);
   height: clamp(74px, 12vh, 92px);
+  margin: 0 auto;
   padding: 0;
   place-items: center;
-  border: 4px solid #fff;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #facc15, #eab308);
-  box-shadow: 0 8px 24px rgb(234 179 8 / 55%);
+  border: 0;
+  background: transparent;
   cursor: pointer;
 }
 
 .speaker-icon {
   display: block;
-  width: 62%;
-  height: 62%;
+  width: 74%;
+  height: 74%;
+  transform: translateX(2px);
 }
 
 .options-grid {

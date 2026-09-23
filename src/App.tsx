@@ -31,7 +31,10 @@ interface AppHistoryState {
   zhuyinApp: true;
   screen: Screen;
   gameGuard?: boolean;
+  overlay?: 'quit' | 'leaderboard';
 }
+
+type LeaderboardOrigin = 'menu' | 'result';
 
 function isAppHistoryState(value: unknown): value is AppHistoryState {
   if (!value || typeof value !== 'object') return false;
@@ -49,9 +52,11 @@ export function App() {
   const resultRef = useRef<GameResult | null>(null);
   const [leaderboardPage, setLeaderboardPage] = useState<LeaderboardPage | null>(null);
   const leaderboardPageRef = useRef<LeaderboardPage | null>(null);
+  const leaderboardOriginRef = useRef<LeaderboardOrigin | null>(null);
   const [quitConfirmation, setQuitConfirmation] = useState(false);
   const quitConfirmationRef = useRef(false);
   const gameGuardActiveRef = useRef(false);
+  const completedExitPendingRef = useRef(false);
   const adventurePreloadStartedRef = useRef(false);
 
   const {
@@ -110,27 +115,71 @@ export function App() {
     );
 
     const handleBack = (event: PopStateEvent) => {
-      if (leaderboardPageRef.current !== null) {
-        setLeaderboardPage(null);
-        return;
-      }
-      if (resultRef.current !== null) {
+      const destination = isAppHistoryState(event.state) ? event.state : null;
+
+      if (completedExitPendingRef.current) {
+        completedExitPendingRef.current = false;
+        resultRef.current = null;
+        leaderboardPageRef.current = null;
+        leaderboardOriginRef.current = null;
         setResult(null);
+        setLeaderboardPage(null);
+        if (destination) applyScreen(destination.screen);
         return;
       }
 
-      const destination = isAppHistoryState(event.state) ? event.state : null;
+      if (quitConfirmationRef.current) {
+        quitConfirmationRef.current = false;
+        setQuitConfirmation(false);
+        if (destination?.screen === 'game') {
+          if (!destination.gameGuard) {
+            history.pushState(
+              { zhuyinApp: true, screen: 'game', gameGuard: true } satisfies AppHistoryState,
+              '',
+              location.href
+            );
+          }
+          gameGuardActiveRef.current = true;
+          applyScreen('game');
+        }
+        return;
+      }
+
+      if (leaderboardPageRef.current !== null) {
+        if (leaderboardOriginRef.current === 'result') {
+          completedExitPendingRef.current = true;
+          history.back();
+          return;
+        }
+        leaderboardPageRef.current = null;
+        leaderboardOriginRef.current = null;
+        setLeaderboardPage(null);
+        if (destination) applyScreen(destination.screen);
+        return;
+      }
+
+      if (resultRef.current !== null) {
+        completedExitPendingRef.current = true;
+        history.back();
+        return;
+      }
+
       if (
         screenRef.current === 'game' &&
         destination?.screen === 'game' &&
         !destination.gameGuard
       ) {
         gameGuardActiveRef.current = false;
+        history.pushState(
+          { zhuyinApp: true, screen: 'game', overlay: 'quit' } satisfies AppHistoryState,
+          '',
+          location.href
+        );
+        quitConfirmationRef.current = true;
         setQuitConfirmation(true);
         return;
       }
 
-      if (quitConfirmationRef.current) setQuitConfirmation(false);
       if (destination) applyScreen(destination.screen);
     };
 
@@ -176,36 +225,72 @@ export function App() {
     } catch (error) {
       console.warn('無法保存冒險紀錄', error);
     } finally {
+      resultRef.current = nextResult;
       setResult(nextResult);
     }
   };
 
-  const returnToMode = () => {
+  const openLeaderboardFromMenu = () => {
+    press(() => {
+      history.pushState(
+        { zhuyinApp: true, screen: 'mode', overlay: 'leaderboard' } satisfies AppHistoryState,
+        '',
+        location.href
+      );
+      leaderboardOriginRef.current = 'menu';
+      leaderboardPageRef.current = 'easy';
+      setLeaderboardPage('easy');
+    });
+  };
+
+  const openLeaderboardFromResult = (page: LeaderboardPage) => {
+    resultRef.current = null;
+    leaderboardOriginRef.current = 'result';
+    leaderboardPageRef.current = page;
     setResult(null);
+    setLeaderboardPage(page);
+  };
+
+  const closeMenuLeaderboard = () => {
+    history.back();
+  };
+
+  const openQuitConfirmation = () => {
+    if (quitConfirmationRef.current) return;
+    history.pushState(
+      { zhuyinApp: true, screen: 'game', overlay: 'quit' } satisfies AppHistoryState,
+      '',
+      location.href
+    );
+    quitConfirmationRef.current = true;
+    setQuitConfirmation(true);
+  };
+
+  const returnToMode = () => {
+    resultRef.current = null;
+    leaderboardPageRef.current = null;
+    leaderboardOriginRef.current = null;
+    quitConfirmationRef.current = false;
+    setResult(null);
+    setLeaderboardPage(null);
     setQuitConfirmation(false);
     gameGuardActiveRef.current = false;
     history.go(gameSetup.mode === 'normal' ? -3 : -2);
   };
 
   const abandonGame = () => {
-    const distance = gameGuardActiveRef.current ? -2 : -1;
+    const distance = gameGuardActiveRef.current ? -3 : -2;
+    quitConfirmationRef.current = false;
     setQuitConfirmation(false);
     history.go(distance);
   };
 
   const continueGame = () => {
-    if (!gameGuardActiveRef.current) {
-      history.pushState(
-        { zhuyinApp: true, screen: 'game', gameGuard: true } satisfies AppHistoryState,
-        '',
-        location.href
-      );
-      gameGuardActiveRef.current = true;
-    }
-    setQuitConfirmation(false);
+    history.back();
   };
 
   const replay = () => {
+    resultRef.current = null;
     setResult(null);
     setRunId((current) => current + 1);
   };
@@ -249,7 +334,7 @@ export function App() {
             <ImageMenuButton
               image={assetUrl('assets/images/record_button.webp')}
               label="冒險紀錄"
-              onClick={() => press(() => setLeaderboardPage('easy'))}
+              onClick={openLeaderboardFromMenu}
             />
             <ImageMenuButton
               image={assetUrl('assets/images/Backward_button.webp')}
@@ -297,7 +382,7 @@ export function App() {
           runId={runId}
           paused={quitConfirmation}
           onFinish={finishGame}
-          onRequestQuit={() => setQuitConfirmation(true)}
+          onRequestQuit={openQuitConfirmation}
         />
       )}
 
@@ -305,10 +390,7 @@ export function App() {
         <ResultModal
           result={result}
           onReplay={replay}
-          onLeaderboard={(page) => {
-            setResult(null);
-            setLeaderboardPage(page);
-          }}
+          onLeaderboard={openLeaderboardFromResult}
           onMenu={returnToMode}
         />
       )}
@@ -317,8 +399,8 @@ export function App() {
         <Leaderboard
           initialPage={leaderboardPage}
           onClose={() => {
-            setLeaderboardPage(null);
-            if (screenRef.current === 'game') returnToMode();
+            if (leaderboardOriginRef.current === 'result') returnToMode();
+            else closeMenuLeaderboard();
           }}
         />
       )}
