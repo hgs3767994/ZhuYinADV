@@ -619,3 +619,22 @@ button:focus-visible {
     color: #dbeafe;
   }
 }
+
+/* iOS/iPadOS standalone PWAs may subtract the bottom safe area from dynamic
+   viewport units. Paint the app with the stable viewport height while keeping
+   interactive content inside env(safe-area-inset-*). */
+@media (display-mode: standalone) {
+  html,
+  body,
+  #root {
+    min-height: 100vh;
+    height: 100vh;
+  }
+
+  .app-shell {
+    height: 100vh;
+    max-height: none;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}

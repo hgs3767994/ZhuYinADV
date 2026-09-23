@@ -30,11 +30,14 @@ interface GameSetup {
 interface AppHistoryState {
   zhuyinApp: true;
   screen: Screen;
+  welcomeGuard?: boolean;
   gameGuard?: boolean;
   overlay?: 'quit' | 'leaderboard';
 }
 
 type LeaderboardOrigin = 'menu' | 'result';
+type QuitConfirmationOrigin = 'back' | 'button';
+type GameHistoryPosition = 'base' | 'guard' | null;
 
 function isAppHistoryState(value: unknown): value is AppHistoryState {
   if (!value || typeof value !== 'object') return false;
@@ -55,7 +58,11 @@ export function App() {
   const leaderboardOriginRef = useRef<LeaderboardOrigin | null>(null);
   const [quitConfirmation, setQuitConfirmation] = useState(false);
   const quitConfirmationRef = useRef(false);
-  const gameGuardActiveRef = useRef(false);
+  const quitConfirmationOriginRef = useRef<QuitConfirmationOrigin | null>(null);
+  const [exitConfirmation, setExitConfirmation] = useState(false);
+  const exitConfirmationRef = useRef(false);
+  const gameHistoryPositionRef = useRef<GameHistoryPosition>(null);
+  const historyRestorationPendingRef = useRef(false);
   const completedExitPendingRef = useRef(false);
   const adventurePreloadStartedRef = useRef(false);
 
@@ -72,13 +79,14 @@ export function App() {
   const navigate = useCallback((next: Screen) => {
     const state: AppHistoryState = { zhuyinApp: true, screen: next };
     history.pushState(state, '', location.href);
-    gameGuardActiveRef.current = false;
+    gameHistoryPositionRef.current = null;
     applyScreen(next);
   }, [applyScreen]);
 
   resultRef.current = result;
   leaderboardPageRef.current = leaderboardPage;
   quitConfirmationRef.current = quitConfirmation;
+  exitConfirmationRef.current = exitConfirmation;
 
   useEffect(() => {
     screenRef.current = screen;
@@ -109,13 +117,27 @@ export function App() {
 
   useEffect(() => {
     history.replaceState(
-      { zhuyinApp: true, screen: screenRef.current } satisfies AppHistoryState,
+      { zhuyinApp: true, screen: 'welcome' } satisfies AppHistoryState,
+      '',
+      location.href
+    );
+    history.pushState(
+      { zhuyinApp: true, screen: 'welcome', welcomeGuard: true } satisfies AppHistoryState,
       '',
       location.href
     );
 
     const handleBack = (event: PopStateEvent) => {
       const destination = isAppHistoryState(event.state) ? event.state : null;
+      gameHistoryPositionRef.current = destination?.screen === 'game'
+        ? destination.gameGuard ? 'guard' : 'base'
+        : null;
+
+      if (historyRestorationPendingRef.current) {
+        historyRestorationPendingRef.current = false;
+        if (destination) applyScreen(destination.screen);
+        return;
+      }
 
       if (completedExitPendingRef.current) {
         completedExitPendingRef.current = false;
@@ -129,19 +151,22 @@ export function App() {
       }
 
       if (quitConfirmationRef.current) {
+        const origin = quitConfirmationOriginRef.current;
         quitConfirmationRef.current = false;
+        quitConfirmationOriginRef.current = null;
         setQuitConfirmation(false);
-        if (destination?.screen === 'game') {
-          if (!destination.gameGuard) {
-            history.pushState(
-              { zhuyinApp: true, screen: 'game', gameGuard: true } satisfies AppHistoryState,
-              '',
-              location.href
-            );
-          }
-          gameGuardActiveRef.current = true;
-          applyScreen('game');
-        }
+        historyRestorationPendingRef.current = true;
+        history.go(origin === 'back' ? 2 : 1);
+        applyScreen('game');
+        return;
+      }
+
+      if (exitConfirmationRef.current) {
+        exitConfirmationRef.current = false;
+        setExitConfirmation(false);
+        historyRestorationPendingRef.current = true;
+        history.go(2);
+        applyScreen('welcome');
         return;
       }
 
@@ -169,14 +194,19 @@ export function App() {
         destination?.screen === 'game' &&
         !destination.gameGuard
       ) {
-        gameGuardActiveRef.current = false;
-        history.pushState(
-          { zhuyinApp: true, screen: 'game', overlay: 'quit' } satisfies AppHistoryState,
-          '',
-          location.href
-        );
         quitConfirmationRef.current = true;
+        quitConfirmationOriginRef.current = 'back';
         setQuitConfirmation(true);
+        return;
+      }
+
+      if (
+        screenRef.current === 'welcome' &&
+        destination?.screen === 'welcome' &&
+        !destination.welcomeGuard
+      ) {
+        exitConfirmationRef.current = true;
+        setExitConfirmation(true);
         return;
       }
 
@@ -214,7 +244,7 @@ export function App() {
         '',
         location.href
       );
-      gameGuardActiveRef.current = true;
+      gameHistoryPositionRef.current = 'guard';
       applyScreen('game');
     });
   };
@@ -257,12 +287,8 @@ export function App() {
 
   const openQuitConfirmation = () => {
     if (quitConfirmationRef.current) return;
-    history.pushState(
-      { zhuyinApp: true, screen: 'game', overlay: 'quit' } satisfies AppHistoryState,
-      '',
-      location.href
-    );
     quitConfirmationRef.current = true;
+    quitConfirmationOriginRef.current = 'button';
     setQuitConfirmation(true);
   };
 
@@ -274,18 +300,41 @@ export function App() {
     setResult(null);
     setLeaderboardPage(null);
     setQuitConfirmation(false);
-    gameGuardActiveRef.current = false;
-    history.go(gameSetup.mode === 'normal' ? -3 : -2);
+    const distance = gameHistoryPositionRef.current === 'guard' ? -2 : -1;
+    gameHistoryPositionRef.current = null;
+    history.go(distance);
   };
 
   const abandonGame = () => {
-    const distance = gameGuardActiveRef.current ? -3 : -2;
+    const distance = quitConfirmationOriginRef.current === 'button' ? -2 : -1;
     quitConfirmationRef.current = false;
+    quitConfirmationOriginRef.current = null;
     setQuitConfirmation(false);
+    gameHistoryPositionRef.current = null;
     history.go(distance);
   };
 
   const continueGame = () => {
+    const origin = quitConfirmationOriginRef.current;
+    quitConfirmationRef.current = false;
+    quitConfirmationOriginRef.current = null;
+    setQuitConfirmation(false);
+    if (origin === 'back') {
+      historyRestorationPendingRef.current = true;
+      history.forward();
+    }
+  };
+
+  const cancelExit = () => {
+    exitConfirmationRef.current = false;
+    setExitConfirmation(false);
+    historyRestorationPendingRef.current = true;
+    history.forward();
+  };
+
+  const confirmExit = () => {
+    exitConfirmationRef.current = false;
+    setExitConfirmation(false);
     history.back();
   };
 
@@ -411,6 +460,15 @@ export function App() {
           <div className="modal-actions horizontal">
             <button className="danger-button" onClick={abandonGame}>放棄冒險</button>
             <button className="primary-button" onClick={continueGame}>繼續遊戲</button>
+          </div>
+        </Modal>
+      )}
+
+      {exitConfirmation && (
+        <Modal title="確定要離開嗎？" labelledBy="exit-title">
+          <div className="modal-actions horizontal">
+            <button className="secondary-button" onClick={cancelExit}>取消</button>
+            <button className="danger-button" onClick={confirmExit}>確定</button>
           </div>
         </Modal>
       )}
