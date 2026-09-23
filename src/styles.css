@@ -41,6 +41,10 @@ button:focus-visible {
   background: #0f172a;
 }
 
+.orientation-lock {
+  display: none;
+}
+
 .screen {
   position: absolute;
   inset: 0;
@@ -527,5 +531,41 @@ button:focus-visible {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
+  }
+}
+
+@media (orientation: landscape) and (pointer: coarse) {
+  .app-shell > :not(.orientation-lock) {
+    display: none !important;
+  }
+
+  .orientation-lock {
+    position: absolute;
+    z-index: 1000;
+    inset: 0;
+    display: flex;
+    padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: linear-gradient(145deg, #172554, #0f172a);
+    color: #fff;
+    text-align: center;
+  }
+
+  .orientation-lock span {
+    font-size: clamp(3rem, 14vw, 6rem);
+    transform: rotate(-90deg);
+  }
+
+  .orientation-lock strong {
+    margin-top: 16px;
+    color: #facc15;
+    font-size: clamp(1.4rem, 5vw, 2rem);
+  }
+
+  .orientation-lock p {
+    margin: 10px 0 0;
+    color: #dbeafe;
   }
 }

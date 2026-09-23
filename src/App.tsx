@@ -23,6 +23,19 @@ interface GameSetup {
   difficulty: Difficulty | null;
 }
 
+interface AppHistoryState {
+  zhuyinApp: true;
+  screen: Screen;
+  gameGuard?: boolean;
+}
+
+function isAppHistoryState(value: unknown): value is AppHistoryState {
+  if (!value || typeof value !== 'object') return false;
+  const state = value as Partial<AppHistoryState>;
+  return state.zhuyinApp === true &&
+    ['welcome', 'mode', 'difficulty', 'game'].includes(state.screen ?? '');
+}
+
 export function App() {
   const [screen, setScreen] = useState<Screen>('welcome');
   const screenRef = useRef<Screen>('welcome');
@@ -33,19 +46,29 @@ export function App() {
   const [leaderboardPage, setLeaderboardPage] = useState<LeaderboardPage | null>(null);
   const leaderboardPageRef = useRef<LeaderboardPage | null>(null);
   const [quitConfirmation, setQuitConfirmation] = useState(false);
+  const quitConfirmationRef = useRef(false);
+  const gameGuardActiveRef = useRef(false);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker
   } = useRegisterSW({ immediate: true });
 
-  const navigate = useCallback((next: Screen) => {
+  const applyScreen = useCallback((next: Screen) => {
     screenRef.current = next;
     setScreen(next);
   }, []);
 
+  const navigate = useCallback((next: Screen) => {
+    const state: AppHistoryState = { zhuyinApp: true, screen: next };
+    history.pushState(state, '', location.href);
+    gameGuardActiveRef.current = false;
+    applyScreen(next);
+  }, [applyScreen]);
+
   resultRef.current = result;
   leaderboardPageRef.current = leaderboardPage;
+  quitConfirmationRef.current = quitConfirmation;
 
   useEffect(() => {
     screenRef.current = screen;
@@ -63,25 +86,47 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    history.replaceState({ zhuyinRoot: true }, '', location.href);
-    history.pushState({ zhuyinGuard: true }, '', location.href);
+    history.replaceState(
+      { zhuyinApp: true, screen: screenRef.current } satisfies AppHistoryState,
+      '',
+      location.href
+    );
 
-    const handleBack = () => {
-      if (leaderboardPageRef.current !== null) setLeaderboardPage(null);
-      else if (resultRef.current !== null) setResult(null);
-      else if (screenRef.current === 'game') setQuitConfirmation(true);
-      else if (screenRef.current === 'difficulty') navigate('mode');
-      else if (screenRef.current === 'mode') navigate('welcome');
-      else {
-        history.back();
+    const handleBack = (event: PopStateEvent) => {
+      if (leaderboardPageRef.current !== null) {
+        setLeaderboardPage(null);
         return;
       }
-      history.pushState({ zhuyinGuard: true }, '', location.href);
+      if (resultRef.current !== null) {
+        setResult(null);
+        return;
+      }
+
+      const destination = isAppHistoryState(event.state) ? event.state : null;
+      if (
+        screenRef.current === 'game' &&
+        destination?.screen === 'game' &&
+        !destination.gameGuard
+      ) {
+        gameGuardActiveRef.current = false;
+        setQuitConfirmation(true);
+        return;
+      }
+
+      if (quitConfirmationRef.current) setQuitConfirmation(false);
+      if (destination) applyScreen(destination.screen);
     };
 
     window.addEventListener('popstate', handleBack);
     return () => window.removeEventListener('popstate', handleBack);
-  }, [navigate]);
+  }, [applyScreen]);
+
+  useEffect(() => {
+    const orientation = window.screen.orientation as ScreenOrientation & {
+      lock?: (value: OrientationLockType) => Promise<void>;
+    };
+    orientation.lock?.('portrait-primary').catch(() => undefined);
+  }, []);
 
   const press = (action: () => void) => {
     audioService.unlock();
@@ -94,7 +139,18 @@ export function App() {
       setGameSetup({ mode, difficulty });
       setResult(null);
       setRunId((current) => current + 1);
-      navigate('game');
+      history.pushState(
+        { zhuyinApp: true, screen: 'game' } satisfies AppHistoryState,
+        '',
+        location.href
+      );
+      history.pushState(
+        { zhuyinApp: true, screen: 'game', gameGuard: true } satisfies AppHistoryState,
+        '',
+        location.href
+      );
+      gameGuardActiveRef.current = true;
+      applyScreen('game');
     });
   };
 
@@ -111,7 +167,26 @@ export function App() {
   const returnToMode = () => {
     setResult(null);
     setQuitConfirmation(false);
-    navigate('mode');
+    gameGuardActiveRef.current = false;
+    history.go(gameSetup.mode === 'normal' ? -3 : -2);
+  };
+
+  const abandonGame = () => {
+    const distance = gameGuardActiveRef.current ? -2 : -1;
+    setQuitConfirmation(false);
+    history.go(distance);
+  };
+
+  const continueGame = () => {
+    if (!gameGuardActiveRef.current) {
+      history.pushState(
+        { zhuyinApp: true, screen: 'game', gameGuard: true } satisfies AppHistoryState,
+        '',
+        location.href
+      );
+      gameGuardActiveRef.current = true;
+    }
+    setQuitConfirmation(false);
   };
 
   const replay = () => {
@@ -164,7 +239,7 @@ export function App() {
               image={assetUrl('assets/images/Backward_button.png')}
               label="返回首頁"
               className="back-image-button"
-              onClick={() => press(() => navigate('welcome'))}
+              onClick={() => press(() => history.back())}
             />
           </div>
         </main>
@@ -192,7 +267,7 @@ export function App() {
               image={assetUrl('assets/images/Backward_button.png')}
               label="返回模式選擇"
               className="back-image-button"
-              onClick={() => press(() => navigate('mode'))}
+              onClick={() => press(() => history.back())}
             />
           </div>
         </main>
@@ -236,8 +311,8 @@ export function App() {
         <Modal title="要放棄這次冒險嗎？" labelledBy="quit-title">
           <p className="modal-copy">本次尚未完成的分數不會列入冒險紀錄。</p>
           <div className="modal-actions horizontal">
-            <button className="danger-button" onClick={returnToMode}>放棄冒險</button>
-            <button className="primary-button" onClick={() => setQuitConfirmation(false)}>繼續遊戲</button>
+            <button className="danger-button" onClick={abandonGame}>放棄冒險</button>
+            <button className="primary-button" onClick={continueGame}>繼續遊戲</button>
           </div>
         </Modal>
       )}
@@ -249,6 +324,12 @@ export function App() {
           <button aria-label="稍後更新" onClick={() => setNeedRefresh(false)}>稍後</button>
         </aside>
       )}
+
+      <aside className="orientation-lock" role="status" aria-live="polite">
+        <span aria-hidden="true">📱</span>
+        <strong>請將裝置轉為直式</strong>
+        <p>小小注音冒險家限定使用直式螢幕。</p>
+      </aside>
     </div>
   );
 }

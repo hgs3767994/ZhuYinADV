@@ -8,23 +8,37 @@ const ZHUYIN_AUDIO_FILES: Record<string, string> = {
   ㄤ: 'ang', ㄥ: 'eng', ㄦ: 'er', ㄧ: 'yi', ㄨ: 'wu', ㄩ: 'yu'
 };
 
+const SFX_FILES = {
+  ding: assetUrl('assets/audio/ding.mp3'),
+  correct: assetUrl('assets/audio/correct.mp3'),
+  wrong: assetUrl('assets/audio/wrong.mp3')
+} as const;
+
+type SafariWindow = Window & typeof globalThis & {
+  webkitAudioContext?: typeof AudioContext;
+};
+
 class AudioService {
   private readonly bgm = new Audio(assetUrl('assets/audio/bgm.mp3'));
-  private readonly voice = new Audio();
-  private readonly sfxPool = Array.from({ length: 5 }, () => new Audio());
-  private sfxIndex = 0;
+  private readonly bufferPromises = new Map<string, Promise<AudioBuffer>>();
+  private context: AudioContext | null = null;
+  private activeVoice: AudioBufferSourceNode | null = null;
+  private voiceRequestId = 0;
   private unlocked = false;
+  private preloading = false;
 
   constructor() {
     this.bgm.loop = true;
     this.bgm.volume = 0.35;
-    this.voice.volume = 1;
+    this.bgm.preload = 'auto';
   }
 
   unlock(): void {
-    if (this.unlocked) return;
     this.unlocked = true;
+    const context = this.ensureContext();
+    if (context?.state === 'suspended') void context.resume();
     this.playBgm();
+    this.preloadShortAudio();
   }
 
   playBgm(): void {
@@ -39,31 +53,126 @@ class AudioService {
   speak(symbol: string): void {
     const file = ZHUYIN_AUDIO_FILES[symbol];
     if (!file) return;
-    this.voice.pause();
-    this.voice.currentTime = 0;
-    this.voice.src = assetUrl(`assets/audio/zhuyin/${file}.mp3`);
-    this.voice.play().catch(() => undefined);
+    const requestId = ++this.voiceRequestId;
+    this.stopVoice();
+    void this.playBuffer(
+      assetUrl(`assets/audio/zhuyin/${file}.mp3`),
+      1,
+      'voice',
+      requestId
+    );
   }
 
   playDing(): void {
-    this.playSfx(assetUrl('assets/audio/ding.mp3'), 0.3);
+    void this.playBuffer(SFX_FILES.ding, 0.3, 'effect');
   }
 
   playCorrect(): void {
-    this.playSfx(assetUrl('assets/audio/correct.mp3'), 0.4);
+    void this.playBuffer(SFX_FILES.correct, 0.4, 'effect');
   }
 
   playWrong(): void {
-    this.playSfx(assetUrl('assets/audio/wrong.mp3'), 0.75);
+    void this.playBuffer(SFX_FILES.wrong, 0.75, 'effect');
   }
 
-  private playSfx(source: string, volume: number): void {
-    const audio = this.sfxPool[this.sfxIndex];
-    this.sfxIndex = (this.sfxIndex + 1) % this.sfxPool.length;
-    audio.pause();
-    audio.currentTime = 0;
+  private ensureContext(): AudioContext | null {
+    if (this.context) return this.context;
+    const AudioContextClass = window.AudioContext ?? (window as SafariWindow).webkitAudioContext;
+    if (!AudioContextClass) return null;
+    this.context = new AudioContextClass({ latencyHint: 'interactive' });
+    return this.context;
+  }
+
+  private preloadShortAudio(): void {
+    if (this.preloading || !this.context) return;
+    this.preloading = true;
+    const sources = [
+      ...Object.values(SFX_FILES),
+      ...Object.values(ZHUYIN_AUDIO_FILES).map((file) =>
+        assetUrl(`assets/audio/zhuyin/${file}.mp3`)
+      )
+    ];
+    void this.preloadInBatches(sources);
+  }
+
+  private async preloadInBatches(sources: string[]): Promise<void> {
+    const batchSize = 4;
+    for (let index = 0; index < sources.length; index += batchSize) {
+      const batch = sources.slice(index, index + batchSize);
+      await Promise.allSettled(batch.map((source) => this.loadBuffer(source)));
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+    }
+  }
+
+  private loadBuffer(source: string): Promise<AudioBuffer> {
+    const existing = this.bufferPromises.get(source);
+    if (existing) return existing;
+    const context = this.ensureContext();
+    if (!context) return Promise.reject(new Error('Web Audio API is unavailable'));
+
+    const pending = fetch(source)
+      .then((response) => {
+        if (!response.ok) throw new Error(`Audio request failed: ${response.status}`);
+        return response.arrayBuffer();
+      })
+      .then((data) => context.decodeAudioData(data))
+      .catch((error) => {
+        this.bufferPromises.delete(source);
+        throw error;
+      });
+    this.bufferPromises.set(source, pending);
+    return pending;
+  }
+
+  private async playBuffer(
+    source: string,
+    volume: number,
+    channel: 'voice' | 'effect',
+    requestId?: number
+  ): Promise<void> {
+    const context = this.ensureContext();
+    if (!context) {
+      this.playFallback(source, volume);
+      return;
+    }
+
+    try {
+      if (context.state === 'suspended') await context.resume();
+      const buffer = await this.loadBuffer(source);
+      if (channel === 'voice' && requestId !== this.voiceRequestId) return;
+
+      const node = context.createBufferSource();
+      const gain = context.createGain();
+      node.buffer = buffer;
+      gain.gain.value = volume;
+      node.connect(gain);
+      gain.connect(context.destination);
+      if (channel === 'voice') this.activeVoice = node;
+      node.onended = () => {
+        node.disconnect();
+        gain.disconnect();
+        if (this.activeVoice === node) this.activeVoice = null;
+      };
+      node.start();
+    } catch {
+      if (channel === 'voice' && requestId !== this.voiceRequestId) return;
+      this.playFallback(source, volume);
+    }
+  }
+
+  private stopVoice(): void {
+    if (!this.activeVoice) return;
+    try {
+      this.activeVoice.stop();
+    } catch {
+      // The node may already have ended between frames.
+    }
+    this.activeVoice = null;
+  }
+
+  private playFallback(source: string, volume: number): void {
+    const audio = new Audio(source);
     audio.volume = volume;
-    audio.src = source;
     audio.play().catch(() => undefined);
   }
 }
