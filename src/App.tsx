@@ -15,6 +15,7 @@ import type {
 import { audioService } from './services/audio';
 import { resultRepository } from './services/resultsRepository';
 import { assetUrl, preloadImage } from './utils/assets';
+import { delay, trackLoadingTasks } from './utils/loading';
 import {
   requestPortraitOrientation,
   type LockableScreenOrientation
@@ -30,14 +31,44 @@ interface GameSetup {
 interface AppHistoryState {
   zhuyinApp: true;
   screen: Screen;
-  welcomeGuard?: boolean;
   gameGuard?: boolean;
   overlay?: 'quit' | 'leaderboard';
+}
+
+interface PageLoadingState {
+  progress: number;
+  failed: boolean;
+  cancellable: boolean;
+}
+
+interface PendingPageLoad {
+  sources: string[];
+  onReady: () => void;
+  cancellable: boolean;
 }
 
 type LeaderboardOrigin = 'menu' | 'result';
 type QuitConfirmationOrigin = 'back' | 'button';
 type GameHistoryPosition = 'base' | 'guard' | null;
+
+const WELCOME_IMAGES = [
+  assetUrl('assets/images/start_banner.webp'),
+  assetUrl('assets/images/title.webp'),
+  assetUrl('assets/images/start_button.webp')
+];
+
+const MODE_IMAGES = [
+  assetUrl('assets/images/start_banner.webp'),
+  assetUrl('assets/images/normal_mode_button.webp'),
+  assetUrl('assets/images/infinity_mode_button.webp'),
+  assetUrl('assets/images/record_button.webp'),
+  assetUrl('assets/images/Backward_button.webp')
+];
+
+const DIFFICULTY_IMAGES = [
+  ...Object.values(DIFFICULTY_CONFIG).map((config) => config.image),
+  assetUrl('assets/images/Backward_button.webp')
+];
 
 function isAppHistoryState(value: unknown): value is AppHistoryState {
   if (!value || typeof value !== 'object') return false;
@@ -47,6 +78,7 @@ function isAppHistoryState(value: unknown): value is AppHistoryState {
 }
 
 export function App() {
+  const [bootReady, setBootReady] = useState(false);
   const [screen, setScreen] = useState<Screen>('welcome');
   const screenRef = useRef<Screen>('welcome');
   const [gameSetup, setGameSetup] = useState<GameSetup>({ mode: 'normal', difficulty: 'easy' });
@@ -59,8 +91,9 @@ export function App() {
   const [quitConfirmation, setQuitConfirmation] = useState(false);
   const quitConfirmationRef = useRef(false);
   const quitConfirmationOriginRef = useRef<QuitConfirmationOrigin | null>(null);
-  const [exitConfirmation, setExitConfirmation] = useState(false);
-  const exitConfirmationRef = useRef(false);
+  const [pageLoading, setPageLoading] = useState<PageLoadingState | null>(null);
+  const pageLoadSequenceRef = useRef(0);
+  const pendingPageLoadRef = useRef<PendingPageLoad | null>(null);
   const gameHistoryPositionRef = useRef<GameHistoryPosition>(null);
   const historyRestorationPendingRef = useRef(false);
   const completedExitPendingRef = useRef(false);
@@ -86,7 +119,63 @@ export function App() {
   resultRef.current = result;
   leaderboardPageRef.current = leaderboardPage;
   quitConfirmationRef.current = quitConfirmation;
-  exitConfirmationRef.current = exitConfirmation;
+
+  const loadPageImages = useCallback((
+    sources: string[],
+    onReady: () => void,
+    cancellable = true
+  ) => {
+    const sequence = ++pageLoadSequenceRef.current;
+    pendingPageLoadRef.current = { sources, onReady, cancellable };
+    setPageLoading(null);
+    let latestProgress = 0;
+    let shownAt = 0;
+    const showTimer = window.setTimeout(() => {
+      if (pageLoadSequenceRef.current !== sequence) return;
+      shownAt = performance.now();
+      setPageLoading({ progress: latestProgress, failed: false, cancellable });
+    }, 150);
+
+    void trackLoadingTasks(
+      sources.map(preloadImage),
+      (progress) => {
+        latestProgress = progress;
+        if (shownAt > 0 && pageLoadSequenceRef.current === sequence) {
+          setPageLoading({ progress, failed: false, cancellable });
+        }
+      }
+    ).then(async () => {
+      window.clearTimeout(showTimer);
+      if (pageLoadSequenceRef.current !== sequence) return;
+      if (shownAt > 0) {
+        setPageLoading({ progress: 100, failed: false, cancellable });
+        await delay(Math.max(0, 250 - (performance.now() - shownAt)));
+      }
+      if (pageLoadSequenceRef.current !== sequence) return;
+      pendingPageLoadRef.current = null;
+      setPageLoading(null);
+      onReady();
+    }).catch(() => {
+      window.clearTimeout(showTimer);
+      if (pageLoadSequenceRef.current !== sequence) return;
+      setPageLoading({ progress: latestProgress, failed: true, cancellable });
+    });
+  }, []);
+
+  const retryPageLoad = () => {
+    const pending = pendingPageLoadRef.current;
+    if (pending) loadPageImages(pending.sources, pending.onReady, pending.cancellable);
+  };
+
+  const cancelPageLoad = () => {
+    pageLoadSequenceRef.current += 1;
+    pendingPageLoadRef.current = null;
+    setPageLoading(null);
+  };
+
+  useEffect(() => {
+    loadPageImages(WELCOME_IMAGES, () => setBootReady(true), false);
+  }, [loadPageImages]);
 
   useEffect(() => {
     screenRef.current = screen;
@@ -98,12 +187,15 @@ export function App() {
     if (screen !== 'mode' || adventurePreloadStartedRef.current) return;
     adventurePreloadStartedRef.current = true;
     window.setTimeout(() => {
-      void Promise.all([
+      void Promise.allSettled(DIFFICULTY_IMAGES.map(preloadImage));
+    }, 100);
+    window.setTimeout(() => {
+      void Promise.allSettled([
         assetUrl('assets/images/bg_endless.webp'),
         ...Object.values(DIFFICULTY_CONFIG).map((config) => config.background)
       ].map(preloadImage));
-    }, 200);
-    window.setTimeout(() => audioService.prepareForAdventure(), 400);
+    }, 250);
+    window.setTimeout(() => audioService.prepareForAdventure(), 500);
   }, [screen]);
 
   useEffect(() => {
@@ -121,13 +213,11 @@ export function App() {
       '',
       location.href
     );
-    history.pushState(
-      { zhuyinApp: true, screen: 'welcome', welcomeGuard: true } satisfies AppHistoryState,
-      '',
-      location.href
-    );
 
     const handleBack = (event: PopStateEvent) => {
+      pageLoadSequenceRef.current += 1;
+      pendingPageLoadRef.current = null;
+      setPageLoading(null);
       const destination = isAppHistoryState(event.state) ? event.state : null;
       gameHistoryPositionRef.current = destination?.screen === 'game'
         ? destination.gameGuard ? 'guard' : 'base'
@@ -161,15 +251,6 @@ export function App() {
         return;
       }
 
-      if (exitConfirmationRef.current) {
-        exitConfirmationRef.current = false;
-        setExitConfirmation(false);
-        historyRestorationPendingRef.current = true;
-        history.go(2);
-        applyScreen('welcome');
-        return;
-      }
-
       if (leaderboardPageRef.current !== null) {
         if (leaderboardOriginRef.current === 'result') {
           completedExitPendingRef.current = true;
@@ -197,16 +278,6 @@ export function App() {
         quitConfirmationRef.current = true;
         quitConfirmationOriginRef.current = 'back';
         setQuitConfirmation(true);
-        return;
-      }
-
-      if (
-        screenRef.current === 'welcome' &&
-        destination?.screen === 'welcome' &&
-        !destination.welcomeGuard
-      ) {
-        exitConfirmationRef.current = true;
-        setExitConfirmation(true);
         return;
       }
 
@@ -325,19 +396,6 @@ export function App() {
     }
   };
 
-  const cancelExit = () => {
-    exitConfirmationRef.current = false;
-    setExitConfirmation(false);
-    historyRestorationPendingRef.current = true;
-    history.forward();
-  };
-
-  const confirmExit = () => {
-    exitConfirmationRef.current = false;
-    setExitConfirmation(false);
-    history.back();
-  };
-
   const replay = () => {
     resultRef.current = null;
     setResult(null);
@@ -346,7 +404,7 @@ export function App() {
 
   return (
     <div className="app-shell">
-      {screen === 'welcome' && (
+      {bootReady && screen === 'welcome' && (
         <main
           className="screen welcome-screen"
           style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.webp')})` }}
@@ -354,7 +412,7 @@ export function App() {
           <img className="title-image" src={assetUrl('assets/images/title.webp')} alt="小小注音冒險家" />
           <button
             className="start-button"
-            onClick={() => press(() => navigate('mode'))}
+            onClick={() => press(() => loadPageImages(MODE_IMAGES, () => navigate('mode')))}
             aria-label="開始冒險"
           >
             <img src={assetUrl('assets/images/start_button.webp')} alt="" draggable="false" />
@@ -373,7 +431,10 @@ export function App() {
             <ImageMenuButton
               image={assetUrl('assets/images/normal_mode_button.webp')}
               label="一般模式"
-              onClick={() => press(() => navigate('difficulty'))}
+              onClick={() => press(() => loadPageImages(
+                DIFFICULTY_IMAGES,
+                () => navigate('difficulty')
+              ))}
             />
             <ImageMenuButton
               image={assetUrl('assets/images/infinity_mode_button.webp')}
@@ -432,6 +493,7 @@ export function App() {
           paused={quitConfirmation}
           onFinish={finishGame}
           onRequestQuit={openQuitConfirmation}
+          onLoadingBack={returnToMode}
         />
       )}
 
@@ -464,13 +526,40 @@ export function App() {
         </Modal>
       )}
 
-      {exitConfirmation && (
-        <Modal title="確定要離開嗎？" labelledBy="exit-title">
-          <div className="modal-actions horizontal">
-            <button className="secondary-button" onClick={cancelExit}>取消</button>
-            <button className="danger-button" onClick={confirmExit}>確定</button>
+      {pageLoading && (
+        <aside className="page-loading" role="status" aria-live="polite">
+          <div className="page-loading-card">
+            <strong>{pageLoading.failed ? '載入失敗' : '載入中…'}</strong>
+            {!pageLoading.failed && (
+              <>
+                <div
+                  className="loading-progress-track"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={pageLoading.progress}
+                >
+                  <div
+                    className="loading-progress-fill"
+                    style={{ width: `${pageLoading.progress}%` }}
+                  />
+                </div>
+                <span>{pageLoading.progress}%</span>
+              </>
+            )}
+            {pageLoading.failed && (
+              <>
+                <p>請檢查網路連線後再試一次。</p>
+                <div className="modal-actions horizontal">
+                  {pageLoading.cancellable && (
+                    <button className="secondary-button" onClick={cancelPageLoad}>返回</button>
+                  )}
+                  <button className="primary-button" onClick={retryPageLoad}>重新載入</button>
+                </div>
+              </>
+            )}
           </div>
-        </Modal>
+        </aside>
       )}
 
       {needRefresh && screen !== 'game' && !result && (

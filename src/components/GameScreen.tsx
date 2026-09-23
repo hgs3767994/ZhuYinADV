@@ -17,7 +17,8 @@ import {
 import type { Difficulty, GameMode, GameResult, GameSession } from '../game/types';
 import { useCountdown } from '../hooks/useCountdown';
 import { audioService } from '../services/audio';
-import { assetUrl } from '../utils/assets';
+import { assetUrl, preloadImage } from '../utils/assets';
+import { delay, trackLoadingTasks } from '../utils/loading';
 
 interface GameScreenProps {
   mode: GameMode;
@@ -26,6 +27,7 @@ interface GameScreenProps {
   paused?: boolean;
   onFinish: (result: GameResult) => void;
   onRequestQuit: () => void;
+  onLoadingBack: () => void;
 }
 
 function backgroundFor(mode: GameMode, difficulty: Difficulty | null): string {
@@ -39,7 +41,8 @@ export function GameScreen({
   runId,
   paused = false,
   onFinish,
-  onRequestQuit
+  onRequestQuit,
+  onLoadingBack
 }: GameScreenProps) {
   const deckRef = useRef(new QuestionDeck());
   const startedAtRef = useRef(performance.now());
@@ -52,6 +55,12 @@ export function GameScreen({
   );
   const [firstQuestionReady, setFirstQuestionReady] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingFailed, setLoadingFailed] = useState(false);
+  const [preparingNext, setPreparingNext] = useState(false);
+  const [nextQuestionFailed, setNextQuestionFailed] = useState(false);
+  const loadingAttemptRef = useRef(0);
+  const pendingNextRef = useRef<GameSession | null>(null);
   const sessionRef = useRef(session);
 
   const commit = useCallback((next: GameSession) => {
@@ -81,18 +90,48 @@ export function GameScreen({
     });
   }, [onFinish]);
 
-  const moveNext = useCallback(async () => {
-    const next = advanceQuestion(sessionRef.current, deckRef.current);
+  const prepareNextSession = useCallback(async (
+    next: GameSession,
+    minimumDelayMs = 0
+  ) => {
+    const waitingIndicator = window.setTimeout(
+      () => setPreparingNext(true),
+      Math.max(150, minimumDelayMs)
+    );
     try {
-      await audioService.prepareVoice(next.currentAnswer);
+      await Promise.all([
+        audioService.prepareVoice(next.currentAnswer),
+        delay(minimumDelayMs)
+      ]);
+      window.clearTimeout(waitingIndicator);
+      if (!activeRef.current || finishingRef.current) return;
+      pendingNextRef.current = null;
+      setPreparingNext(false);
+      setNextQuestionFailed(false);
+      disabledOptionsRef.current.clear();
+      interactionLockedRef.current = false;
+      commit(next);
     } catch {
-      // Continue with the HTMLAudio fallback when Web Audio preparation fails.
+      window.clearTimeout(waitingIndicator);
+      if (!activeRef.current || finishingRef.current) return;
+      pendingNextRef.current = next;
+      setPreparingNext(false);
+      setNextQuestionFailed(true);
     }
-    if (!activeRef.current || finishingRef.current) return;
-    disabledOptionsRef.current.clear();
-    interactionLockedRef.current = false;
-    commit(next);
   }, [commit]);
+
+  const moveNext = useCallback((minimumDelayMs = 0) => {
+    const next = advanceQuestion(sessionRef.current, deckRef.current);
+    void prepareNextSession(next, minimumDelayMs);
+  }, [prepareNextSession]);
+
+  const retryNextQuestion = () => {
+    const next = pendingNextRef.current;
+    if (!next) return;
+    setNextQuestionFailed(false);
+    setPreparingNext(true);
+    void prepareNextSession(next);
+  };
 
   const handleTimeout = useCallback(() => {
     if (finishingRef.current || interactionLockedRef.current) return;
@@ -116,18 +155,10 @@ export function GameScreen({
       window.setTimeout(() => finish(false), 650);
     } else {
       const waiting = { ...timedOut, isLocked: true };
-      const next = advanceQuestion(waiting, deckRef.current);
       commit(waiting);
-      void audioService.prepareVoice(next.currentAnswer)
-        .catch(() => undefined)
-        .then(() => {
-          if (!activeRef.current || finishingRef.current) return;
-          disabledOptionsRef.current.clear();
-          interactionLockedRef.current = false;
-          commit(next);
-        });
+      moveNext(650);
     }
-  }, [commit, finish]);
+  }, [commit, finish, moveNext]);
 
   const timerDuration = session.mode === 'endless'
     ? getEndlessTimeLimitMs(session.questionNumber)
@@ -147,22 +178,41 @@ export function GameScreen({
     };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    const loadingTimer = window.setTimeout(() => setShowLoading(true), 400);
-    void audioService.prepareVoice(sessionRef.current.currentAnswer)
-      .catch(() => undefined)
-      .then(() => {
-        if (cancelled) return;
-        window.clearTimeout(loadingTimer);
-        startedAtRef.current = performance.now();
-        setFirstQuestionReady(true);
-      });
-    return () => {
-      cancelled = true;
+  const prepareFirstQuestion = useCallback(() => {
+    const attempt = ++loadingAttemptRef.current;
+    setLoadingFailed(false);
+    setLoadingProgress(0);
+    setShowLoading(false);
+    const loadingTimer = window.setTimeout(() => {
+      if (loadingAttemptRef.current === attempt) setShowLoading(true);
+    }, 150);
+    const current = sessionRef.current;
+    void trackLoadingTasks([
+      preloadImage(backgroundFor(mode, difficulty)),
+      audioService.prepareVoice(current.currentAnswer),
+      audioService.prepareEffect('correct'),
+      audioService.prepareEffect('wrong')
+    ], (progress) => {
+      if (loadingAttemptRef.current === attempt) setLoadingProgress(progress);
+    }).then(() => {
       window.clearTimeout(loadingTimer);
+      if (!activeRef.current || loadingAttemptRef.current !== attempt) return;
+      startedAtRef.current = performance.now();
+      setFirstQuestionReady(true);
+    }).catch(() => {
+      window.clearTimeout(loadingTimer);
+      if (!activeRef.current || loadingAttemptRef.current !== attempt) return;
+      setShowLoading(true);
+      setLoadingFailed(true);
+    });
+  }, [difficulty, mode]);
+
+  useEffect(() => {
+    prepareFirstQuestion();
+    return () => {
+      loadingAttemptRef.current += 1;
     };
-  }, [runId]);
+  }, [prepareFirstQuestion, runId]);
 
   useEffect(() => {
     if (!firstQuestionReady) return;
@@ -201,13 +251,13 @@ export function GameScreen({
         isLocked: true
       });
 
-      window.setTimeout(() => {
-        if (isNormalComplete(sessionRef.current)) {
+      if (isNormalComplete(sessionRef.current)) {
+        window.setTimeout(() => {
           finish(true);
-        } else {
-          moveNext();
-        }
-      }, 650);
+        }, 650);
+      } else {
+        moveNext(650);
+      }
       return;
     }
 
@@ -248,9 +298,34 @@ export function GameScreen({
         <div className="dark-overlay" />
         <div className="game-loading" role="status" aria-live="polite">
           {showLoading && (
-            <div className="loading-card">
-              <span className="loading-spinner" aria-hidden="true" />
-              <strong>讀取中</strong>
+            <div className="loading-card game-loading-card">
+              <strong>{loadingFailed ? '載入失敗' : '載入中…'}</strong>
+              {!loadingFailed && (
+                <>
+                  <div
+                    className="loading-progress-track"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={loadingProgress}
+                  >
+                    <div
+                      className="loading-progress-fill"
+                      style={{ width: `${loadingProgress}%` }}
+                    />
+                  </div>
+                  <span>{loadingProgress}%</span>
+                </>
+              )}
+              {loadingFailed && (
+                <>
+                  <p>請檢查網路連線後再試一次。</p>
+                  <div className="modal-actions horizontal">
+                    <button className="secondary-button" onClick={onLoadingBack}>返回</button>
+                    <button className="primary-button" onClick={prepareFirstQuestion}>重新載入</button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -287,7 +362,9 @@ export function GameScreen({
         )}
 
         <div className="combo-area" aria-live="polite">
-          {mode === 'endless' && session.combo >= 3 && (
+          {preparingNext ? (
+            <span>載入中…</span>
+          ) : mode === 'endless' && session.combo >= 3 && (
             <span>🔥 Combo ×{session.combo}！</span>
           )}
         </div>
@@ -334,6 +411,19 @@ export function GameScreen({
 
         <button className="quit-button" onClick={onRequestQuit}>💦 放棄冒險</button>
       </div>
+
+      {nextQuestionFailed && (
+        <div className="game-loading" role="alert">
+          <div className="loading-card game-loading-card">
+            <strong>載入失敗</strong>
+            <p>請檢查網路連線後再試一次。</p>
+            <div className="modal-actions horizontal">
+              <button className="secondary-button" onClick={onLoadingBack}>返回</button>
+              <button className="primary-button" onClick={retryNextQuestion}>重新載入</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

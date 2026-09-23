@@ -140,12 +140,14 @@ button:focus-visible {
 }
 
 .game-loading {
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  z-index: 2;
+  inset: 0;
   display: grid;
   width: 100%;
   height: 100%;
   place-items: center;
+  background: #000;
 }
 
 .loading-card {
@@ -160,6 +162,58 @@ button:focus-visible {
   background: rgb(15 23 42 / 88%);
   box-shadow: 0 10px 30px rgb(0 0 0 / 45%);
   font-size: 1.15rem;
+}
+
+.game-loading-card,
+.page-loading-card {
+  flex-direction: column;
+}
+
+.game-loading-card p,
+.page-loading-card p {
+  margin: 0;
+  color: #dbeafe;
+  text-align: center;
+}
+
+.page-loading {
+  position: absolute;
+  z-index: 300;
+  inset: 0;
+  display: grid;
+  padding: 24px;
+  place-items: center;
+  background: #000;
+}
+
+.page-loading-card {
+  display: flex;
+  width: min(100%, 340px);
+  padding: 24px;
+  align-items: center;
+  gap: 14px;
+  color: #fff;
+}
+
+.page-loading-card strong,
+.game-loading-card strong {
+  font-size: 1.2rem;
+}
+
+.loading-progress-track {
+  width: min(68vw, 280px);
+  height: 16px;
+  overflow: hidden;
+  border: 2px solid #64748b;
+  border-radius: 999px;
+  background: #1e293b;
+}
+
+.loading-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #38bdf8, #2563eb);
+  transition: width 160ms ease-out;
 }
 
 .loading-spinner {

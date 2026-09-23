@@ -9,12 +9,21 @@ export function preloadImage(source: string): Promise<void> {
   const existing = imagePreloads.get(source);
   if (existing) return existing;
 
-  const pending = new Promise<void>((resolve) => {
+  const pending = new Promise<void>((resolve, reject) => {
     const image = new Image();
     image.decoding = 'async';
-    image.onload = () => resolve();
-    image.onerror = () => resolve();
+    image.onload = () => {
+      if (typeof image.decode !== 'function') {
+        resolve();
+        return;
+      }
+      void image.decode().then(resolve, resolve);
+    };
+    image.onerror = () => reject(new Error(`Image request failed: ${source}`));
     image.src = source;
+  }).catch((error) => {
+    imagePreloads.delete(source);
+    throw error;
   });
   imagePreloads.set(source, pending);
   return pending;

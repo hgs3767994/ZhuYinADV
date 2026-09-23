@@ -28,6 +28,8 @@ class AudioService {
   private bgmStartTimer: number | null = null;
   private bgmRequested = false;
   private adventureWarmup: Promise<void> | null = null;
+  private criticalLoadCount = 0;
+  private criticalIdleResolvers: Array<() => void> = [];
 
   constructor() {
     this.bgm.loop = true;
@@ -84,7 +86,7 @@ class AudioService {
         assetUrl(`assets/audio/zhuyin/${file}.mp3`)
       )
     ];
-    this.adventureWarmup = this.preloadInBatches(sources, 3).finally(() => {
+    this.adventureWarmup = this.preloadInBatches(sources, 2).finally(() => {
       this.adventureWarmup = null;
       if (this.bgmRequested) this.playBgm();
     });
@@ -94,21 +96,19 @@ class AudioService {
     const file = ZHUYIN_AUDIO_FILES[symbol];
     if (!file) return;
     const source = assetUrl(`assets/audio/zhuyin/${file}.mp3`);
-    await new Promise<void>((resolve, reject) => {
-      const timeout = window.setTimeout(
-        () => reject(new Error('Audio preparation timed out')),
-        8_000
-      );
-      void this.loadBuffer(source).then(
-        () => {
-          window.clearTimeout(timeout);
-          resolve();
-        },
-        (error: unknown) => {
-          window.clearTimeout(timeout);
-          reject(error instanceof Error ? error : new Error('Audio preparation failed'));
-        }
-      );
+    await this.withTimeout(
+      this.runCritical(async () => {
+        await this.resumeContext();
+        await this.loadBuffer(source);
+      }),
+      8_000
+    );
+  }
+
+  async prepareEffect(effect: 'correct' | 'wrong'): Promise<void> {
+    await this.runCritical(async () => {
+      await this.resumeContext();
+      await this.loadBuffer(SFX_FILES[effect]);
     });
   }
 
@@ -145,6 +145,12 @@ class AudioService {
     return this.context;
   }
 
+  private async resumeContext(): Promise<void> {
+    const context = this.ensureContext();
+    if (!context) throw new Error('Web Audio API is unavailable');
+    if (context.state === 'suspended') await context.resume();
+  }
+
   private loadBuffer(source: string): Promise<AudioBuffer> {
     const existing = this.bufferPromises.get(source);
     if (existing) return existing;
@@ -167,10 +173,44 @@ class AudioService {
 
   private async preloadInBatches(sources: string[], batchSize: number): Promise<void> {
     for (let index = 0; index < sources.length; index += batchSize) {
+      await this.waitForCriticalIdle();
       await Promise.allSettled(
         sources.slice(index, index + batchSize).map((source) => this.loadBuffer(source))
       );
-      await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 40));
+    }
+  }
+
+  private async runCritical<T>(task: () => Promise<T>): Promise<T> {
+    this.criticalLoadCount += 1;
+    try {
+      return await task();
+    } finally {
+      this.criticalLoadCount -= 1;
+      if (this.criticalLoadCount === 0) {
+        const resolvers = this.criticalIdleResolvers.splice(0);
+        resolvers.forEach((resolve) => resolve());
+      }
+    }
+  }
+
+  private waitForCriticalIdle(): Promise<void> {
+    if (this.criticalLoadCount === 0) return Promise.resolve();
+    return new Promise((resolve) => this.criticalIdleResolvers.push(resolve));
+  }
+
+  private async withTimeout<T>(task: Promise<T>, timeoutMs: number): Promise<T> {
+    let timeoutId = 0;
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = window.setTimeout(
+        () => reject(new Error('Audio preparation timed out')),
+        timeoutMs
+      );
+    });
+    try {
+      return await Promise.race([task, timeout]);
+    } finally {
+      window.clearTimeout(timeoutId);
     }
   }
 
