@@ -35,17 +35,19 @@ export default defineConfig({
         ],
         screenshots: [
           {
-            src: 'assets/images/screenshot.png',
+            src: 'assets/images/screenshot.webp',
             sizes: '540x1033',
-            type: 'image/png',
+            type: 'image/webp',
             form_factor: 'narrow',
             label: '小小注音冒險家主畫面'
           }
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,mp3,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,png,webp,mp3,webmanifest}'],
         cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         navigateFallback: 'index.html'
       }
     })

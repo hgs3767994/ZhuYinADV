@@ -15,6 +15,10 @@ import type {
 import { audioService } from './services/audio';
 import { resultRepository } from './services/resultsRepository';
 import { assetUrl } from './utils/assets';
+import {
+  requestPortraitOrientation,
+  type LockableScreenOrientation
+} from './utils/orientation';
 
 type Screen = 'welcome' | 'mode' | 'difficulty' | 'game';
 
@@ -122,10 +126,9 @@ export function App() {
   }, [applyScreen]);
 
   useEffect(() => {
-    const orientation = window.screen.orientation as ScreenOrientation & {
-      lock?: (value: OrientationLockType) => Promise<void>;
-    };
-    orientation.lock?.('portrait-primary').catch(() => undefined);
+    requestPortraitOrientation(
+      window.screen.orientation as LockableScreenOrientation | undefined
+    );
   }, []);
 
   const press = (action: () => void) => {
@@ -199,15 +202,15 @@ export function App() {
       {screen === 'welcome' && (
         <main
           className="screen welcome-screen"
-          style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.png')})` }}
+          style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.webp')})` }}
         >
-          <img className="title-image" src={assetUrl('assets/images/title.png')} alt="小小注音冒險家" />
+          <img className="title-image" src={assetUrl('assets/images/title.webp')} alt="小小注音冒險家" />
           <button
             className="start-button"
             onClick={() => press(() => navigate('mode'))}
             aria-label="開始冒險"
           >
-            <img src={assetUrl('assets/images/start_button.png')} alt="" draggable="false" />
+            <img src={assetUrl('assets/images/start_button.webp')} alt="" draggable="false" />
           </button>
           <span className="version-tag">v {APP_VERSION}</span>
         </main>
@@ -216,27 +219,27 @@ export function App() {
       {screen === 'mode' && (
         <main
           className="screen menu-screen"
-          style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.png')})` }}
+          style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.webp')})` }}
         >
           <div className="dark-overlay" />
           <div className="menu-stack">
             <ImageMenuButton
-              image={assetUrl('assets/images/normal_mode_button.png')}
+              image={assetUrl('assets/images/normal_mode_button.webp')}
               label="一般模式"
               onClick={() => press(() => navigate('difficulty'))}
             />
             <ImageMenuButton
-              image={assetUrl('assets/images/infinity_mode_button.png')}
+              image={assetUrl('assets/images/infinity_mode_button.webp')}
               label="無限模式"
               onClick={() => startGame('endless', null)}
             />
             <ImageMenuButton
-              image={assetUrl('assets/images/record_button.png')}
+              image={assetUrl('assets/images/record_button.webp')}
               label="冒險紀錄"
               onClick={() => press(() => setLeaderboardPage('easy'))}
             />
             <ImageMenuButton
-              image={assetUrl('assets/images/Backward_button.png')}
+              image={assetUrl('assets/images/Backward_button.webp')}
               label="返回首頁"
               className="back-image-button"
               onClick={() => press(() => history.back())}
@@ -248,7 +251,7 @@ export function App() {
       {screen === 'difficulty' && (
         <main
           className="screen menu-screen"
-          style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.png')})` }}
+          style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.webp')})` }}
         >
           <div className="dark-overlay" />
           <div className="menu-stack">
@@ -264,7 +267,7 @@ export function App() {
               />
             ))}
             <ImageMenuButton
-              image={assetUrl('assets/images/Backward_button.png')}
+              image={assetUrl('assets/images/Backward_button.webp')}
               label="返回模式選擇"
               className="back-image-button"
               onClick={() => press(() => history.back())}

@@ -29,7 +29,7 @@ interface GameScreenProps {
 }
 
 function backgroundFor(mode: GameMode, difficulty: Difficulty | null): string {
-  if (mode === 'endless') return assetUrl('assets/images/bg_endless.png');
+  if (mode === 'endless') return assetUrl('assets/images/bg_endless.webp');
   return DIFFICULTY_CONFIG[difficulty ?? 'easy'].background;
 }
 

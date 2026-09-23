@@ -1,7 +1,7 @@
 import type { Difficulty } from './types';
 import { assetUrl } from '../utils/assets';
 
-export const APP_VERSION = '3.0.1';
+export const APP_VERSION = '3.0.2';
 export const DEVICE_PROFILE_ID = 'device-player';
 
 export const ZHUYIN_LIST = [
@@ -20,20 +20,20 @@ export const DIFFICULTY_CONFIG: Record<Difficulty, {
   easy: {
     label: '新手難度',
     optionCount: 2,
-    background: assetUrl('assets/images/bg_prairie.png'),
-    image: assetUrl('assets/images/Newbie_button.png')
+    background: assetUrl('assets/images/bg_prairie.webp'),
+    image: assetUrl('assets/images/Newbie_button.webp')
   },
   normal: {
     label: '專家難度',
     optionCount: 4,
-    background: assetUrl('assets/images/bg_jungle.png'),
-    image: assetUrl('assets/images/Expert_button.png')
+    background: assetUrl('assets/images/bg_jungle.webp'),
+    image: assetUrl('assets/images/Expert_button.webp')
   },
   hard: {
     label: '菁英難度',
     optionCount: 6,
-    background: assetUrl('assets/images/bg_wasteland.png'),
-    image: assetUrl('assets/images/Elite_button.png')
+    background: assetUrl('assets/images/bg_wasteland.webp'),
+    image: assetUrl('assets/images/Elite_button.webp')
   }
 };
 
