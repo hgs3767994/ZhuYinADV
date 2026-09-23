@@ -26,6 +26,8 @@ class AudioService {
   private voiceRequestId = 0;
   private unlocked = false;
   private bgmStartTimer: number | null = null;
+  private bgmRequested = false;
+  private adventureWarmup: Promise<void> | null = null;
 
   constructor() {
     this.bgm.loop = true;
@@ -42,22 +44,72 @@ class AudioService {
   }
 
   playBgm(): void {
-    if (!this.unlocked || document.hidden || this.bgmStartTimer !== null || !this.bgm.paused) {
+    this.bgmRequested = true;
+    if (
+      !this.unlocked ||
+      document.hidden ||
+      this.adventureWarmup !== null ||
+      this.bgmStartTimer !== null ||
+      !this.bgm.paused
+    ) {
       return;
     }
     this.bgmStartTimer = window.setTimeout(() => {
       this.bgmStartTimer = null;
-      if (!this.unlocked || document.hidden) return;
+      if (!this.unlocked || !this.bgmRequested || document.hidden) return;
       this.bgm.play().catch(() => undefined);
     }, 800);
   }
 
   pauseBgm(): void {
+    this.bgmRequested = false;
     if (this.bgmStartTimer !== null) {
       window.clearTimeout(this.bgmStartTimer);
       this.bgmStartTimer = null;
     }
     this.bgm.pause();
+  }
+
+  prepareForAdventure(): void {
+    if (this.adventureWarmup !== null || !this.ensureContext()) return;
+    if (this.bgmStartTimer !== null) {
+      window.clearTimeout(this.bgmStartTimer);
+      this.bgmStartTimer = null;
+    }
+
+    const sources = [
+      SFX_FILES.correct,
+      SFX_FILES.wrong,
+      ...Object.values(ZHUYIN_AUDIO_FILES).map((file) =>
+        assetUrl(`assets/audio/zhuyin/${file}.mp3`)
+      )
+    ];
+    this.adventureWarmup = this.preloadInBatches(sources, 3).finally(() => {
+      this.adventureWarmup = null;
+      if (this.bgmRequested) this.playBgm();
+    });
+  }
+
+  async prepareVoice(symbol: string): Promise<void> {
+    const file = ZHUYIN_AUDIO_FILES[symbol];
+    if (!file) return;
+    const source = assetUrl(`assets/audio/zhuyin/${file}.mp3`);
+    await new Promise<void>((resolve, reject) => {
+      const timeout = window.setTimeout(
+        () => reject(new Error('Audio preparation timed out')),
+        8_000
+      );
+      void this.loadBuffer(source).then(
+        () => {
+          window.clearTimeout(timeout);
+          resolve();
+        },
+        (error: unknown) => {
+          window.clearTimeout(timeout);
+          reject(error instanceof Error ? error : new Error('Audio preparation failed'));
+        }
+      );
+    });
   }
 
   speak(symbol: string): void {
@@ -111,6 +163,15 @@ class AudioService {
       });
     this.bufferPromises.set(source, pending);
     return pending;
+  }
+
+  private async preloadInBatches(sources: string[], batchSize: number): Promise<void> {
+    for (let index = 0; index < sources.length; index += batchSize) {
+      await Promise.allSettled(
+        sources.slice(index, index + batchSize).map((source) => this.loadBuffer(source))
+      );
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+    }
   }
 
   private async playBuffer(

@@ -52,6 +52,7 @@ export function App() {
   const [quitConfirmation, setQuitConfirmation] = useState(false);
   const quitConfirmationRef = useRef(false);
   const gameGuardActiveRef = useRef(false);
+  const adventurePreloadStartedRef = useRef(false);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -81,14 +82,15 @@ export function App() {
   }, [screen]);
 
   useEffect(() => {
-    if (screen !== 'mode') return;
-    const timer = window.setTimeout(() => {
+    if (screen !== 'mode' || adventurePreloadStartedRef.current) return;
+    adventurePreloadStartedRef.current = true;
+    window.setTimeout(() => {
       void Promise.all([
         assetUrl('assets/images/bg_endless.webp'),
         ...Object.values(DIFFICULTY_CONFIG).map((config) => config.background)
       ].map(preloadImage));
     }, 200);
-    return () => window.clearTimeout(timer);
+    window.setTimeout(() => audioService.prepareForAdventure(), 400);
   }, [screen]);
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 import type { Difficulty } from './types';
 import { assetUrl } from '../utils/assets';
 
-export const APP_VERSION = '3.0.3';
+export const APP_VERSION = '3.0.4';
 export const DEVICE_PROFILE_ID = 'device-player';
 
 export const ZHUYIN_LIST = [

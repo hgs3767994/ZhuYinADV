@@ -44,11 +44,14 @@ export function GameScreen({
   const deckRef = useRef(new QuestionDeck());
   const startedAtRef = useRef(performance.now());
   const finishingRef = useRef(false);
+  const activeRef = useRef(true);
   const interactionLockedRef = useRef(false);
   const disabledOptionsRef = useRef(new Set<string>());
   const [session, setSession] = useState<GameSession>(() =>
     createGameSession(mode, difficulty, deckRef.current)
   );
+  const [firstQuestionReady, setFirstQuestionReady] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
   const sessionRef = useRef(session);
 
   const commit = useCallback((next: GameSession) => {
@@ -78,10 +81,17 @@ export function GameScreen({
     });
   }, [onFinish]);
 
-  const moveNext = useCallback(() => {
+  const moveNext = useCallback(async () => {
+    const next = advanceQuestion(sessionRef.current, deckRef.current);
+    try {
+      await audioService.prepareVoice(next.currentAnswer);
+    } catch {
+      // Continue with the HTMLAudio fallback when Web Audio preparation fails.
+    }
+    if (!activeRef.current || finishingRef.current) return;
     disabledOptionsRef.current.clear();
     interactionLockedRef.current = false;
-    commit(advanceQuestion(sessionRef.current, deckRef.current));
+    commit(next);
   }, [commit]);
 
   const handleTimeout = useCallback(() => {
@@ -100,13 +110,22 @@ export function GameScreen({
       isLocked: lives <= 0
     };
     const shouldFinish = lives <= 0;
-    commit(shouldFinish ? timedOut : advanceQuestion(timedOut, deckRef.current));
 
     if (shouldFinish) {
+      commit(timedOut);
       window.setTimeout(() => finish(false), 650);
     } else {
-      disabledOptionsRef.current.clear();
-      interactionLockedRef.current = false;
+      const waiting = { ...timedOut, isLocked: true };
+      const next = advanceQuestion(waiting, deckRef.current);
+      commit(waiting);
+      void audioService.prepareVoice(next.currentAnswer)
+        .catch(() => undefined)
+        .then(() => {
+          if (!activeRef.current || finishingRef.current) return;
+          disabledOptionsRef.current.clear();
+          interactionLockedRef.current = false;
+          commit(next);
+        });
     }
   }, [commit, finish]);
 
@@ -115,16 +134,47 @@ export function GameScreen({
     : null;
   const remainingMs = useCountdown({
     durationMs: timerDuration,
-    active: !session.isLocked,
+    active: firstQuestionReady && !session.isLocked,
     paused,
     resetKey: `${runId}-${session.questionNumber}`,
     onExpire: handleTimeout
   });
 
   useEffect(() => {
-    const timer = window.setTimeout(() => audioService.speak(session.currentAnswer), 250);
-    return () => window.clearTimeout(timer);
-  }, [session.currentAnswer]);
+    activeRef.current = true;
+    return () => {
+      activeRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadingTimer = window.setTimeout(() => setShowLoading(true), 400);
+    void audioService.prepareVoice(sessionRef.current.currentAnswer)
+      .catch(() => undefined)
+      .then(() => {
+        if (cancelled) return;
+        window.clearTimeout(loadingTimer);
+        startedAtRef.current = performance.now();
+        setFirstQuestionReady(true);
+      });
+    return () => {
+      cancelled = true;
+      window.clearTimeout(loadingTimer);
+    };
+  }, [runId]);
+
+  useEffect(() => {
+    if (!firstQuestionReady) return;
+    let secondFrame = 0;
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => audioService.speak(session.currentAnswer));
+    });
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+    };
+  }, [firstQuestionReady, session.currentAnswer]);
 
   const handleAnswer = (selected: string) => {
     if (
@@ -188,6 +238,25 @@ export function GameScreen({
     : 100;
   const timerWarning = remainingMs !== null && timerDuration !== null &&
     (remainingMs <= 1_500 || timerPercent <= 30);
+
+  if (!firstQuestionReady) {
+    return (
+      <main
+        className="screen game-screen"
+        style={{ backgroundImage: `url(${backgroundFor(mode, difficulty)})` }}
+      >
+        <div className="dark-overlay" />
+        <div className="game-loading" role="status" aria-live="polite">
+          {showLoading && (
+            <div className="loading-card">
+              <span className="loading-spinner" aria-hidden="true" />
+              <strong>讀取中</strong>
+            </div>
+          )}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main
