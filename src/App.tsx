@@ -14,8 +14,9 @@ import type {
 } from './game/types';
 import { audioService } from './services/audio';
 import { resultRepository } from './services/resultsRepository';
-import { assetUrl, preloadImage } from './utils/assets';
-import { delay, trackLoadingTasks } from './utils/loading';
+import { assetUrl, preloadImage, resetImagePreloads } from './utils/assets';
+import { delay, isResourceTimeoutError, trackLoadingTasks } from './utils/loading';
+import { runCriticalResource, waitForCriticalResources } from './utils/resourcePriority';
 import {
   requestPortraitOrientation,
   type LockableScreenOrientation
@@ -37,7 +38,7 @@ interface AppHistoryState {
 
 interface PageLoadingState {
   progress: number;
-  failed: boolean;
+  error: 'timeout' | 'network' | null;
   cancellable: boolean;
 }
 
@@ -133,32 +134,37 @@ export function App() {
     const showTimer = window.setTimeout(() => {
       if (pageLoadSequenceRef.current !== sequence) return;
       shownAt = performance.now();
-      setPageLoading({ progress: latestProgress, failed: false, cancellable });
+      setPageLoading({ progress: latestProgress, error: null, cancellable });
     }, 150);
 
-    void trackLoadingTasks(
+    void runCriticalResource(() => trackLoadingTasks(
       sources.map(preloadImage),
       (progress) => {
         latestProgress = progress;
         if (shownAt > 0 && pageLoadSequenceRef.current === sequence) {
-          setPageLoading({ progress, failed: false, cancellable });
+          setPageLoading({ progress, error: null, cancellable });
         }
       }
-    ).then(async () => {
+    )).then(async () => {
       window.clearTimeout(showTimer);
       if (pageLoadSequenceRef.current !== sequence) return;
       if (shownAt > 0) {
-        setPageLoading({ progress: 100, failed: false, cancellable });
+        setPageLoading({ progress: 100, error: null, cancellable });
         await delay(Math.max(0, 250 - (performance.now() - shownAt)));
       }
       if (pageLoadSequenceRef.current !== sequence) return;
       pendingPageLoadRef.current = null;
       setPageLoading(null);
       onReady();
-    }).catch(() => {
+    }).catch((error: unknown) => {
       window.clearTimeout(showTimer);
       if (pageLoadSequenceRef.current !== sequence) return;
-      setPageLoading({ progress: latestProgress, failed: true, cancellable });
+      resetImagePreloads(sources);
+      setPageLoading({
+        progress: latestProgress,
+        error: isResourceTimeoutError(error) ? 'timeout' : 'network',
+        cancellable
+      });
     });
   }, []);
 
@@ -187,15 +193,19 @@ export function App() {
     if (screen !== 'mode' || adventurePreloadStartedRef.current) return;
     adventurePreloadStartedRef.current = true;
     window.setTimeout(() => {
-      void Promise.allSettled(DIFFICULTY_IMAGES.map(preloadImage));
-    }, 100);
-    window.setTimeout(() => {
-      void Promise.allSettled([
+      void (async () => {
+        await Promise.allSettled(DIFFICULTY_IMAGES.map(preloadImage));
+        const gameBackgrounds = [
         assetUrl('assets/images/bg_endless.webp'),
         ...Object.values(DIFFICULTY_CONFIG).map((config) => config.background)
-      ].map(preloadImage));
-    }, 250);
-    window.setTimeout(() => audioService.prepareForAdventure(), 500);
+        ];
+        for (const background of gameBackgrounds) {
+          await waitForCriticalResources();
+          await preloadImage(background).catch(() => undefined);
+        }
+        await audioService.prepareOfflineAudio();
+      })().catch(() => undefined);
+    }, 100);
   }, [screen]);
 
   useEffect(() => {
@@ -529,8 +539,10 @@ export function App() {
       {pageLoading && (
         <aside className="page-loading" role="status" aria-live="polite">
           <div className="page-loading-card">
-            <strong>{pageLoading.failed ? '載入失敗' : '載入中…'}</strong>
-            {!pageLoading.failed && (
+            <strong>{pageLoading.error
+              ? pageLoading.error === 'timeout' ? '載入時間較久' : '載入失敗'
+              : '載入中…'}</strong>
+            {!pageLoading.error && (
               <>
                 <div
                   className="loading-progress-track"
@@ -547,9 +559,11 @@ export function App() {
                 <span>{pageLoading.progress}%</span>
               </>
             )}
-            {pageLoading.failed && (
+            {pageLoading.error && (
               <>
-                <p>請檢查網路連線後再試一次。</p>
+                <p>{pageLoading.error === 'timeout'
+                  ? '裝置仍在準備資源，請再試一次。'
+                  : '請檢查網路連線後再試一次。'}</p>
                 <div className="modal-actions horizontal">
                   {pageLoading.cancellable && (
                     <button className="secondary-button" onClick={cancelPageLoad}>返回</button>

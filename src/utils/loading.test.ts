@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { trackLoadingTasks } from './loading';
+import { ResourceTimeoutError, trackLoadingTasks } from './loading';
 
 describe('trackLoadingTasks', () => {
   it('reports progress as required resources finish', async () => {
@@ -18,6 +18,6 @@ describe('trackLoadingTasks', () => {
       [new Promise(() => undefined)],
       () => undefined,
       5
-    )).rejects.toThrow('timed out');
+    )).rejects.toBeInstanceOf(ResourceTimeoutError);
   });
 });

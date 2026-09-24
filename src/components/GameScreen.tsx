@@ -17,8 +17,9 @@ import {
 import type { Difficulty, GameMode, GameResult, GameSession } from '../game/types';
 import { useCountdown } from '../hooks/useCountdown';
 import { audioService } from '../services/audio';
-import { assetUrl, preloadImage } from '../utils/assets';
-import { delay, trackLoadingTasks } from '../utils/loading';
+import { assetUrl, preloadImage, resetImagePreloads } from '../utils/assets';
+import { delay, isResourceTimeoutError, trackLoadingTasks } from '../utils/loading';
+import { runCriticalResource } from '../utils/resourcePriority';
 
 interface GameScreenProps {
   mode: GameMode;
@@ -56,9 +57,9 @@ export function GameScreen({
   const [firstQuestionReady, setFirstQuestionReady] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingFailed, setLoadingFailed] = useState(false);
+  const [loadingError, setLoadingError] = useState<'timeout' | 'network' | null>(null);
   const [preparingNext, setPreparingNext] = useState(false);
-  const [nextQuestionFailed, setNextQuestionFailed] = useState(false);
+  const [nextQuestionError, setNextQuestionError] = useState<'timeout' | 'network' | null>(null);
   const loadingAttemptRef = useRef(0);
   const pendingNextRef = useRef<GameSession | null>(null);
   const sessionRef = useRef(session);
@@ -107,16 +108,16 @@ export function GameScreen({
       if (!activeRef.current || finishingRef.current) return;
       pendingNextRef.current = null;
       setPreparingNext(false);
-      setNextQuestionFailed(false);
+      setNextQuestionError(null);
       disabledOptionsRef.current.clear();
       interactionLockedRef.current = false;
       commit(next);
-    } catch {
+    } catch (error) {
       window.clearTimeout(waitingIndicator);
       if (!activeRef.current || finishingRef.current) return;
       pendingNextRef.current = next;
       setPreparingNext(false);
-      setNextQuestionFailed(true);
+      setNextQuestionError(isResourceTimeoutError(error) ? 'timeout' : 'network');
     }
   }, [commit]);
 
@@ -128,7 +129,7 @@ export function GameScreen({
   const retryNextQuestion = () => {
     const next = pendingNextRef.current;
     if (!next) return;
-    setNextQuestionFailed(false);
+    setNextQuestionError(null);
     setPreparingNext(true);
     void prepareNextSession(next);
   };
@@ -180,30 +181,32 @@ export function GameScreen({
 
   const prepareFirstQuestion = useCallback(() => {
     const attempt = ++loadingAttemptRef.current;
-    setLoadingFailed(false);
+    setLoadingError(null);
     setLoadingProgress(0);
     setShowLoading(false);
     const loadingTimer = window.setTimeout(() => {
       if (loadingAttemptRef.current === attempt) setShowLoading(true);
     }, 150);
     const current = sessionRef.current;
-    void trackLoadingTasks([
-      preloadImage(backgroundFor(mode, difficulty)),
+    const background = backgroundFor(mode, difficulty);
+    void runCriticalResource(() => trackLoadingTasks([
+      preloadImage(background),
       audioService.prepareVoice(current.currentAnswer),
       audioService.prepareEffect('correct'),
       audioService.prepareEffect('wrong')
     ], (progress) => {
       if (loadingAttemptRef.current === attempt) setLoadingProgress(progress);
-    }).then(() => {
+    })).then(() => {
       window.clearTimeout(loadingTimer);
       if (!activeRef.current || loadingAttemptRef.current !== attempt) return;
       startedAtRef.current = performance.now();
       setFirstQuestionReady(true);
-    }).catch(() => {
+    }).catch((error: unknown) => {
       window.clearTimeout(loadingTimer);
       if (!activeRef.current || loadingAttemptRef.current !== attempt) return;
+      resetImagePreloads([background]);
       setShowLoading(true);
-      setLoadingFailed(true);
+      setLoadingError(isResourceTimeoutError(error) ? 'timeout' : 'network');
     });
   }, [difficulty, mode]);
 
@@ -299,8 +302,10 @@ export function GameScreen({
         <div className="game-loading" role="status" aria-live="polite">
           {showLoading && (
             <div className="loading-card game-loading-card">
-              <strong>{loadingFailed ? '載入失敗' : '載入中…'}</strong>
-              {!loadingFailed && (
+              <strong>{loadingError
+                ? loadingError === 'timeout' ? '載入時間較久' : '載入失敗'
+                : '載入中…'}</strong>
+              {!loadingError && (
                 <>
                   <div
                     className="loading-progress-track"
@@ -317,9 +322,11 @@ export function GameScreen({
                   <span>{loadingProgress}%</span>
                 </>
               )}
-              {loadingFailed && (
+              {loadingError && (
                 <>
-                  <p>請檢查網路連線後再試一次。</p>
+                  <p>{loadingError === 'timeout'
+                    ? '裝置仍在準備資源，請再試一次。'
+                    : '請檢查網路連線後再試一次。'}</p>
                   <div className="modal-actions horizontal">
                     <button className="secondary-button" onClick={onLoadingBack}>返回</button>
                     <button className="primary-button" onClick={prepareFirstQuestion}>重新載入</button>
@@ -412,11 +419,13 @@ export function GameScreen({
         <button className="quit-button" onClick={onRequestQuit}>💦 放棄冒險</button>
       </div>
 
-      {nextQuestionFailed && (
+      {nextQuestionError && (
         <div className="game-loading" role="alert">
           <div className="loading-card game-loading-card">
-            <strong>載入失敗</strong>
-            <p>請檢查網路連線後再試一次。</p>
+            <strong>{nextQuestionError === 'timeout' ? '載入時間較久' : '載入失敗'}</strong>
+            <p>{nextQuestionError === 'timeout'
+              ? '裝置仍在準備聲音，請再試一次。'
+              : '請檢查網路連線後再試一次。'}</p>
             <div className="modal-actions horizontal">
               <button className="secondary-button" onClick={onLoadingBack}>返回</button>
               <button className="primary-button" onClick={retryNextQuestion}>重新載入</button>

@@ -4,6 +4,11 @@ export function assetUrl(path: string): string {
 }
 
 const imagePreloads = new Map<string, Promise<void>>();
+const IMAGE_DECODE_GRACE_MS = 1_000;
+
+export function resetImagePreloads(sources: string[]): void {
+  sources.forEach((source) => imagePreloads.delete(source));
+}
 
 export function preloadImage(source: string): Promise<void> {
   const existing = imagePreloads.get(source);
@@ -17,7 +22,15 @@ export function preloadImage(source: string): Promise<void> {
         resolve();
         return;
       }
-      void image.decode().then(resolve, resolve);
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(decodeFallback);
+        resolve();
+      };
+      const decodeFallback = window.setTimeout(finish, IMAGE_DECODE_GRACE_MS);
+      void image.decode().then(finish, finish);
     };
     image.onerror = () => reject(new Error(`Image request failed: ${source}`));
     image.src = source;

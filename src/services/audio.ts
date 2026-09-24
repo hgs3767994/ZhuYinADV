@@ -1,4 +1,6 @@
 import { assetUrl } from '../utils/assets';
+import { ResourceTimeoutError } from '../utils/loading';
+import { runCriticalResource, waitForCriticalResources } from '../utils/resourcePriority';
 
 const ZHUYIN_AUDIO_FILES: Record<string, string> = {
   ㄅ: 'b', ㄆ: 'p', ㄇ: 'm', ㄈ: 'f', ㄉ: 'd', ㄊ: 't', ㄋ: 'n', ㄌ: 'l',
@@ -14,6 +16,16 @@ const SFX_FILES = {
   wrong: assetUrl('assets/audio/wrong.mp3')
 } as const;
 
+const AUDIO_CACHE_NAME = 'zhuyin-audio-v1';
+const BGM_FILE = assetUrl('assets/audio/bgm.mp3');
+const OFFLINE_AUDIO_FILES = [
+  BGM_FILE,
+  ...Object.values(SFX_FILES),
+  ...Object.values(ZHUYIN_AUDIO_FILES).map((file) =>
+    assetUrl(`assets/audio/zhuyin/${file}.mp3`)
+  )
+];
+
 type SafariWindow = Window & typeof globalThis & {
   webkitAudioContext?: typeof AudioContext;
 };
@@ -27,15 +39,13 @@ class AudioService {
   private unlocked = false;
   private bgmStartTimer: number | null = null;
   private bgmRequested = false;
-  private adventureWarmup: Promise<void> | null = null;
-  private criticalLoadCount = 0;
-  private criticalIdleResolvers: Array<() => void> = [];
+  private offlinePreparation: Promise<void> | null = null;
 
   constructor() {
     this.bgm.loop = true;
     this.bgm.volume = 0.35;
     this.bgm.preload = 'none';
-    this.bgm.src = assetUrl('assets/audio/bgm.mp3');
+    this.bgm.src = BGM_FILE;
   }
 
   unlock(): void {
@@ -50,7 +60,6 @@ class AudioService {
     if (
       !this.unlocked ||
       document.hidden ||
-      this.adventureWarmup !== null ||
       this.bgmStartTimer !== null ||
       !this.bgm.paused
     ) {
@@ -72,44 +81,28 @@ class AudioService {
     this.bgm.pause();
   }
 
-  prepareForAdventure(): void {
-    if (this.adventureWarmup !== null || !this.ensureContext()) return;
-    if (this.bgmStartTimer !== null) {
-      window.clearTimeout(this.bgmStartTimer);
-      this.bgmStartTimer = null;
+  prepareOfflineAudio(onProgress?: (percent: number) => void): Promise<void> {
+    if (this.offlinePreparation) return this.offlinePreparation;
+    if (!('caches' in window)) {
+      onProgress?.(100);
+      return Promise.resolve();
     }
 
-    const sources = [
-      SFX_FILES.correct,
-      SFX_FILES.wrong,
-      ...Object.values(ZHUYIN_AUDIO_FILES).map((file) =>
-        assetUrl(`assets/audio/zhuyin/${file}.mp3`)
-      )
-    ];
-    this.adventureWarmup = this.preloadInBatches(sources, 2).finally(() => {
-      this.adventureWarmup = null;
-      if (this.bgmRequested) this.playBgm();
+    this.offlinePreparation = this.cacheOfflineAudio(onProgress).finally(() => {
+      this.offlinePreparation = null;
     });
+    return this.offlinePreparation;
   }
 
   async prepareVoice(symbol: string): Promise<void> {
     const file = ZHUYIN_AUDIO_FILES[symbol];
     if (!file) return;
     const source = assetUrl(`assets/audio/zhuyin/${file}.mp3`);
-    await this.withTimeout(
-      this.runCritical(async () => {
-        await this.resumeContext();
-        await this.loadBuffer(source);
-      }),
-      8_000
-    );
+    await this.prepareSource(source);
   }
 
   async prepareEffect(effect: 'correct' | 'wrong'): Promise<void> {
-    await this.runCritical(async () => {
-      await this.resumeContext();
-      await this.loadBuffer(SFX_FILES[effect]);
-    });
+    await this.prepareSource(SFX_FILES[effect]);
   }
 
   speak(symbol: string): void {
@@ -171,39 +164,51 @@ class AudioService {
     return pending;
   }
 
-  private async preloadInBatches(sources: string[], batchSize: number): Promise<void> {
-    for (let index = 0; index < sources.length; index += batchSize) {
-      await this.waitForCriticalIdle();
-      await Promise.allSettled(
-        sources.slice(index, index + batchSize).map((source) => this.loadBuffer(source))
-      );
+  private async prepareSource(source: string): Promise<void> {
+    try {
+      await this.withTimeout(runCriticalResource(async () => {
+        await this.resumeContext();
+        await this.loadBuffer(source);
+      }), 8_000);
+    } catch (error) {
+      this.bufferPromises.delete(source);
+      throw error;
+    }
+  }
+
+  private async cacheOfflineAudio(onProgress?: (percent: number) => void): Promise<void> {
+    const cache = await caches.open(AUDIO_CACHE_NAME);
+    let completed = 0;
+    onProgress?.(0);
+
+    for (const source of OFFLINE_AUDIO_FILES) {
+      await waitForCriticalResources();
+      try {
+        const cached = await cache.match(source);
+        if (!cached) {
+          const existing = await caches.match(source);
+          if (existing) {
+            await cache.put(source, existing.clone());
+          } else {
+            const response = await fetch(source);
+            if (!response.ok) throw new Error(`Audio request failed: ${response.status}`);
+            await cache.put(source, response.clone());
+          }
+        }
+      } catch {
+        // Individual files are retried on the next run; game-critical loads remain independent.
+      }
+      completed += 1;
+      onProgress?.(Math.round((completed / OFFLINE_AUDIO_FILES.length) * 100));
       await new Promise<void>((resolve) => window.setTimeout(resolve, 40));
     }
-  }
-
-  private async runCritical<T>(task: () => Promise<T>): Promise<T> {
-    this.criticalLoadCount += 1;
-    try {
-      return await task();
-    } finally {
-      this.criticalLoadCount -= 1;
-      if (this.criticalLoadCount === 0) {
-        const resolvers = this.criticalIdleResolvers.splice(0);
-        resolvers.forEach((resolve) => resolve());
-      }
-    }
-  }
-
-  private waitForCriticalIdle(): Promise<void> {
-    if (this.criticalLoadCount === 0) return Promise.resolve();
-    return new Promise((resolve) => this.criticalIdleResolvers.push(resolve));
   }
 
   private async withTimeout<T>(task: Promise<T>, timeoutMs: number): Promise<T> {
     let timeoutId = 0;
     const timeout = new Promise<never>((_, reject) => {
       timeoutId = window.setTimeout(
-        () => reject(new Error('Audio preparation timed out')),
+        () => reject(new ResourceTimeoutError('Audio preparation timed out')),
         timeoutMs
       );
     });

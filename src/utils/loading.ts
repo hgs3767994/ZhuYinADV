@@ -1,5 +1,17 @@
 export const RESOURCE_TIMEOUT_MS = 10_000;
 
+export class ResourceTimeoutError extends Error {
+  constructor(message = 'Resource preparation timed out') {
+    super(message);
+    this.name = 'ResourceTimeoutError';
+  }
+}
+
+export function isResourceTimeoutError(error: unknown): error is ResourceTimeoutError {
+  return error instanceof ResourceTimeoutError ||
+    (error instanceof Error && error.name === 'ResourceTimeoutError');
+}
+
 export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => globalThis.setTimeout(resolve, ms));
 }
@@ -24,7 +36,7 @@ export async function trackLoadingTasks(
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   const timeout = new Promise<never>((_, reject) => {
     timeoutId = globalThis.setTimeout(
-      () => reject(new Error('Resource preparation timed out')),
+      () => reject(new ResourceTimeoutError()),
       timeoutMs
     );
   });

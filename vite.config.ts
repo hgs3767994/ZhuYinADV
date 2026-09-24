@@ -44,7 +44,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,webp,mp3,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,png,webp,webmanifest}'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
@@ -65,6 +65,7 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'zhuyin-audio-v1',
+              rangeRequests: true,
               cacheableResponse: { statuses: [0, 200] },
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 }
             }
