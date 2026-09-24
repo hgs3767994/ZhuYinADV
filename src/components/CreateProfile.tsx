@@ -1,0 +1,84 @@
+import { useState, type FormEvent } from 'react';
+
+interface CreateProfileProps {
+  onCreate: (name: string, password: string) => Promise<void>;
+  onBack: () => void;
+}
+
+export function CreateProfile({ onCreate, onBack }: CreateProfileProps) {
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    if (password !== confirmation) {
+      setError('兩次輸入的密碼不一致');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await onCreate(name, password);
+      setSubmitting(false);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : '無法建立帳號');
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <main className="screen account-screen">
+      <div className="dark-overlay" />
+      <form className="account-panel account-form" onSubmit={submit}>
+        <h1>新增冒險家</h1>
+        <label>
+          帳號名稱
+          <input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            autoComplete="username"
+            maxLength={20}
+            required
+          />
+        </label>
+        <label>
+          密碼
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="new-password"
+            minLength={4}
+            maxLength={64}
+            required
+          />
+        </label>
+        <label>
+          再次輸入密碼
+          <input
+            type="password"
+            value={confirmation}
+            onChange={(event) => setConfirmation(event.target.value)}
+            autoComplete="new-password"
+            minLength={4}
+            maxLength={64}
+            required
+          />
+        </label>
+        <p className="field-note">密碼至少 4 個字元，只保存在這台裝置上。</p>
+        {error && <p className="error-message" role="alert">{error}</p>}
+        <div className="account-actions">
+          <button className="primary-button" type="submit" disabled={submitting}>
+            {submitting ? '建立中…' : '建立帳號'}
+          </button>
+          <button className="secondary-button" type="button" onClick={onBack} disabled={submitting}>
+            返回帳號選擇
+          </button>
+        </div>
+      </form>
+    </main>
+  );
+}

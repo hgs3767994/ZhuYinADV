@@ -4,6 +4,10 @@ import { GameScreen } from './components/GameScreen';
 import { ImageMenuButton } from './components/ImageMenuButton';
 import { Leaderboard } from './components/Leaderboard';
 import { Modal } from './components/Modal';
+import { CreateProfile } from './components/CreateProfile';
+import { ProfileAvatar } from './components/ProfileAvatar';
+import { ProfileLogin } from './components/ProfileLogin';
+import { ProfileSelection } from './components/ProfileSelection';
 import { ResultModal } from './components/ResultModal';
 import { APP_VERSION, DIFFICULTY_CONFIG } from './game/config';
 import type {
@@ -13,6 +17,11 @@ import type {
   LeaderboardPage
 } from './game/types';
 import { audioService } from './services/audio';
+import {
+  createGuestProfile,
+  profileRepository,
+  type PlayerProfile
+} from './services/profileRepository';
 import { resultRepository } from './services/resultsRepository';
 import { assetUrl, preloadImage, resetImagePreloads } from './utils/assets';
 import { delay, isResourceTimeoutError, trackLoadingTasks } from './utils/loading';
@@ -22,7 +31,7 @@ import {
   type LockableScreenOrientation
 } from './utils/orientation';
 
-type Screen = 'welcome' | 'mode' | 'difficulty' | 'game';
+type Screen = 'welcome' | 'profiles' | 'create-profile' | 'login' | 'mode' | 'difficulty' | 'game';
 
 interface GameSetup {
   mode: GameMode;
@@ -75,13 +84,20 @@ function isAppHistoryState(value: unknown): value is AppHistoryState {
   if (!value || typeof value !== 'object') return false;
   const state = value as Partial<AppHistoryState>;
   return state.zhuyinApp === true &&
-    ['welcome', 'mode', 'difficulty', 'game'].includes(state.screen ?? '');
+    ['welcome', 'profiles', 'create-profile', 'login', 'mode', 'difficulty', 'game']
+      .includes(state.screen ?? '');
 }
 
 export function App() {
   const [bootReady, setBootReady] = useState(false);
   const [screen, setScreen] = useState<Screen>('welcome');
   const screenRef = useRef<Screen>('welcome');
+  const [profiles, setProfiles] = useState<PlayerProfile[]>([]);
+  const [profilesLoading, setProfilesLoading] = useState(false);
+  const [profilesError, setProfilesError] = useState<string | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<PlayerProfile | null>(null);
+  const [activeProfile, setActiveProfile] = useState<PlayerProfile | null>(null);
+  const activeProfileRef = useRef<PlayerProfile | null>(null);
   const [gameSetup, setGameSetup] = useState<GameSetup>({ mode: 'normal', difficulty: 'easy' });
   const [runId, setRunId] = useState(0);
   const [result, setResult] = useState<GameResult | null>(null);
@@ -116,6 +132,18 @@ export function App() {
     gameHistoryPositionRef.current = null;
     applyScreen(next);
   }, [applyScreen]);
+
+  const loadProfiles = useCallback(async () => {
+    setProfilesLoading(true);
+    setProfilesError(null);
+    try {
+      setProfiles(await profileRepository.list());
+    } catch {
+      setProfilesError('無法讀取這台裝置上的帳號');
+    } finally {
+      setProfilesLoading(false);
+    }
+  }, []);
 
   resultRef.current = result;
   leaderboardPageRef.current = leaderboardPage;
@@ -187,7 +215,14 @@ export function App() {
     screenRef.current = screen;
     if (screen === 'game') audioService.pauseBgm();
     else audioService.playBgm();
-  }, [screen]);
+    if (screen === 'profiles') {
+      if (activeProfile?.isGuest) resultRepository.clearGuestResults();
+      activeProfileRef.current = null;
+      setActiveProfile(null);
+      setSelectedProfile(null);
+      void loadProfiles();
+    }
+  }, [loadProfiles, screen]);
 
   useEffect(() => {
     if (screen !== 'mode' || adventurePreloadStartedRef.current) return;
@@ -229,6 +264,19 @@ export function App() {
       pendingPageLoadRef.current = null;
       setPageLoading(null);
       const destination = isAppHistoryState(event.state) ? event.state : null;
+      if (
+        destination &&
+        ['mode', 'difficulty', 'game'].includes(destination.screen) &&
+        activeProfileRef.current === null
+      ) {
+        history.replaceState(
+          { zhuyinApp: true, screen: 'profiles' } satisfies AppHistoryState,
+          '',
+          location.href
+        );
+        applyScreen('profiles');
+        return;
+      }
       gameHistoryPositionRef.current = destination?.screen === 'game'
         ? destination.gameGuard ? 'guard' : 'base'
         : null;
@@ -308,6 +356,32 @@ export function App() {
     audioService.unlock();
     audioService.playDing();
     action();
+  };
+
+  const enterMode = (profile: PlayerProfile) => {
+    activeProfileRef.current = profile;
+    setActiveProfile(profile);
+    loadPageImages(MODE_IMAGES, () => {
+      history.replaceState(
+        { zhuyinApp: true, screen: 'profiles' } satisfies AppHistoryState,
+        '',
+        location.href
+      );
+      navigate('mode');
+    });
+  };
+
+  const createProfile = async (name: string, password: string) => {
+    const profile = await profileRepository.create(name, password);
+    setProfiles((current) => [...current, profile]);
+    enterMode(profile);
+  };
+
+  const loginProfile = async (password: string) => {
+    if (!selectedProfile) throw new Error('找不到要登入的帳號');
+    const profile = await profileRepository.authenticate(selectedProfile.id, password);
+    if (!profile) throw new Error('密碼不正確');
+    enterMode(profile);
   };
 
   const startGame = (mode: GameMode, difficulty: Difficulty | null) => {
@@ -422,7 +496,7 @@ export function App() {
           <img className="title-image" src={assetUrl('assets/images/title.webp')} alt="小小注音冒險家" />
           <button
             className="start-button"
-            onClick={() => press(() => loadPageImages(MODE_IMAGES, () => navigate('mode')))}
+            onClick={() => press(() => navigate('profiles'))}
             aria-label="開始冒險"
           >
             <img src={assetUrl('assets/images/start_button.webp')} alt="" draggable="false" />
@@ -431,12 +505,47 @@ export function App() {
         </main>
       )}
 
-      {screen === 'mode' && (
+      {screen === 'profiles' && (
+        <ProfileSelection
+          profiles={profiles}
+          loading={profilesLoading}
+          error={profilesError}
+          onSelect={(profile) => press(() => {
+            setSelectedProfile(profile);
+            navigate('login');
+          })}
+          onCreate={() => press(() => navigate('create-profile'))}
+          onGuest={() => press(() => enterMode(createGuestProfile()))}
+          onBack={() => press(() => history.back())}
+          onRetry={() => void loadProfiles()}
+        />
+      )}
+
+      {screen === 'create-profile' && (
+        <CreateProfile
+          onCreate={createProfile}
+          onBack={() => press(() => history.back())}
+        />
+      )}
+
+      {screen === 'login' && selectedProfile && (
+        <ProfileLogin
+          profile={selectedProfile}
+          onLogin={loginProfile}
+          onBack={() => press(() => history.back())}
+        />
+      )}
+
+      {screen === 'mode' && activeProfile && (
         <main
           className="screen menu-screen"
           style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.webp')})` }}
         >
           <div className="dark-overlay" />
+          <div className="active-profile-badge">
+            <ProfileAvatar profile={activeProfile} />
+            <span>{activeProfile.name}</span>
+          </div>
           <div className="menu-stack">
             <ImageMenuButton
               image={assetUrl('assets/images/normal_mode_button.webp')}
@@ -458,7 +567,7 @@ export function App() {
             />
             <ImageMenuButton
               image={assetUrl('assets/images/Backward_button.webp')}
-              label="返回首頁"
+              label="返回帳號選擇"
               className="back-image-button"
               onClick={() => press(() => history.back())}
             />
@@ -466,7 +575,7 @@ export function App() {
         </main>
       )}
 
-      {screen === 'difficulty' && (
+      {screen === 'difficulty' && activeProfile && (
         <main
           className="screen menu-screen"
           style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.webp')})` }}
@@ -494,12 +603,13 @@ export function App() {
         </main>
       )}
 
-      {screen === 'game' && (
+      {screen === 'game' && activeProfile && (
         <GameScreen
           key={`${gameSetup.mode}-${gameSetup.difficulty}-${runId}`}
           mode={gameSetup.mode}
           difficulty={gameSetup.difficulty}
           runId={runId}
+          profileId={activeProfile.id}
           paused={quitConfirmation}
           onFinish={finishGame}
           onRequestQuit={openQuitConfirmation}
@@ -516,9 +626,10 @@ export function App() {
         />
       )}
 
-      {leaderboardPage && (
+      {leaderboardPage && activeProfile && (
         <Leaderboard
           initialPage={leaderboardPage}
+          profileId={activeProfile.id}
           onClose={() => {
             if (leaderboardOriginRef.current === 'result') returnToMode();
             else closeMenuLeaderboard();

@@ -1,8 +1,7 @@
 import type { Difficulty } from './types';
 import { assetUrl } from '../utils/assets';
 
-export const APP_VERSION = '3.0.9';
-export const DEVICE_PROFILE_ID = 'device-player';
+export const APP_VERSION = '3.1.0';
 
 export const ZHUYIN_LIST = [
   'ㄅ', 'ㄆ', 'ㄇ', 'ㄈ', 'ㄉ', 'ㄊ', 'ㄋ', 'ㄌ', 'ㄍ', 'ㄎ', 'ㄏ',

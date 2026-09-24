@@ -1,40 +1,21 @@
 import type { Difficulty, GameResult, LeaderboardPage } from '../game/types';
-
-const DATABASE_NAME = 'little-zhuyin-adventurer';
-const DATABASE_VERSION = 1;
-const RESULT_STORE = 'gameResults';
+import { openDatabase, requestResult, RESULT_STORE } from './database';
+import { GUEST_PROFILE_ID } from './profileRepository';
 
 export interface ResultRepository {
   save(result: GameResult): Promise<void>;
   leaderboard(profileId: string, page: LeaderboardPage, limit?: number): Promise<GameResult[]>;
-}
-
-function openDatabase(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
-
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      if (!database.objectStoreNames.contains(RESULT_STORE)) {
-        const store = database.createObjectStore(RESULT_STORE, { keyPath: 'id' });
-        store.createIndex('profileId', 'profileId', { unique: false });
-      }
-    };
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error('無法開啟冒險紀錄資料庫'));
-  });
-}
-
-function requestResult<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error('資料庫操作失敗'));
-  });
+  clearGuestResults(): void;
 }
 
 class IndexedDbResultRepository implements ResultRepository {
+  private guestResults: GameResult[] = [];
+
   async save(result: GameResult): Promise<void> {
+    if (result.profileId === GUEST_PROFILE_ID) {
+      this.guestResults.push(result);
+      return;
+    }
     const database = await openDatabase();
     try {
       const transaction = database.transaction(RESULT_STORE, 'readwrite');
@@ -49,24 +30,38 @@ class IndexedDbResultRepository implements ResultRepository {
     page: LeaderboardPage,
     limit = 5
   ): Promise<GameResult[]> {
+    if (profileId === GUEST_PROFILE_ID) {
+      return this.filterLeaderboard(this.guestResults, page, limit);
+    }
     const database = await openDatabase();
     try {
       const transaction = database.transaction(RESULT_STORE, 'readonly');
       const index = transaction.objectStore(RESULT_STORE).index('profileId');
       const records = await requestResult(index.getAll(profileId));
-      const difficulty: Difficulty | null = page === 'endless' ? null : page;
-
-      return records
-        .filter((record) =>
-          page === 'endless'
-            ? record.modeId === 'endless'
-            : record.modeId === 'normal' && record.difficultyId === difficulty
-        )
-        .sort((left, right) => right.score - left.score || right.playedAt.localeCompare(left.playedAt))
-        .slice(0, limit);
+      return this.filterLeaderboard(records, page, limit);
     } finally {
       database.close();
     }
+  }
+
+  clearGuestResults(): void {
+    this.guestResults = [];
+  }
+
+  private filterLeaderboard(
+    records: GameResult[],
+    page: LeaderboardPage,
+    limit: number
+  ): GameResult[] {
+    const difficulty: Difficulty | null = page === 'endless' ? null : page;
+    return records
+      .filter((record) =>
+        page === 'endless'
+          ? record.modeId === 'endless'
+          : record.modeId === 'normal' && record.difficultyId === difficulty
+      )
+      .sort((left, right) => right.score - left.score || right.playedAt.localeCompare(left.playedAt))
+      .slice(0, limit);
   }
 }
 

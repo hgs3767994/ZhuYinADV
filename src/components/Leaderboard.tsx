@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { DEVICE_PROFILE_ID } from '../game/config';
 import type { GameResult, LeaderboardPage } from '../game/types';
 import { resultRepository } from '../services/resultsRepository';
 import { Modal } from './Modal';
@@ -13,10 +12,11 @@ const PAGES: Array<{ id: LeaderboardPage; label: string }> = [
 
 interface LeaderboardProps {
   initialPage?: LeaderboardPage;
+  profileId: string;
   onClose: () => void;
 }
 
-export function Leaderboard({ initialPage = 'easy', onClose }: LeaderboardProps) {
+export function Leaderboard({ initialPage = 'easy', profileId, onClose }: LeaderboardProps) {
   const [page, setPage] = useState<LeaderboardPage>(initialPage);
   const [records, setRecords] = useState<GameResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,7 @@ export function Leaderboard({ initialPage = 'easy', onClose }: LeaderboardProps)
     let cancelled = false;
     setLoading(true);
     resultRepository
-      .leaderboard(DEVICE_PROFILE_ID, page)
+      .leaderboard(profileId, page)
       .then((next) => {
         if (!cancelled) setRecords(next);
       })
@@ -38,7 +38,7 @@ export function Leaderboard({ initialPage = 'easy', onClose }: LeaderboardProps)
     return () => {
       cancelled = true;
     };
-  }, [page]);
+  }, [page, profileId]);
 
   return (
     <Modal title="🏆 冒險紀錄殿堂" labelledBy="leaderboard-title">

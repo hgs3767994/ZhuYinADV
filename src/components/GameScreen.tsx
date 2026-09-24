@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   APP_VERSION,
-  DEVICE_PROFILE_ID,
   DIFFICULTY_CONFIG,
   NORMAL_QUESTION_COUNT
 } from '../game/config';
@@ -25,6 +24,7 @@ interface GameScreenProps {
   mode: GameMode;
   difficulty: Difficulty | null;
   runId: number;
+  profileId: string;
   paused?: boolean;
   onFinish: (result: GameResult) => void;
   onRequestQuit: () => void;
@@ -40,6 +40,7 @@ export function GameScreen({
   mode,
   difficulty,
   runId,
+  profileId,
   paused = false,
   onFinish,
   onRequestQuit,
@@ -75,7 +76,7 @@ export function GameScreen({
     const current = sessionRef.current;
     onFinish({
       id: crypto.randomUUID(),
-      profileId: DEVICE_PROFILE_ID,
+      profileId,
       modeId: current.mode,
       difficultyId: current.difficulty,
       score: current.score,
@@ -89,7 +90,7 @@ export function GameScreen({
       playedAt: new Date().toISOString(),
       appVersion: APP_VERSION
     });
-  }, [onFinish]);
+  }, [onFinish, profileId]);
 
   const prepareNextSession = useCallback(async (
     next: GameSession,

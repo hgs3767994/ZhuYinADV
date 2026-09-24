@@ -32,6 +32,11 @@ button:focus-visible {
   outline-offset: 3px;
 }
 
+button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .app-shell {
   position: relative;
   width: 100%;
@@ -133,6 +138,188 @@ button:focus-visible {
 .back-image-button {
   width: 60%;
   margin-top: clamp(8px, 2vh, 24px);
+}
+
+.account-screen {
+  overflow-y: auto;
+  padding: max(24px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 50% 18%, rgb(56 189 248 / 24%), transparent 34%),
+    linear-gradient(155deg, #14532d, #0f172a 68%);
+}
+
+.account-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(100%, 390px);
+  min-height: calc(100% - 2px);
+  margin: auto;
+  padding: 24px 20px;
+  flex-direction: column;
+  align-items: center;
+  border: 2px solid rgb(255 255 255 / 20%);
+  border-radius: 24px;
+  background: rgb(15 23 42 / 90%);
+  box-shadow: 0 18px 45px rgb(0 0 0 / 48%);
+}
+
+.account-panel h1 {
+  margin: 0 0 8px;
+  color: #facc15;
+  font-size: clamp(1.6rem, 7vw, 2.1rem);
+  text-align: center;
+}
+
+.account-hint,
+.field-note {
+  margin: 0;
+  color: #cbd5e1;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.profile-list {
+  display: grid;
+  width: 100%;
+  min-height: 190px;
+  margin: 20px 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 12px;
+}
+
+.profile-choice {
+  display: flex;
+  min-width: 0;
+  padding: 14px 8px;
+  align-items: center;
+  flex-direction: column;
+  gap: 9px;
+  border: 2px solid #64748b;
+  border-radius: 18px;
+  background: #1e293b;
+  color: #fff;
+  cursor: pointer;
+}
+
+.profile-choice strong {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-avatar {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 3px solid rgb(255 255 255 / 74%);
+  border-radius: 50%;
+  background: hsl(var(--avatar-hue) 65% 43%);
+  box-shadow: 0 5px 15px rgb(0 0 0 / 35%);
+  color: #fff;
+  font-weight: 950;
+  text-shadow: 0 2px 3px rgb(0 0 0 / 50%);
+}
+
+.profile-avatar-small {
+  width: 48px;
+  height: 48px;
+  font-size: 1.35rem;
+}
+
+.profile-avatar-large {
+  width: 76px;
+  height: 76px;
+  font-size: 2rem;
+}
+
+.account-status {
+  grid-column: 1 / -1;
+  align-self: center;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+.account-actions {
+  display: flex;
+  width: 100%;
+  margin-top: auto;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.text-button {
+  padding: 10px;
+  border: 0;
+  background: transparent;
+  color: #bfdbfe;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.account-form {
+  justify-content: center;
+  gap: 14px;
+}
+
+.account-form label {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 6px;
+  color: #dbeafe;
+  font-weight: 800;
+}
+
+.account-form input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 2px solid #64748b;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.account-form input:focus {
+  border-color: #38bdf8;
+  outline: 2px solid #38bdf8;
+}
+
+.account-form .account-actions {
+  margin-top: 10px;
+}
+
+.login-form .profile-avatar {
+  margin-bottom: 4px;
+}
+
+.error-message {
+  color: #fecaca;
+  text-align: center;
+}
+
+.active-profile-badge {
+  position: absolute;
+  z-index: 2;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  display: flex;
+  max-width: 45%;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-weight: 900;
+  text-shadow: 0 2px 4px #000;
+}
+
+.active-profile-badge span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .game-screen {
