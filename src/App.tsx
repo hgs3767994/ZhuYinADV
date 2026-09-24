@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { GameScreen } from './components/GameScreen';
+import { AvatarEditor } from './components/AvatarEditor';
 import { ImageMenuButton } from './components/ImageMenuButton';
 import { Leaderboard } from './components/Leaderboard';
 import { Modal } from './components/Modal';
@@ -15,6 +16,7 @@ import { ProfileLogin } from './components/ProfileLogin';
 import { ProfileSelection } from './components/ProfileSelection';
 import { ResetProfilePassword } from './components/ResetProfilePassword';
 import { ResultModal } from './components/ResultModal';
+import { randomAvatarRecipe, type AvatarRecipeV2 } from './avatar/model';
 import { APP_VERSION, DIFFICULTY_CONFIG } from './game/config';
 import type {
   Difficulty,
@@ -45,6 +47,7 @@ type Screen =
   | 'welcome'
   | 'profiles'
   | 'create-profile'
+  | 'avatar-builder'
   | 'login'
   | 'parent-setup'
   | 'parent-gate'
@@ -53,12 +56,19 @@ type Screen =
   | 'change-parent-pin'
   | 'reset-password'
   | 'mode'
+  | 'edit-avatar'
   | 'difficulty'
   | 'game';
 
 interface GameSetup {
   mode: GameMode;
   difficulty: Difficulty | null;
+}
+
+interface ProfileDraft {
+  name: string;
+  password: string;
+  avatar: AvatarRecipeV2;
 }
 
 interface AppHistoryState {
@@ -140,9 +150,9 @@ function isAppHistoryState(value: unknown): value is AppHistoryState {
   const state = value as Partial<AppHistoryState>;
   return state.zhuyinApp === true &&
     [
-      'welcome', 'profiles', 'create-profile', 'login', 'parent-setup', 'parent-gate',
+      'welcome', 'profiles', 'create-profile', 'avatar-builder', 'login', 'parent-setup', 'parent-gate',
       'parent-recovery', 'parent-management', 'change-parent-pin', 'reset-password',
-      'mode', 'difficulty', 'game'
+      'mode', 'edit-avatar', 'difficulty', 'game'
     ]
       .includes(state.screen ?? '');
 }
@@ -154,6 +164,8 @@ export function App() {
   const [profiles, setProfiles] = useState<PlayerProfile[]>([]);
   const [profilesLoading, setProfilesLoading] = useState(false);
   const [profilesError, setProfilesError] = useState<string | null>(null);
+  const [profileDraft, setProfileDraft] = useState<ProfileDraft | null>(null);
+  const profileDraftRef = useRef<ProfileDraft | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<PlayerProfile | null>(null);
   const selectedProfileRef = useRef<PlayerProfile | null>(null);
   const [activeProfile, setActiveProfile] = useState<PlayerProfile | null>(null);
@@ -185,6 +197,7 @@ export function App() {
   const completedExitPendingRef = useRef(false);
   const adventurePreparedRef = useRef(false);
   const adventurePreparationRunningRef = useRef(false);
+  const profileCreationCompletionRef = useRef(false);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -306,7 +319,7 @@ export function App() {
   }, [loadPageImages]);
 
   useEffect(() => {
-    screenRef.current = screen;
+    if (screenRef.current !== screen) return;
     if (screen === 'game') audioService.pauseBgm();
     else audioService.playBgm();
     if (screen === 'profiles') {
@@ -315,6 +328,8 @@ export function App() {
       setActiveProfile(null);
       selectedProfileRef.current = null;
       setSelectedProfile(null);
+      profileDraftRef.current = null;
+      setProfileDraft(null);
       void loadProfiles();
     }
     if (screen === 'profiles' || screen === 'login') parentAuthorizedRef.current = false;
@@ -341,9 +356,22 @@ export function App() {
       pendingPageLoadRef.current = null;
       setPageLoading(null);
       const destination = isAppHistoryState(event.state) ? event.state : null;
+      if (profileCreationCompletionRef.current) {
+        profileCreationCompletionRef.current = false;
+        history.pushState(
+          { zhuyinApp: true, screen: 'mode' } satisfies AppHistoryState,
+          '',
+          location.href
+        );
+        applyScreen('mode');
+        return;
+      }
       if (
         destination &&
-        ['parent-management', 'change-parent-pin', 'reset-password'].includes(destination.screen) &&
+        [
+          'create-profile', 'avatar-builder', 'parent-management',
+          'change-parent-pin', 'reset-password'
+        ].includes(destination.screen) &&
         !parentAuthorizedRef.current
       ) {
         const fallback = selectedProfileRef.current ? 'login' : 'profiles';
@@ -357,7 +385,7 @@ export function App() {
       }
       if (
         destination &&
-        ['mode', 'difficulty', 'game'].includes(destination.screen) &&
+        ['mode', 'edit-avatar', 'difficulty', 'game'].includes(destination.screen) &&
         activeProfileRef.current === null
       ) {
         history.replaceState(
@@ -528,10 +556,45 @@ export function App() {
     });
   };
 
-  const createProfile = async (name: string, password: string) => {
-    const profile = await profileRepository.create(name, password);
+  const beginProfileAvatar = async (name: string, password: string) => {
+    await profileRepository.validateNewProfile(name, password);
+    const draft: ProfileDraft = {
+      name,
+      password,
+      avatar: profileDraftRef.current?.avatar ?? randomAvatarRecipe()
+    };
+    profileDraftRef.current = draft;
+    setProfileDraft(draft);
+    navigate('avatar-builder');
+  };
+
+  const completeProfileCreation = async (avatar: AvatarRecipeV2) => {
+    const draft = profileDraftRef.current;
+    if (!draft) throw new Error('找不到尚未完成的帳號資料');
+    const profile = await profileRepository.create(
+      draft.name,
+      draft.password,
+      avatar
+    );
     setProfiles((current) => [...current, profile]);
-    enterMode(profile);
+    activeProfileRef.current = profile;
+    setActiveProfile(profile);
+    profileDraftRef.current = null;
+    setProfileDraft(null);
+    loadPageImages(MODE_IMAGES, () => {
+      profileCreationCompletionRef.current = true;
+      history.go(-2);
+    }, false);
+  };
+
+  const saveActiveAvatar = async (avatar: AvatarRecipeV2) => {
+    const current = activeProfileRef.current;
+    if (!current || current.isGuest) throw new Error('訪客無法保存頭像');
+    const updated = await profileRepository.updateAvatar(current.id, avatar);
+    activeProfileRef.current = updated;
+    setActiveProfile(updated);
+    setProfiles((items) => items.map((profile) => profile.id === updated.id ? updated : profile));
+    history.back();
   };
 
   const loginProfile = async (password: string) => {
@@ -710,8 +773,29 @@ export function App() {
 
       {screen === 'create-profile' && (
         <CreateProfile
-          onCreate={createProfile}
-          onBack={() => press(() => history.back())}
+          initialName={profileDraftRef.current?.name}
+          initialPassword={profileDraftRef.current?.password}
+          onContinue={beginProfileAvatar}
+          onBack={() => press(() => {
+            profileDraftRef.current = null;
+            setProfileDraft(null);
+            history.back();
+          })}
+        />
+      )}
+
+      {screen === 'avatar-builder' && profileDraft && (
+        <AvatarEditor
+          initialRecipe={profileDraft.avatar}
+          title="建立冒險家頭像"
+          saveLabel="完成並建立帳號"
+          onSave={completeProfileCreation}
+          onBack={(avatar) => press(() => {
+            const draft = { ...profileDraft, avatar };
+            profileDraftRef.current = draft;
+            setProfileDraft(draft);
+            history.back();
+          })}
         />
       )}
 
@@ -797,10 +881,23 @@ export function App() {
           style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.webp')})` }}
         >
           <div className="dark-overlay" />
-          <div className="active-profile-badge">
-            <ProfileAvatar profile={activeProfile} />
-            <span>{activeProfile.name}</span>
-          </div>
+          {activeProfile.isGuest ? (
+            <div className="active-profile-badge">
+              <ProfileAvatar profile={activeProfile} />
+              <span>{activeProfile.name}</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="active-profile-badge editable"
+              aria-label={`編輯 ${activeProfile.name} 的頭像`}
+              onClick={() => press(() => navigate('edit-avatar'))}
+            >
+              <ProfileAvatar profile={activeProfile} />
+              <span>{activeProfile.name}</span>
+              <small>編輯頭像</small>
+            </button>
+          )}
           <div className="menu-stack">
             <ImageMenuButton
               image={assetUrl('assets/images/normal_mode_button.webp')}
@@ -828,6 +925,16 @@ export function App() {
             />
           </div>
         </main>
+      )}
+
+      {screen === 'edit-avatar' && activeProfile && !activeProfile.isGuest && (
+        <AvatarEditor
+          initialRecipe={activeProfile.avatar}
+          title="編輯冒險家頭像"
+          saveLabel="保存頭像"
+          onSave={saveActiveAvatar}
+          onBack={() => press(() => history.back())}
+        />
       )}
 
       {screen === 'difficulty' && activeProfile && (

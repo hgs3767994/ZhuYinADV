@@ -1,5 +1,12 @@
 import { createCredential, verifyCredential, type PasswordCredential } from './credential';
 import {
+  avatarRecipeFromSeed,
+  normalizeAvatarRecipe,
+  randomAvatarRecipe,
+  type AvatarRecipe,
+  type AvatarRecipeV2
+} from '../avatar/model';
+import {
   openDatabase,
   PROFILE_STORE,
   requestResult,
@@ -13,21 +20,17 @@ const PROFILE_NAME_MAX_LENGTH = 20;
 export const DELETION_GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1_000;
 export const GUEST_PROFILE_ID = 'guest-session';
 
-export interface AvatarRecipe {
-  version: 1;
-  seed: string;
-}
-
 export interface PlayerProfile {
   id: string;
   name: string;
-  avatar: AvatarRecipe;
+  avatar: AvatarRecipeV2;
   isGuest: boolean;
   createdAt: string;
   scheduledDeletionAt?: string;
 }
 
-interface StoredPlayerProfile extends PlayerProfile {
+interface StoredPlayerProfile extends Omit<PlayerProfile, 'avatar'> {
+  avatar: AvatarRecipe;
   normalizedName: string;
   credential: PasswordCredential;
 }
@@ -35,9 +38,11 @@ interface StoredPlayerProfile extends PlayerProfile {
 export interface ProfileRepository {
   list(): Promise<PlayerProfile[]>;
   listManaged(): Promise<PlayerProfile[]>;
-  create(name: string, password: string): Promise<PlayerProfile>;
+  validateNewProfile(name: string, password: string): Promise<void>;
+  create(name: string, password: string, avatar?: AvatarRecipeV2): Promise<PlayerProfile>;
   authenticate(profileId: string, password: string): Promise<PlayerProfile | null>;
   resetPassword(profileId: string, password: string): Promise<void>;
+  updateAvatar(profileId: string, avatar: AvatarRecipeV2): Promise<PlayerProfile>;
   scheduleDeletion(profileId: string, confirmationName: string): Promise<void>;
   restore(profileId: string): Promise<void>;
 }
@@ -72,7 +77,7 @@ function publicProfile(profile: StoredPlayerProfile): PlayerProfile {
   return {
     id: profile.id,
     name: profile.name,
-    avatar: profile.avatar,
+    avatar: normalizeAvatarRecipe(profile.avatar),
     isGuest: false,
     createdAt: profile.createdAt,
     scheduledDeletionAt: profile.scheduledDeletionAt
@@ -83,7 +88,7 @@ export function createGuestProfile(): PlayerProfile {
   return {
     id: GUEST_PROFILE_ID,
     name: '小小訪客',
-    avatar: { version: 1, seed: 'guest' },
+    avatar: avatarRecipeFromSeed('guest'),
     isGuest: true,
     createdAt: new Date().toISOString()
   };
@@ -121,7 +126,30 @@ class IndexedDbProfileRepository implements ProfileRepository {
     return (await this.readAllAndPurgeExpired()).map(publicProfile);
   }
 
-  async create(name: string, password: string): Promise<PlayerProfile> {
+  async validateNewProfile(name: string, password: string): Promise<void> {
+    const displayName = validateProfileName(name);
+    validatePassword(password);
+    const normalizedName = normalizeProfileName(displayName);
+    const database = await openDatabase();
+    try {
+      const existing = await requestResult(
+        database.transaction(PROFILE_STORE, 'readonly')
+          .objectStore(PROFILE_STORE)
+          .getAll() as IDBRequest<StoredPlayerProfile[]>
+      );
+      if (existing.some((profile) => normalizeProfileName(profile.name) === normalizedName)) {
+        throw new Error('這個帳號名稱已經有人使用');
+      }
+    } finally {
+      database.close();
+    }
+  }
+
+  async create(
+    name: string,
+    password: string,
+    avatar: AvatarRecipeV2 = randomAvatarRecipe()
+  ): Promise<PlayerProfile> {
     const displayName = validateProfileName(name);
     validatePassword(password);
     const normalizedName = normalizeProfileName(displayName);
@@ -141,7 +169,7 @@ class IndexedDbProfileRepository implements ProfileRepository {
         id: crypto.randomUUID(),
         name: displayName,
         normalizedName,
-        avatar: { version: 1, seed: crypto.randomUUID() },
+        avatar: normalizeAvatarRecipe(avatar),
         isGuest: false,
         createdAt,
         credential
@@ -172,6 +200,23 @@ class IndexedDbProfileRepository implements ProfileRepository {
       if (!profile || profile.scheduledDeletionAt) throw new Error('找不到這個帳號');
       profile.credential = credential;
       await requestResult(store.put(profile));
+    } finally {
+      database.close();
+    }
+  }
+
+  async updateAvatar(profileId: string, avatar: AvatarRecipeV2): Promise<PlayerProfile> {
+    const database = await openDatabase();
+    try {
+      const transaction = database.transaction(PROFILE_STORE, 'readwrite');
+      const store = transaction.objectStore(PROFILE_STORE);
+      const profile = await requestResult(
+        store.get(profileId) as IDBRequest<StoredPlayerProfile | undefined>
+      );
+      if (!profile || profile.scheduledDeletionAt) throw new Error('找不到這個帳號');
+      profile.avatar = normalizeAvatarRecipe(avatar);
+      await requestResult(store.put(profile));
+      return publicProfile(profile);
     } finally {
       database.close();
     }

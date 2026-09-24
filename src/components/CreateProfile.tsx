@@ -1,16 +1,29 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 
 interface CreateProfileProps {
-  onCreate: (name: string, password: string) => Promise<void>;
+  initialName?: string;
+  initialPassword?: string;
+  onContinue: (name: string, password: string) => Promise<void>;
   onBack: () => void;
 }
 
-export function CreateProfile({ onCreate, onBack }: CreateProfileProps) {
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmation, setConfirmation] = useState('');
+export function CreateProfile({
+  initialName = '',
+  initialPassword = '',
+  onContinue,
+  onBack
+}: CreateProfileProps) {
+  const [name, setName] = useState(initialName);
+  const [password, setPassword] = useState(initialPassword);
+  const [confirmation, setConfirmation] = useState(initialPassword);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setName(initialName);
+    setPassword(initialPassword);
+    setConfirmation(initialPassword);
+  }, [initialName, initialPassword]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -21,7 +34,7 @@ export function CreateProfile({ onCreate, onBack }: CreateProfileProps) {
     }
     setSubmitting(true);
     try {
-      await onCreate(name, password);
+      await onContinue(name, password);
       setSubmitting(false);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : '無法建立帳號');
@@ -73,7 +86,7 @@ export function CreateProfile({ onCreate, onBack }: CreateProfileProps) {
         {error && <p className="error-message" role="alert">{error}</p>}
         <div className="account-actions">
           <button className="primary-button" type="submit" disabled={submitting}>
-            {submitting ? '建立中…' : '建立帳號'}
+            {submitting ? '檢查中…' : '建立頭像'}
           </button>
           <button className="secondary-button" type="button" onClick={onBack} disabled={submitting}>
             返回帳號選擇
