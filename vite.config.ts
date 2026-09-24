@@ -64,7 +64,7 @@ export default defineConfig({
               request.destination === 'audio' || url.pathname.endsWith('.mp3'),
             handler: 'CacheFirst',
             options: {
-              cacheName: 'zhuyin-audio-v1',
+              cacheName: 'zhuyin-audio-v2',
               rangeRequests: true,
               cacheableResponse: { statuses: [0, 200] },
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 }

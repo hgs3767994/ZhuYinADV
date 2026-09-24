@@ -98,7 +98,7 @@ export function GameScreen({
   ) => {
     const waitingIndicator = window.setTimeout(
       () => setPreparingNext(true),
-      Math.max(150, minimumDelayMs)
+      minimumDelayMs + 150
     );
     try {
       await Promise.all([

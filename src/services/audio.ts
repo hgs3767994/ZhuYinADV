@@ -16,7 +16,8 @@ const SFX_FILES = {
   wrong: assetUrl('assets/audio/wrong.mp3')
 } as const;
 
-const AUDIO_CACHE_NAME = 'zhuyin-audio-v1';
+const AUDIO_CACHE_NAME = 'zhuyin-audio-v2';
+const PREVIOUS_AUDIO_CACHE_NAME = 'zhuyin-audio-v1';
 const BGM_FILE = assetUrl('assets/audio/bgm.mp3');
 const OFFLINE_AUDIO_FILES = [
   BGM_FILE,
@@ -25,6 +26,15 @@ const OFFLINE_AUDIO_FILES = [
     assetUrl(`assets/audio/zhuyin/${file}.mp3`)
   )
 ];
+const DECODED_AUDIO_FILES = [
+  ...Object.values(SFX_FILES),
+  ...Object.values(ZHUYIN_AUDIO_FILES).map((file) =>
+    assetUrl(`assets/audio/zhuyin/${file}.mp3`)
+  )
+];
+
+export const ADVENTURE_AUDIO_PREPARATION_STEPS =
+  OFFLINE_AUDIO_FILES.length + DECODED_AUDIO_FILES.length;
 
 type SafariWindow = Window & typeof globalThis & {
   webkitAudioContext?: typeof AudioContext;
@@ -39,7 +49,7 @@ class AudioService {
   private unlocked = false;
   private bgmStartTimer: number | null = null;
   private bgmRequested = false;
-  private offlinePreparation: Promise<void> | null = null;
+  private adventurePreparation: Promise<void> | null = null;
 
   constructor() {
     this.bgm.loop = true;
@@ -81,17 +91,25 @@ class AudioService {
     this.bgm.pause();
   }
 
-  prepareOfflineAudio(onProgress?: (percent: number) => void): Promise<void> {
-    if (this.offlinePreparation) return this.offlinePreparation;
-    if (!('caches' in window)) {
-      onProgress?.(100);
-      return Promise.resolve();
+  async hasMissingOfflineAudio(): Promise<boolean> {
+    if (!('caches' in window)) return true;
+    try {
+      const cache = await caches.open(AUDIO_CACHE_NAME);
+      for (const source of OFFLINE_AUDIO_FILES) {
+        if (!await cache.match(source)) return true;
+      }
+      return false;
+    } catch {
+      return true;
     }
+  }
 
-    this.offlinePreparation = this.cacheOfflineAudio(onProgress).finally(() => {
-      this.offlinePreparation = null;
+  prepareAdventureAudio(onProgress?: (completed: number, total: number) => void): Promise<void> {
+    if (this.adventurePreparation) return this.adventurePreparation;
+    this.adventurePreparation = this.prepareAllAudio(onProgress).finally(() => {
+      this.adventurePreparation = null;
     });
-    return this.offlinePreparation;
+    return this.adventurePreparation;
   }
 
   async prepareVoice(symbol: string): Promise<void> {
@@ -176,31 +194,53 @@ class AudioService {
     }
   }
 
-  private async cacheOfflineAudio(onProgress?: (percent: number) => void): Promise<void> {
-    const cache = await caches.open(AUDIO_CACHE_NAME);
+  private async prepareAllAudio(
+    onProgress?: (completed: number, total: number) => void
+  ): Promise<void> {
+    const total = ADVENTURE_AUDIO_PREPARATION_STEPS;
     let completed = 0;
-    onProgress?.(0);
+    onProgress?.(completed, total);
 
-    for (const source of OFFLINE_AUDIO_FILES) {
-      await waitForCriticalResources();
-      try {
+    if ('caches' in window) {
+      const cache = await caches.open(AUDIO_CACHE_NAME);
+      for (const source of OFFLINE_AUDIO_FILES) {
+        await waitForCriticalResources();
         const cached = await cache.match(source);
         if (!cached) {
           const existing = await caches.match(source);
           if (existing) {
             await cache.put(source, existing.clone());
           } else {
-            const response = await fetch(source);
+            const response = await this.withTimeout(fetch(source), 10_000);
             if (!response.ok) throw new Error(`Audio request failed: ${response.status}`);
             await cache.put(source, response.clone());
           }
         }
-      } catch {
-        // Individual files are retried on the next run; game-critical loads remain independent.
+        completed += 1;
+        onProgress?.(completed, total);
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 20));
+      }
+    } else {
+      completed = OFFLINE_AUDIO_FILES.length;
+      onProgress?.(completed, total);
+    }
+
+    await this.resumeContext();
+    for (const source of DECODED_AUDIO_FILES) {
+      await waitForCriticalResources();
+      try {
+        await this.withTimeout(this.loadBuffer(source), 8_000);
+      } catch (error) {
+        this.bufferPromises.delete(source);
+        throw error;
       }
       completed += 1;
-      onProgress?.(Math.round((completed / OFFLINE_AUDIO_FILES.length) * 100));
-      await new Promise<void>((resolve) => window.setTimeout(resolve, 40));
+      onProgress?.(completed, total);
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 15));
+    }
+
+    if ('caches' in window) {
+      await caches.delete(PREVIOUS_AUDIO_CACHE_NAME).catch(() => false);
     }
   }
 

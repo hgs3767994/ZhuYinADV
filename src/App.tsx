@@ -21,7 +21,10 @@ import type {
   GameResult,
   LeaderboardPage
 } from './game/types';
-import { audioService } from './services/audio';
+import {
+  ADVENTURE_AUDIO_PREPARATION_STEPS,
+  audioService
+} from './services/audio';
 import { parentSecurity } from './services/parentSecurity';
 import {
   createGuestProfile,
@@ -31,7 +34,7 @@ import {
 import { resultRepository } from './services/resultsRepository';
 import { assetUrl, preloadImage, resetImagePreloads } from './utils/assets';
 import { delay, isResourceTimeoutError, trackLoadingTasks } from './utils/loading';
-import { runCriticalResource, waitForCriticalResources } from './utils/resourcePriority';
+import { runCriticalResource } from './utils/resourcePriority';
 import {
   requestPortraitOrientation,
   type LockableScreenOrientation
@@ -75,6 +78,13 @@ interface PendingPageLoad {
   cancellable: boolean;
 }
 
+interface AdventurePreparationState {
+  progress: number;
+  checking: boolean;
+  missingAssets: boolean;
+  error: 'timeout' | 'network' | null;
+}
+
 type LeaderboardOrigin = 'menu' | 'result';
 type QuitConfirmationOrigin = 'back' | 'button';
 type GameHistoryPosition = 'base' | 'guard' | null;
@@ -98,6 +108,26 @@ const DIFFICULTY_IMAGES = [
   ...Object.values(DIFFICULTY_CONFIG).map((config) => config.image),
   assetUrl('assets/images/Backward_button.webp')
 ];
+
+const ADVENTURE_IMAGES = Array.from(new Set([
+  ...WELCOME_IMAGES,
+  ...MODE_IMAGES,
+  ...DIFFICULTY_IMAGES,
+  assetUrl('assets/images/bg_endless.webp'),
+  ...Object.values(DIFFICULTY_CONFIG).map((config) => config.background)
+]));
+
+async function hasMissingCachedImages(sources: string[]): Promise<boolean> {
+  if (!('caches' in window)) return true;
+  try {
+    for (const source of sources) {
+      if (!await caches.match(source)) return true;
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
 
 function isAppHistoryState(value: unknown): value is AppHistoryState {
   if (!value || typeof value !== 'object') return false;
@@ -138,12 +168,15 @@ export function App() {
   const quitConfirmationRef = useRef(false);
   const quitConfirmationOriginRef = useRef<QuitConfirmationOrigin | null>(null);
   const [pageLoading, setPageLoading] = useState<PageLoadingState | null>(null);
+  const [adventurePreparation, setAdventurePreparation] =
+    useState<AdventurePreparationState | null>(null);
   const pageLoadSequenceRef = useRef(0);
   const pendingPageLoadRef = useRef<PendingPageLoad | null>(null);
   const gameHistoryPositionRef = useRef<GameHistoryPosition>(null);
   const historyRestorationPendingRef = useRef(false);
   const completedExitPendingRef = useRef(false);
-  const adventurePreloadStartedRef = useRef(false);
+  const adventurePreparedRef = useRef(false);
+  const adventurePreparationRunningRef = useRef(false);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -158,6 +191,16 @@ export function App() {
   const navigate = useCallback((next: Screen) => {
     const state: AppHistoryState = { zhuyinApp: true, screen: next };
     history.pushState(state, '', location.href);
+    gameHistoryPositionRef.current = null;
+    applyScreen(next);
+  }, [applyScreen]);
+
+  const replaceScreen = useCallback((next: Screen) => {
+    history.replaceState(
+      { zhuyinApp: true, screen: next } satisfies AppHistoryState,
+      '',
+      location.href
+    );
     gameHistoryPositionRef.current = null;
     applyScreen(next);
   }, [applyScreen]);
@@ -268,25 +311,6 @@ export function App() {
     }
     if (screen === 'profiles' || screen === 'login') parentAuthorizedRef.current = false;
   }, [loadProfiles, screen]);
-
-  useEffect(() => {
-    if (screen !== 'mode' || adventurePreloadStartedRef.current) return;
-    adventurePreloadStartedRef.current = true;
-    window.setTimeout(() => {
-      void (async () => {
-        await Promise.allSettled(DIFFICULTY_IMAGES.map(preloadImage));
-        const gameBackgrounds = [
-        assetUrl('assets/images/bg_endless.webp'),
-        ...Object.values(DIFFICULTY_CONFIG).map((config) => config.background)
-        ];
-        for (const background of gameBackgrounds) {
-          await waitForCriticalResources();
-          await preloadImage(background).catch(() => undefined);
-        }
-        await audioService.prepareOfflineAudio();
-      })().catch(() => undefined);
-    }, 100);
-  }, [screen]);
 
   useEffect(() => {
     const pauseWhenHidden = () => {
@@ -417,16 +441,84 @@ export function App() {
     action();
   };
 
+  const prepareAdventure = async () => {
+    if (adventurePreparedRef.current) {
+      navigate('profiles');
+      return;
+    }
+    if (adventurePreparationRunningRef.current) return;
+    adventurePreparationRunningRef.current = true;
+    audioService.pauseBgm();
+    setAdventurePreparation({
+      progress: 0,
+      checking: true,
+      missingAssets: false,
+      error: null
+    });
+
+    try {
+      const [missingImages, missingAudio] = await Promise.all([
+        hasMissingCachedImages(ADVENTURE_IMAGES),
+        audioService.hasMissingOfflineAudio()
+      ]);
+      const missingAssets = missingImages || missingAudio;
+      const total = ADVENTURE_IMAGES.length + ADVENTURE_AUDIO_PREPARATION_STEPS;
+      let completedImages = 0;
+      setAdventurePreparation({
+        progress: 0,
+        checking: false,
+        missingAssets,
+        error: null
+      });
+
+      for (const source of ADVENTURE_IMAGES) {
+        await trackLoadingTasks([preloadImage(source)], () => undefined);
+        completedImages += 1;
+        setAdventurePreparation({
+          progress: Math.round((completedImages / total) * 100),
+          checking: false,
+          missingAssets,
+          error: null
+        });
+      }
+
+      await audioService.prepareAdventureAudio((completedAudio) => {
+        setAdventurePreparation({
+          progress: Math.round(((completedImages + completedAudio) / total) * 100),
+          checking: false,
+          missingAssets,
+          error: null
+        });
+      });
+
+      adventurePreparedRef.current = true;
+      setAdventurePreparation(null);
+      navigate('profiles');
+    } catch (error) {
+      resetImagePreloads(ADVENTURE_IMAGES);
+      setAdventurePreparation((current) => ({
+        progress: current?.progress ?? 0,
+        checking: false,
+        missingAssets: current?.missingAssets ?? true,
+        error: isResourceTimeoutError(error) ? 'timeout' : 'network'
+      }));
+    } finally {
+      adventurePreparationRunningRef.current = false;
+    }
+  };
+
+  const cancelAdventurePreparation = () => {
+    if (adventurePreparationRunningRef.current) return;
+    setAdventurePreparation(null);
+    audioService.playBgm();
+  };
+
   const enterMode = (profile: PlayerProfile) => {
     activeProfileRef.current = profile;
     setActiveProfile(profile);
     loadPageImages(MODE_IMAGES, () => {
-      history.replaceState(
-        { zhuyinApp: true, screen: 'profiles' } satisfies AppHistoryState,
-        '',
-        location.href
-      );
-      navigate('mode');
+      if (screenRef.current === 'profiles') navigate('mode');
+      else replaceScreen('mode');
     });
   };
 
@@ -450,28 +542,17 @@ export function App() {
 
   const continueParentAction = () => {
     parentAuthorizedRef.current = true;
-    const origin: Screen = parentAction === 'reset-password' ? 'login' : 'profiles';
     const destination: Screen = parentAction === 'create'
       ? 'create-profile'
       : parentAction === 'manage' ? 'parent-management' : 'reset-password';
-    history.replaceState(
-      { zhuyinApp: true, screen: origin } satisfies AppHistoryState,
-      '',
-      location.href
-    );
     if (destination === 'parent-management') void loadManagedProfiles();
-    navigate(destination);
+    replaceScreen(destination);
   };
 
   const completePasswordReset = () => {
     setPasswordResetNotice('密碼已更新，請使用新密碼登入。');
     parentAuthorizedRef.current = false;
-    history.replaceState(
-      { zhuyinApp: true, screen: 'login' } satisfies AppHistoryState,
-      '',
-      location.href
-    );
-    applyScreen('login');
+    history.back();
   };
 
   const startGame = (mode: GameMode, difficulty: Difficulty | null) => {
@@ -586,7 +667,7 @@ export function App() {
           <img className="title-image" src={assetUrl('assets/images/title.webp')} alt="小小注音冒險家" />
           <button
             className="start-button"
-            onClick={() => press(() => navigate('profiles'))}
+            onClick={() => press(() => void prepareAdventure())}
             aria-label="開始冒險"
           >
             <img src={assetUrl('assets/images/start_button.webp')} alt="" draggable="false" />
@@ -651,7 +732,7 @@ export function App() {
             : parentAction === 'create' ? '新增冒險家' : '重設使用者密碼'}
           onVerify={(pin) => parentSecurity.verifyPin(pin)}
           onSuccess={continueParentAction}
-          onRecovery={() => press(() => navigate('parent-recovery'))}
+          onRecovery={() => press(() => replaceScreen('parent-recovery'))}
           onBack={() => press(() => history.back())}
         />
       )}
@@ -829,6 +910,52 @@ export function App() {
                     <button className="secondary-button" onClick={cancelPageLoad}>返回</button>
                   )}
                   <button className="primary-button" onClick={retryPageLoad}>重新載入</button>
+                </div>
+              </>
+            )}
+          </div>
+        </aside>
+      )}
+
+      {adventurePreparation && (
+        <aside className="page-loading adventure-preparation" role="status" aria-live="polite">
+          <div className="page-loading-card">
+            <strong>{adventurePreparation.error
+              ? adventurePreparation.error === 'timeout' ? '準備時間較久' : '準備失敗'
+              : adventurePreparation.checking
+                ? '讀取中…'
+                : adventurePreparation.missingAssets
+                  ? '發現新冒險元件，正在為您準備中'
+                  : '讀取中…'}</strong>
+            {!adventurePreparation.error && (
+              <>
+                <div
+                  className="loading-progress-track"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={adventurePreparation.progress}
+                >
+                  <div
+                    className="loading-progress-fill"
+                    style={{ width: `${adventurePreparation.progress}%` }}
+                  />
+                </div>
+                <span>{adventurePreparation.progress}%</span>
+              </>
+            )}
+            {adventurePreparation.error && (
+              <>
+                <p>{adventurePreparation.error === 'timeout'
+                  ? '裝置準備冒險元件的時間較久，請再試一次。'
+                  : '尚有冒險元件未完成，請檢查網路連線後再試一次。'}</p>
+                <div className="modal-actions horizontal">
+                  <button className="secondary-button" onClick={cancelAdventurePreparation}>
+                    返回
+                  </button>
+                  <button className="primary-button" onClick={() => void prepareAdventure()}>
+                    重新準備
+                  </button>
                 </div>
               </>
             )}
