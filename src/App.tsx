@@ -5,6 +5,7 @@ import { ImageMenuButton } from './components/ImageMenuButton';
 import { Leaderboard } from './components/Leaderboard';
 import { Modal } from './components/Modal';
 import { CreateProfile } from './components/CreateProfile';
+import { ChangeParentPin } from './components/ChangeParentPin';
 import { ParentGate } from './components/ParentGate';
 import { ParentManagement } from './components/ParentManagement';
 import { ParentRecovery } from './components/ParentRecovery';
@@ -49,6 +50,7 @@ type Screen =
   | 'parent-gate'
   | 'parent-recovery'
   | 'parent-management'
+  | 'change-parent-pin'
   | 'reset-password'
   | 'mode'
   | 'difficulty'
@@ -80,8 +82,6 @@ interface PendingPageLoad {
 
 interface AdventurePreparationState {
   progress: number;
-  checking: boolean;
-  missingAssets: boolean;
   error: 'timeout' | 'network' | null;
 }
 
@@ -116,16 +116,22 @@ const ADVENTURE_IMAGES = Array.from(new Set([
   assetUrl('assets/images/bg_endless.webp'),
   ...Object.values(DIFFICULTY_CONFIG).map((config) => config.background)
 ]));
+const ADVENTURE_ASSET_VERSION = '1';
+const ADVENTURE_ASSET_VERSION_KEY = 'zhuyin-adventure-asset-version';
 
-async function hasMissingCachedImages(sources: string[]): Promise<boolean> {
-  if (!('caches' in window)) return true;
+function hasCurrentAdventureAssetVersion(): boolean {
   try {
-    for (const source of sources) {
-      if (!await caches.match(source)) return true;
-    }
-    return false;
+    return localStorage.getItem(ADVENTURE_ASSET_VERSION_KEY) === ADVENTURE_ASSET_VERSION;
   } catch {
-    return true;
+    return false;
+  }
+}
+
+function rememberAdventureAssetVersion(): void {
+  try {
+    localStorage.setItem(ADVENTURE_ASSET_VERSION_KEY, ADVENTURE_ASSET_VERSION);
+  } catch {
+    // Storage can be unavailable in restrictive browser modes; cache checks still protect audio.
   }
 }
 
@@ -135,7 +141,8 @@ function isAppHistoryState(value: unknown): value is AppHistoryState {
   return state.zhuyinApp === true &&
     [
       'welcome', 'profiles', 'create-profile', 'login', 'parent-setup', 'parent-gate',
-      'parent-recovery', 'parent-management', 'reset-password', 'mode', 'difficulty', 'game'
+      'parent-recovery', 'parent-management', 'change-parent-pin', 'reset-password',
+      'mode', 'difficulty', 'game'
     ]
       .includes(state.screen ?? '');
 }
@@ -156,6 +163,7 @@ export function App() {
   const parentAuthorizedRef = useRef(false);
   const [managedProfiles, setManagedProfiles] = useState<PlayerProfile[]>([]);
   const [managedProfilesLoading, setManagedProfilesLoading] = useState(false);
+  const [parentManagementNotice, setParentManagementNotice] = useState<string | null>(null);
   const [passwordResetNotice, setPasswordResetNotice] = useState<string | null>(null);
   const [gameSetup, setGameSetup] = useState<GameSetup>({ mode: 'normal', difficulty: 'easy' });
   const [runId, setRunId] = useState(0);
@@ -335,7 +343,7 @@ export function App() {
       const destination = isAppHistoryState(event.state) ? event.state : null;
       if (
         destination &&
-        ['parent-management', 'reset-password'].includes(destination.screen) &&
+        ['parent-management', 'change-parent-pin', 'reset-password'].includes(destination.screen) &&
         !parentAuthorizedRef.current
       ) {
         const fallback = selectedProfileRef.current ? 'login' : 'profiles';
@@ -448,26 +456,29 @@ export function App() {
     }
     if (adventurePreparationRunningRef.current) return;
     adventurePreparationRunningRef.current = true;
-    audioService.pauseBgm();
-    setAdventurePreparation({
-      progress: 0,
-      checking: true,
-      missingAssets: false,
-      error: null
-    });
 
     try {
-      const [missingImages, missingAudio] = await Promise.all([
-        hasMissingCachedImages(ADVENTURE_IMAGES),
-        audioService.hasMissingOfflineAudio()
-      ]);
-      const missingAssets = missingImages || missingAudio;
+      const missingAudio = await audioService.hasMissingOfflineAudio();
+      const missingAssets = !hasCurrentAdventureAssetVersion() || missingAudio;
+      if (!missingAssets) {
+        adventurePreparedRef.current = true;
+        navigate('profiles');
+        void (async () => {
+          for (const source of ADVENTURE_IMAGES) {
+            await preloadImage(source);
+          }
+          await audioService.prepareAdventureAudio();
+        })().catch((error: unknown) => {
+          console.warn('無法在背景完成冒險元件預熱', error);
+        });
+        return;
+      }
+
+      audioService.pauseBgm();
       const total = ADVENTURE_IMAGES.length + ADVENTURE_AUDIO_PREPARATION_STEPS;
       let completedImages = 0;
       setAdventurePreparation({
         progress: 0,
-        checking: false,
-        missingAssets,
         error: null
       });
 
@@ -476,8 +487,6 @@ export function App() {
         completedImages += 1;
         setAdventurePreparation({
           progress: Math.round((completedImages / total) * 100),
-          checking: false,
-          missingAssets,
           error: null
         });
       }
@@ -485,12 +494,11 @@ export function App() {
       await audioService.prepareAdventureAudio((completedAudio) => {
         setAdventurePreparation({
           progress: Math.round(((completedImages + completedAudio) / total) * 100),
-          checking: false,
-          missingAssets,
           error: null
         });
       });
 
+      rememberAdventureAssetVersion();
       adventurePreparedRef.current = true;
       setAdventurePreparation(null);
       navigate('profiles');
@@ -498,8 +506,6 @@ export function App() {
       resetImagePreloads(ADVENTURE_IMAGES);
       setAdventurePreparation((current) => ({
         progress: current?.progress ?? 0,
-        checking: false,
-        missingAssets: current?.missingAssets ?? true,
         error: isResourceTimeoutError(error) ? 'timeout' : 'network'
       }));
     } finally {
@@ -546,7 +552,13 @@ export function App() {
       ? 'create-profile'
       : parentAction === 'manage' ? 'parent-management' : 'reset-password';
     if (destination === 'parent-management') void loadManagedProfiles();
+    setParentManagementNotice(null);
     replaceScreen(destination);
+  };
+
+  const completeParentPinChange = () => {
+    setParentManagementNotice('家長 PIN 已變更。');
+    history.back();
   };
 
   const completePasswordReset = () => {
@@ -753,6 +765,19 @@ export function App() {
             profileRepository.scheduleDeletion(profile.id, confirmationName)}
           onRestore={(profile) => profileRepository.restore(profile.id)}
           onRefresh={loadManagedProfiles}
+          onChangePin={() => press(() => {
+            setParentManagementNotice(null);
+            navigate('change-parent-pin');
+          })}
+          notice={parentManagementNotice}
+          onBack={() => press(() => history.back())}
+        />
+      )}
+
+      {screen === 'change-parent-pin' && (
+        <ChangeParentPin
+          onChange={(currentPin, newPin) => parentSecurity.changePin(currentPin, newPin)}
+          onComplete={completeParentPinChange}
           onBack={() => press(() => history.back())}
         />
       )}
@@ -922,11 +947,7 @@ export function App() {
           <div className="page-loading-card">
             <strong>{adventurePreparation.error
               ? adventurePreparation.error === 'timeout' ? '準備時間較久' : '準備失敗'
-              : adventurePreparation.checking
-                ? '讀取中…'
-                : adventurePreparation.missingAssets
-                  ? '發現新冒險元件，正在為您準備中'
-                  : '讀取中…'}</strong>
+              : '發現新冒險元件，正在為您準備中'}</strong>
             {!adventurePreparation.error && (
               <>
                 <div

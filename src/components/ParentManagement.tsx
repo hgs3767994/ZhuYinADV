@@ -8,6 +8,8 @@ interface ParentManagementProps {
   onDelete: (profile: PlayerProfile, confirmationName: string) => Promise<void>;
   onRestore: (profile: PlayerProfile) => Promise<void>;
   onRefresh: () => Promise<void>;
+  onChangePin: () => void;
+  notice?: string | null;
   onBack: () => void;
 }
 
@@ -17,6 +19,8 @@ export function ParentManagement({
   onDelete,
   onRestore,
   onRefresh,
+  onChangePin,
+  notice,
   onBack
 }: ParentManagementProps) {
   const [deleting, setDeleting] = useState<PlayerProfile | null>(null);
@@ -60,6 +64,7 @@ export function ParentManagement({
       <section className="account-panel management-panel">
         <h1>家長管理</h1>
         <p className="account-hint">待刪除帳號會保留 7 天，期間可以恢復。</p>
+        {notice && <p className="success-message" role="status">{notice}</p>}
         {error && <p className="error-message" role="alert">{error}</p>}
 
         {deleting ? (
@@ -105,7 +110,12 @@ export function ParentManagement({
           </div>
         )}
 
-        {!deleting && <button className="secondary-button" onClick={onBack}>返回帳號選擇</button>}
+        {!deleting && (
+          <div className="account-actions management-actions">
+            <button className="secondary-button" onClick={onChangePin}>變更家長 PIN 碼</button>
+            <button className="secondary-button" onClick={onBack}>返回帳號選擇</button>
+          </div>
+        )}
       </section>
     </main>
   );

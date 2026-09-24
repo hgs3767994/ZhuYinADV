@@ -26,6 +26,7 @@ export interface ParentSecurityService {
   isConfigured(): Promise<boolean>;
   setup(pin: string): Promise<string>;
   verifyPin(pin: string): Promise<ParentPinResult>;
+  changePin(currentPin: string, newPin: string): Promise<ParentPinResult>;
   resetWithRecovery(recoveryCode: string, newPin: string): Promise<string>;
 }
 
@@ -106,6 +107,26 @@ class IndexedDbParentSecurityService implements ParentSecurityService {
         : MAX_FAILED_ATTEMPTS - record.failedAttempts,
       lockedUntil: record.lockedUntil
     };
+  }
+
+  async changePin(currentPin: string, newPin: string): Promise<ParentPinResult> {
+    validatePin(currentPin);
+    validatePin(newPin);
+    const verification = await this.verifyPin(currentPin);
+    if (!verification.ok) return verification;
+
+    const record = await this.read();
+    if (!record) throw new Error('尚未設定家長 PIN');
+    if (await verifyCredential(newPin, record.pinCredential)) {
+      throw new Error('新的家長 PIN 不可與目前 PIN 相同');
+    }
+
+    record.pinCredential = await createCredential(newPin);
+    record.failedAttempts = 0;
+    record.lockedUntil = null;
+    record.updatedAt = new Date().toISOString();
+    await this.write(record);
+    return { ok: true, remainingAttempts: MAX_FAILED_ATTEMPTS, lockedUntil: null };
   }
 
   async resetWithRecovery(recoveryCode: string, newPin: string): Promise<string> {
