@@ -40,7 +40,6 @@ export function CreateProfile({ onCreate, onBack }: CreateProfileProps) {
             value={name}
             onChange={(event) => setName(event.target.value)}
             autoComplete="username"
-            maxLength={20}
             required
           />
         </label>
@@ -68,7 +67,9 @@ export function CreateProfile({ onCreate, onBack }: CreateProfileProps) {
             required
           />
         </label>
-        <p className="field-note">密碼至少 4 個字元，只保存在這台裝置上。</p>
+        <p className="field-note">
+          名稱可使用中英文、數字、特殊符號與 Emoji，最多 20 個字元；密碼至少 4 個字元。
+        </p>
         {error && <p className="error-message" role="alert">{error}</p>}
         <div className="account-actions">
           <button className="primary-button" type="submit" disabled={submitting}>

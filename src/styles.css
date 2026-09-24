@@ -302,6 +302,120 @@ button:disabled {
   text-align: center;
 }
 
+.success-message {
+  margin: 0;
+  color: #86efac;
+  text-align: center;
+}
+
+.warning-copy {
+  color: #fde68a;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.recovery-panel {
+  justify-content: center;
+  gap: 18px;
+}
+
+.recovery-code {
+  display: block;
+  width: 100%;
+  padding: 18px 10px;
+  border: 2px dashed #facc15;
+  border-radius: 14px;
+  background: #111827;
+  color: #fef08a;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: clamp(1.15rem, 5.5vw, 1.55rem);
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-align: center;
+  user-select: all;
+}
+
+.management-panel {
+  gap: 14px;
+}
+
+.management-list {
+  display: flex;
+  width: 100%;
+  margin: 8px 0 18px;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.management-row {
+  display: grid;
+  width: 100%;
+  padding: 10px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #475569;
+  border-radius: 14px;
+  background: #1e293b;
+  text-align: left;
+}
+
+.management-row div {
+  min-width: 0;
+}
+
+.management-row strong,
+.management-row small {
+  display: block;
+}
+
+.management-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.management-row small {
+  margin-top: 4px;
+  color: #fca5a5;
+  line-height: 1.35;
+}
+
+.compact-button {
+  width: auto;
+  padding: 9px 11px;
+}
+
+.delete-confirmation {
+  display: flex;
+  width: 100%;
+  margin: auto 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.delete-confirmation h2 {
+  margin: 0;
+  color: #fecaca;
+}
+
+.delete-confirmation label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #dbeafe;
+  font-weight: 800;
+}
+
+.delete-confirmation input {
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 2px solid #64748b;
+  border-radius: 12px;
+  font-size: 1rem;
+}
+
 .active-profile-badge {
   position: absolute;
   z-index: 2;

@@ -5,9 +5,14 @@ import { ImageMenuButton } from './components/ImageMenuButton';
 import { Leaderboard } from './components/Leaderboard';
 import { Modal } from './components/Modal';
 import { CreateProfile } from './components/CreateProfile';
+import { ParentGate } from './components/ParentGate';
+import { ParentManagement } from './components/ParentManagement';
+import { ParentRecovery } from './components/ParentRecovery';
+import { ParentSetup } from './components/ParentSetup';
 import { ProfileAvatar } from './components/ProfileAvatar';
 import { ProfileLogin } from './components/ProfileLogin';
 import { ProfileSelection } from './components/ProfileSelection';
+import { ResetProfilePassword } from './components/ResetProfilePassword';
 import { ResultModal } from './components/ResultModal';
 import { APP_VERSION, DIFFICULTY_CONFIG } from './game/config';
 import type {
@@ -17,6 +22,7 @@ import type {
   LeaderboardPage
 } from './game/types';
 import { audioService } from './services/audio';
+import { parentSecurity } from './services/parentSecurity';
 import {
   createGuestProfile,
   profileRepository,
@@ -31,7 +37,19 @@ import {
   type LockableScreenOrientation
 } from './utils/orientation';
 
-type Screen = 'welcome' | 'profiles' | 'create-profile' | 'login' | 'mode' | 'difficulty' | 'game';
+type Screen =
+  | 'welcome'
+  | 'profiles'
+  | 'create-profile'
+  | 'login'
+  | 'parent-setup'
+  | 'parent-gate'
+  | 'parent-recovery'
+  | 'parent-management'
+  | 'reset-password'
+  | 'mode'
+  | 'difficulty'
+  | 'game';
 
 interface GameSetup {
   mode: GameMode;
@@ -60,6 +78,7 @@ interface PendingPageLoad {
 type LeaderboardOrigin = 'menu' | 'result';
 type QuitConfirmationOrigin = 'back' | 'button';
 type GameHistoryPosition = 'base' | 'guard' | null;
+type ParentAction = 'create' | 'manage' | 'reset-password';
 
 const WELCOME_IMAGES = [
   assetUrl('assets/images/start_banner.webp'),
@@ -84,7 +103,10 @@ function isAppHistoryState(value: unknown): value is AppHistoryState {
   if (!value || typeof value !== 'object') return false;
   const state = value as Partial<AppHistoryState>;
   return state.zhuyinApp === true &&
-    ['welcome', 'profiles', 'create-profile', 'login', 'mode', 'difficulty', 'game']
+    [
+      'welcome', 'profiles', 'create-profile', 'login', 'parent-setup', 'parent-gate',
+      'parent-recovery', 'parent-management', 'reset-password', 'mode', 'difficulty', 'game'
+    ]
       .includes(state.screen ?? '');
 }
 
@@ -96,8 +118,15 @@ export function App() {
   const [profilesLoading, setProfilesLoading] = useState(false);
   const [profilesError, setProfilesError] = useState<string | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<PlayerProfile | null>(null);
+  const selectedProfileRef = useRef<PlayerProfile | null>(null);
   const [activeProfile, setActiveProfile] = useState<PlayerProfile | null>(null);
   const activeProfileRef = useRef<PlayerProfile | null>(null);
+  const [parentConfigured, setParentConfigured] = useState(false);
+  const [parentAction, setParentAction] = useState<ParentAction>('manage');
+  const parentAuthorizedRef = useRef(false);
+  const [managedProfiles, setManagedProfiles] = useState<PlayerProfile[]>([]);
+  const [managedProfilesLoading, setManagedProfilesLoading] = useState(false);
+  const [passwordResetNotice, setPasswordResetNotice] = useState<string | null>(null);
   const [gameSetup, setGameSetup] = useState<GameSetup>({ mode: 'normal', difficulty: 'easy' });
   const [runId, setRunId] = useState(0);
   const [result, setResult] = useState<GameResult | null>(null);
@@ -137,11 +166,25 @@ export function App() {
     setProfilesLoading(true);
     setProfilesError(null);
     try {
-      setProfiles(await profileRepository.list());
+      const [nextProfiles, configured] = await Promise.all([
+        profileRepository.list(),
+        parentSecurity.isConfigured()
+      ]);
+      setProfiles(nextProfiles);
+      setParentConfigured(configured);
     } catch {
       setProfilesError('無法讀取這台裝置上的帳號');
     } finally {
       setProfilesLoading(false);
+    }
+  }, []);
+
+  const loadManagedProfiles = useCallback(async () => {
+    setManagedProfilesLoading(true);
+    try {
+      setManagedProfiles(await profileRepository.listManaged());
+    } finally {
+      setManagedProfilesLoading(false);
     }
   }, []);
 
@@ -219,9 +262,11 @@ export function App() {
       if (activeProfile?.isGuest) resultRepository.clearGuestResults();
       activeProfileRef.current = null;
       setActiveProfile(null);
+      selectedProfileRef.current = null;
       setSelectedProfile(null);
       void loadProfiles();
     }
+    if (screen === 'profiles' || screen === 'login') parentAuthorizedRef.current = false;
   }, [loadProfiles, screen]);
 
   useEffect(() => {
@@ -264,6 +309,20 @@ export function App() {
       pendingPageLoadRef.current = null;
       setPageLoading(null);
       const destination = isAppHistoryState(event.state) ? event.state : null;
+      if (
+        destination &&
+        ['parent-management', 'reset-password'].includes(destination.screen) &&
+        !parentAuthorizedRef.current
+      ) {
+        const fallback = selectedProfileRef.current ? 'login' : 'profiles';
+        history.replaceState(
+          { zhuyinApp: true, screen: fallback } satisfies AppHistoryState,
+          '',
+          location.href
+        );
+        applyScreen(fallback);
+        return;
+      }
       if (
         destination &&
         ['mode', 'difficulty', 'game'].includes(destination.screen) &&
@@ -382,6 +441,37 @@ export function App() {
     const profile = await profileRepository.authenticate(selectedProfile.id, password);
     if (!profile) throw new Error('密碼不正確');
     enterMode(profile);
+  };
+
+  const beginParentAction = (action: ParentAction) => {
+    setParentAction(action);
+    navigate(parentConfigured ? 'parent-gate' : 'parent-setup');
+  };
+
+  const continueParentAction = () => {
+    parentAuthorizedRef.current = true;
+    const origin: Screen = parentAction === 'reset-password' ? 'login' : 'profiles';
+    const destination: Screen = parentAction === 'create'
+      ? 'create-profile'
+      : parentAction === 'manage' ? 'parent-management' : 'reset-password';
+    history.replaceState(
+      { zhuyinApp: true, screen: origin } satisfies AppHistoryState,
+      '',
+      location.href
+    );
+    if (destination === 'parent-management') void loadManagedProfiles();
+    navigate(destination);
+  };
+
+  const completePasswordReset = () => {
+    setPasswordResetNotice('密碼已更新，請使用新密碼登入。');
+    parentAuthorizedRef.current = false;
+    history.replaceState(
+      { zhuyinApp: true, screen: 'login' } satisfies AppHistoryState,
+      '',
+      location.href
+    );
+    applyScreen('login');
   };
 
   const startGame = (mode: GameMode, difficulty: Difficulty | null) => {
@@ -511,11 +601,15 @@ export function App() {
           loading={profilesLoading}
           error={profilesError}
           onSelect={(profile) => press(() => {
+            selectedProfileRef.current = profile;
             setSelectedProfile(profile);
+            setPasswordResetNotice(null);
             navigate('login');
           })}
-          onCreate={() => press(() => navigate('create-profile'))}
+          onCreate={() => press(() => beginParentAction('create'))}
           onGuest={() => press(() => enterMode(createGuestProfile()))}
+          parentConfigured={parentConfigured}
+          onParentManagement={() => press(() => beginParentAction('manage'))}
           onBack={() => press(() => history.back())}
           onRetry={() => void loadProfiles()}
         />
@@ -532,6 +626,61 @@ export function App() {
         <ProfileLogin
           profile={selectedProfile}
           onLogin={loginProfile}
+          notice={passwordResetNotice}
+          onForgotPassword={() => press(() => beginParentAction('reset-password'))}
+          onBack={() => press(() => history.back())}
+        />
+      )}
+
+      {screen === 'parent-setup' && (
+        <ParentSetup
+          onSetup={async (pin) => {
+            const code = await parentSecurity.setup(pin);
+            setParentConfigured(true);
+            return code;
+          }}
+          onComplete={continueParentAction}
+          onBack={() => press(() => history.back())}
+        />
+      )}
+
+      {screen === 'parent-gate' && (
+        <ParentGate
+          title={parentAction === 'manage'
+            ? '進入家長管理'
+            : parentAction === 'create' ? '新增冒險家' : '重設使用者密碼'}
+          onVerify={(pin) => parentSecurity.verifyPin(pin)}
+          onSuccess={continueParentAction}
+          onRecovery={() => press(() => navigate('parent-recovery'))}
+          onBack={() => press(() => history.back())}
+        />
+      )}
+
+      {screen === 'parent-recovery' && (
+        <ParentRecovery
+          onReset={(code, pin) => parentSecurity.resetWithRecovery(code, pin)}
+          onComplete={continueParentAction}
+          onBack={() => press(() => history.back())}
+        />
+      )}
+
+      {screen === 'parent-management' && (
+        <ParentManagement
+          profiles={managedProfiles}
+          loading={managedProfilesLoading}
+          onDelete={(profile, confirmationName) =>
+            profileRepository.scheduleDeletion(profile.id, confirmationName)}
+          onRestore={(profile) => profileRepository.restore(profile.id)}
+          onRefresh={loadManagedProfiles}
+          onBack={() => press(() => history.back())}
+        />
+      )}
+
+      {screen === 'reset-password' && selectedProfile && (
+        <ResetProfilePassword
+          profile={selectedProfile}
+          onReset={(password) => profileRepository.resetPassword(selectedProfile.id, password)}
+          onComplete={completePasswordReset}
           onBack={() => press(() => history.back())}
         />
       )}

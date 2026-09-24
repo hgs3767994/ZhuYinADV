@@ -4,11 +4,19 @@ import { ProfileAvatar } from './ProfileAvatar';
 
 interface ProfileLoginProps {
   profile: PlayerProfile;
+  notice?: string | null;
   onLogin: (password: string) => Promise<void>;
+  onForgotPassword: () => void;
   onBack: () => void;
 }
 
-export function ProfileLogin({ profile, onLogin, onBack }: ProfileLoginProps) {
+export function ProfileLogin({
+  profile,
+  notice,
+  onLogin,
+  onForgotPassword,
+  onBack
+}: ProfileLoginProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -32,6 +40,7 @@ export function ProfileLogin({ profile, onLogin, onBack }: ProfileLoginProps) {
       <form className="account-panel account-form login-form" onSubmit={submit}>
         <ProfileAvatar profile={profile} size="large" />
         <h1>{profile.name}</h1>
+        {notice && <p className="success-message" role="status">{notice}</p>}
         <label>
           輸入密碼
           <input
@@ -48,6 +57,9 @@ export function ProfileLogin({ profile, onLogin, onBack }: ProfileLoginProps) {
         <div className="account-actions">
           <button className="primary-button" type="submit" disabled={submitting}>
             {submitting ? '確認中…' : '進入冒險'}
+          </button>
+          <button className="text-button" type="button" onClick={onForgotPassword}>
+            忘記密碼
           </button>
           <button className="secondary-button" type="button" onClick={onBack} disabled={submitting}>
             返回帳號選擇

@@ -8,6 +8,8 @@ interface ProfileSelectionProps {
   onSelect: (profile: PlayerProfile) => void;
   onCreate: () => void;
   onGuest: () => void;
+  parentConfigured: boolean;
+  onParentManagement: () => void;
   onBack: () => void;
   onRetry: () => void;
 }
@@ -19,6 +21,8 @@ export function ProfileSelection({
   onSelect,
   onCreate,
   onGuest,
+  parentConfigured,
+  onParentManagement,
   onBack,
   onRetry
 }: ProfileSelectionProps) {
@@ -54,6 +58,9 @@ export function ProfileSelection({
         <div className="account-actions">
           <button className="primary-button" onClick={onCreate}>新增帳號</button>
           <button className="secondary-button" onClick={onGuest}>訪客進入</button>
+          <button className="secondary-button" onClick={onParentManagement}>
+            {parentConfigured ? '家長管理' : '設定家長 PIN'}
+          </button>
           <button className="text-button" onClick={onBack}>返回歡迎頁</button>
         </div>
       </section>
