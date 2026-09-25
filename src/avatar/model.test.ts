@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_AVATAR_RECIPE,
   FACE_OPTIONS,
+  HAIR_OPTIONS,
   avatarRecipeFromSeed,
   normalizeAvatarRecipe,
   randomAvatarRecipe,
@@ -30,6 +31,24 @@ describe('avatar recipes', () => {
   it('migrates the retired soft-square face without changing other choices', () => {
     const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, face: 'soft-square' } as unknown as AvatarRecipeV2;
     expect(normalizeAvatarRecipe(legacyV2).face).toBe('square02');
+  });
+
+  it('offers the thirteen selected hairstyles', () => {
+    expect(HAIR_OPTIONS).toEqual([
+      'a01', 'a02', 'a03', 'a04', 'a05', 'a06', 'a07', 'a08',
+      'b01', 'b02', 'b05', 'b06', 'b07'
+    ]);
+  });
+
+  it('migrates every retired procedural hairstyle to a selected SVG hairstyle', () => {
+    const mappings = {
+      short: 'a01', bob: 'a05', curly: 'a05', 'twin-tails': 'a05',
+      'side-sweep': 'a06', spiky: 'a08'
+    } as const;
+    for (const [hair, expected] of Object.entries(mappings)) {
+      const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, hair } as unknown as AvatarRecipeV2;
+      expect(normalizeAvatarRecipe(legacyV2).hair).toBe(expected);
+    }
   });
 
   it('creates complete random recipes', () => {

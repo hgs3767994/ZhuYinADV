@@ -50,7 +50,26 @@ const CATEGORIES: Category[] = [
     }
   },
   { key: 'skinTone', label: '膚色', options: SKIN_TONE_OPTIONS, optionLabels: { peach: '粉嫩', warm: '暖膚', golden: '蜜糖', tan: '小麥', deep: '深膚' } },
-  { key: 'hair', label: '髮型', options: HAIR_OPTIONS, optionLabels: { short: '短髮', bob: '鮑伯頭', curly: '捲髮', 'twin-tails': '雙馬尾', 'side-sweep': '側分', spiky: '活力尖髮' } },
+  {
+    key: 'hair',
+    label: '髮型',
+    options: HAIR_OPTIONS,
+    optionLabels: {
+      a01: '瀏海短髮',
+      a02: '刺蝟短髮',
+      a03: '經典側分',
+      a04: '蓬鬆後梳',
+      a05: '中長捲髮',
+      a06: '斜瀏海',
+      a07: '蓬鬆中分',
+      a08: '活力碎髮',
+      b01: '俐落平頭',
+      b02: '復古側分',
+      b05: '整齊後梳',
+      b06: '尖刺短髮',
+      b07: '短捲髮'
+    }
+  },
   { key: 'hairColor', label: '髮色', options: HAIR_COLOR_OPTIONS, optionLabels: { black: '墨黑', brown: '深棕', chestnut: '栗子', golden: '金黃', blue: '海洋藍', pink: '莓果粉' } },
   { key: 'brows', label: '眉毛', options: BROW_OPTIONS, optionLabels: { soft: '柔和眉', straight: '一字眉', arched: '彎彎眉', cheerful: '開心眉' } },
   { key: 'eyes', label: '眼睛', options: EYE_OPTIONS, optionLabels: { round: '圓眼', smile: '笑眼', sparkle: '星星眼', gentle: '溫柔眼', bright: '亮亮眼', wink: '眨眼' } },

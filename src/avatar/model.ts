@@ -9,7 +9,10 @@ export const FACE_OPTIONS = [
   'long02'
 ] as const;
 export const SKIN_TONE_OPTIONS = ['peach', 'warm', 'golden', 'tan', 'deep'] as const;
-export const HAIR_OPTIONS = ['short', 'bob', 'curly', 'twin-tails', 'side-sweep', 'spiky'] as const;
+export const HAIR_OPTIONS = [
+  'a01', 'a02', 'a03', 'a04', 'a05', 'a06', 'a07', 'a08',
+  'b01', 'b02', 'b05', 'b06', 'b07'
+] as const;
 export const HAIR_COLOR_OPTIONS = ['black', 'brown', 'chestnut', 'golden', 'blue', 'pink'] as const;
 export const BROW_OPTIONS = ['soft', 'straight', 'arched', 'cheerful'] as const;
 export const EYE_OPTIONS = ['round', 'smile', 'sparkle', 'gentle', 'bright', 'wink'] as const;
@@ -58,7 +61,7 @@ export const DEFAULT_AVATAR_RECIPE: AvatarRecipeV2 = {
   version: 2,
   face: 'round',
   skinTone: 'warm',
-  hair: 'short',
+  hair: 'a01',
   hairColor: 'brown',
   brows: 'soft',
   eyes: 'round',
@@ -128,7 +131,20 @@ export function normalizeAvatarRecipe(recipe: AvatarRecipe): AvatarRecipeV2 {
       ? storedFace as FaceOption
       : DEFAULT_AVATAR_RECIPE.face;
 
-  return { ...recipe, face };
+  const storedHair = recipe.hair as string;
+  const legacyHair: Record<string, HairOption> = {
+    short: 'a01',
+    bob: 'a05',
+    curly: 'a05',
+    'twin-tails': 'a05',
+    'side-sweep': 'a06',
+    spiky: 'a08'
+  };
+  const hair = HAIR_OPTIONS.includes(storedHair as HairOption)
+    ? storedHair as HairOption
+    : legacyHair[storedHair] ?? DEFAULT_AVATAR_RECIPE.hair;
+
+  return { ...recipe, face, hair };
 }
 
 export function randomAvatarRecipe(): AvatarRecipeV2 {

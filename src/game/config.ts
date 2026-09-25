@@ -1,7 +1,7 @@
 import type { Difficulty } from './types';
 import { assetUrl } from '../utils/assets';
 
-export const APP_VERSION = '3.5.0';
+export const APP_VERSION = '3.6.0';
 
 export const ZHUYIN_LIST = [
   'ㄅ', 'ㄆ', 'ㄇ', 'ㄈ', 'ㄉ', 'ㄊ', 'ㄋ', 'ㄌ', 'ㄍ', 'ㄎ', 'ㄏ',

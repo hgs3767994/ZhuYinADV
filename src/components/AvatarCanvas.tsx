@@ -1,6 +1,11 @@
 import { useId } from 'react';
-import { faceAssetUrl } from '../avatar/assets';
-import type { AvatarRecipeV2, HairColorOption, SkinToneOption } from '../avatar/model';
+import { faceAssetUrl, hairAssetUrl, hairHasBackLayer } from '../avatar/assets';
+import type {
+  AvatarRecipeV2,
+  FaceOption,
+  HairColorOption,
+  SkinToneOption
+} from '../avatar/model';
 
 interface AvatarCanvasProps {
   recipe: AvatarRecipeV2;
@@ -25,60 +30,56 @@ export const HAIR_COLORS: Record<HairColorOption, string> = {
   pink: '#b84f78'
 };
 
-function HairBack({ recipe }: { recipe: AvatarRecipeV2 }) {
-  const color = HAIR_COLORS[recipe.hairColor];
-  switch (recipe.hair) {
-    case 'bob':
-      return <path d="M113 256c0-122 58-189 143-189s143 67 143 189v118c-35 24-251 24-286 0Z" fill={color} />;
-    case 'curly':
-      return (
-        <g fill={color}>
-          <circle cx="141" cy="182" r="54" /><circle cx="184" cy="118" r="57" />
-          <circle cx="256" cy="91" r="63" /><circle cx="328" cy="118" r="57" />
-          <circle cx="371" cy="182" r="54" /><circle cx="132" cy="263" r="48" />
-          <circle cx="380" cy="263" r="48" />
-        </g>
-      );
-    case 'twin-tails':
-      return (
-        <g fill={color}>
-          <path d="M151 132c-61 9-93 65-82 122 6 29 24 50 48 63 33-41 50-105 34-185Z" />
-          <path d="M361 132c61 9 93 65 82 122-6 29-24 50-48 63-33-41-50-105-34-185Z" />
-          <circle cx="139" cy="172" r="29" fill="#f59e0b" />
-          <circle cx="373" cy="172" r="29" fill="#f59e0b" />
-        </g>
-      );
-    case 'side-sweep':
-      return <path d="M105 250C105 119 171 60 270 70c92 9 137 82 128 198l-21 112H130Z" fill={color} />;
-    case 'spiky':
-      return <path d="m111 245 20-96 27 19 12-76 42 29 37-70 30 69 55-52 6 75 62-15-28 93 18 73H122Z" fill={color} />;
-    default:
-      return <path d="M117 250C117 128 173 72 256 72s139 56 139 178l-20 90H137Z" fill={color} />;
-  }
+const HEAD_TRANSFORM = 'matrix(.65 0 0 .78 89.6 80)';
+
+const HAIR_FACE_SCALE_X: Record<FaceOption, number> = {
+  round: 1,
+  oval: 0.94,
+  diamond: 0.94,
+  square01: 1,
+  square02: 1,
+  square03: 1,
+  long01: 0.92,
+  long02: 0.88
+};
+
+function centeredScaleX(scaleX: number): string {
+  return `matrix(${scaleX} 0 0 1 ${256 * (1 - scaleX)} 0)`;
 }
 
-function HairFront({ recipe }: { recipe: AvatarRecipeV2 }) {
-  const color = HAIR_COLORS[recipe.hairColor];
-  switch (recipe.hair) {
-    case 'bob':
-      return <path d="M137 205c8-105 62-139 124-139 70 0 118 45 126 140-55-3-89-28-111-61-24 39-72 62-139 60Z" fill={color} />;
-    case 'curly':
-      return (
-        <g fill={color}>
-          <circle cx="159" cy="151" r="48" /><circle cx="205" cy="116" r="49" />
-          <circle cx="261" cy="107" r="50" /><circle cx="315" cy="122" r="48" />
-          <circle cx="354" cy="158" r="45" />
-        </g>
-      );
-    case 'twin-tails':
-      return <path d="M132 207c7-96 55-141 124-141s117 45 124 141c-42-7-78-29-108-68-24 36-71 62-140 68Z" fill={color} />;
-    case 'side-sweep':
-      return <path d="M128 215c4-98 62-152 145-148 72 3 112 50 114 130-38-9-69-30-93-63-39 58-90 78-166 81Z" fill={color} />;
-    case 'spiky':
-      return <path d="M126 214c8-76 36-116 77-132l20 42 34-67 27 62 53-42 2 68 44-13-17 76c-43-9-73-30-96-65-28 42-74 65-144 71Z" fill={color} />;
-    default:
-      return <path d="M132 205c8-91 55-137 124-137s116 46 124 137c-43-5-77-27-105-65-28 39-75 62-143 65Z" fill={color} />;
-  }
+interface HairLayerProps {
+  recipe: AvatarRecipeV2;
+  maskId: string;
+  back?: boolean;
+}
+
+function HairLayer({ recipe, maskId, back = false }: HairLayerProps) {
+  if (back && !hairHasBackLayer(recipe.hair)) return null;
+
+  const prefix = back ? 'back-' : '';
+  const detailsSource = hairAssetUrl(recipe.hair, `${prefix}details`);
+  const hairTransform = centeredScaleX(HAIR_FACE_SCALE_X[recipe.face]);
+
+  return (
+    <g transform={HEAD_TRANSFORM}>
+      <rect
+        x="0"
+        y="0"
+        width="512"
+        height="512"
+        fill={HAIR_COLORS[recipe.hairColor]}
+        mask={`url(#${maskId})`}
+      />
+      <image
+        href={detailsSource}
+        x="0"
+        y="0"
+        width="512"
+        height="512"
+        transform={hairTransform}
+      />
+    </g>
+  );
 }
 
 function Brows({ recipe }: { recipe: AvatarRecipeV2 }) {
@@ -161,9 +162,14 @@ function HairAccessory({ recipe }: { recipe: AvatarRecipeV2 }) {
 
 export function AvatarCanvas({ recipe, className = '', label = '冒險家頭像' }: AvatarCanvasProps) {
   const skin = SKIN_COLORS[recipe.skinTone];
-  const maskId = `face-mask-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  const instanceId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  const faceMaskId = `face-mask-${instanceId}`;
+  const hairMaskId = `hair-mask-${instanceId}`;
+  const hairBackMaskId = `hair-back-mask-${instanceId}`;
   const maskSource = faceAssetUrl(recipe.face, 'mask');
   const detailsSource = faceAssetUrl(recipe.face, 'details');
+  const hairTransform = centeredScaleX(HAIR_FACE_SCALE_X[recipe.face]);
+  const hasHairBack = hairHasBackLayer(recipe.hair);
   return (
     <svg
       className={`avatar-canvas ${className}`.trim()}
@@ -173,30 +179,39 @@ export function AvatarCanvas({ recipe, className = '', label = '冒險家頭像'
       aria-hidden={label ? undefined : true}
     >
       <defs>
-        <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+        <mask id={faceMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+          <image href={maskSource} x="0" y="0" width="512" height="512" />
+        </mask>
+        <mask id={hairMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
           <image
-            href={maskSource}
+            href={hairAssetUrl(recipe.hair, 'mask')}
             x="0"
             y="0"
             width="512"
             height="512"
-            transform="matrix(.65 0 0 .78 89.6 80)"
+            transform={hairTransform}
           />
         </mask>
+        {hasHairBack && (
+          <mask id={hairBackMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+            <image
+              href={hairAssetUrl(recipe.hair, 'back-mask')}
+              x="0"
+              y="0"
+              width="512"
+              height="512"
+              transform={hairTransform}
+            />
+          </mask>
+        )}
       </defs>
       <circle cx="256" cy="256" r="244" fill="#dff4f0" />
-      <path d="M99 512q18-113 157-113t157 113Z" fill="#3b82a0" />
-      <HairBack recipe={recipe} />
-      <rect x="0" y="0" width="512" height="512" fill={skin} mask={`url(#${maskId})`} />
-      <image
-        href={detailsSource}
-        x="0"
-        y="0"
-        width="512"
-        height="512"
-        transform="matrix(.65 0 0 .78 89.6 80)"
-      />
-      <HairFront recipe={recipe} />
+      <HairLayer recipe={recipe} maskId={hairBackMaskId} back />
+      <g transform={HEAD_TRANSFORM}>
+        <rect x="0" y="0" width="512" height="512" fill={skin} mask={`url(#${faceMaskId})`} />
+        <image href={detailsSource} x="0" y="0" width="512" height="512" />
+      </g>
+      <HairLayer recipe={recipe} maskId={hairMaskId} />
       <Brows recipe={recipe} />
       <Eyes recipe={recipe} />
       <Nose recipe={recipe} />

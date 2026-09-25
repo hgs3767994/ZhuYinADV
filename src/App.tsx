@@ -17,7 +17,7 @@ import { ProfileSelection } from './components/ProfileSelection';
 import { ResetProfilePassword } from './components/ResetProfilePassword';
 import { ResultModal } from './components/ResultModal';
 import { randomAvatarRecipe, type AvatarRecipeV2 } from './avatar/model';
-import { AVATAR_FACE_ASSETS } from './avatar/assets';
+import { AVATAR_FACE_ASSETS, AVATAR_HAIR_ASSETS } from './avatar/assets';
 import { APP_VERSION, DIFFICULTY_CONFIG } from './game/config';
 import type {
   Difficulty,
@@ -126,9 +126,10 @@ const ADVENTURE_IMAGES = Array.from(new Set([
   ...DIFFICULTY_IMAGES,
   assetUrl('assets/images/bg_endless.webp'),
   ...Object.values(DIFFICULTY_CONFIG).map((config) => config.background),
-  ...AVATAR_FACE_ASSETS
+  ...AVATAR_FACE_ASSETS,
+  ...AVATAR_HAIR_ASSETS
 ]));
-const ADVENTURE_ASSET_VERSION = '2';
+const ADVENTURE_ASSET_VERSION = '3';
 const ADVENTURE_ASSET_VERSION_KEY = 'zhuyin-adventure-asset-version';
 
 function hasCurrentAdventureAssetVersion(): boolean {
