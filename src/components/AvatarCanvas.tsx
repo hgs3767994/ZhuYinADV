@@ -1,3 +1,5 @@
+import { useId } from 'react';
+import { faceAssetUrl } from '../avatar/assets';
 import type { AvatarRecipeV2, HairColorOption, SkinToneOption } from '../avatar/model';
 
 interface AvatarCanvasProps {
@@ -53,17 +55,6 @@ function HairBack({ recipe }: { recipe: AvatarRecipeV2 }) {
     default:
       return <path d="M117 250C117 128 173 72 256 72s139 56 139 178l-20 90H137Z" fill={color} />;
   }
-}
-
-function FaceShape({ recipe }: { recipe: AvatarRecipeV2 }) {
-  const skin = SKIN_COLORS[recipe.skinTone];
-  if (recipe.face === 'oval') {
-    return <ellipse cx="256" cy="259" rx="108" ry="145" fill={skin} stroke="#7c4a34" strokeWidth="7" />;
-  }
-  if (recipe.face === 'soft-square') {
-    return <path d="M153 145c31-31 175-31 206 0 25 25 27 173 3 213-19 32-70 53-106 53s-87-21-106-53c-24-40-22-188 3-213Z" fill={skin} stroke="#7c4a34" strokeWidth="7" />;
-  }
-  return <ellipse cx="256" cy="258" rx="124" ry="137" fill={skin} stroke="#7c4a34" strokeWidth="7" />;
 }
 
 function HairFront({ recipe }: { recipe: AvatarRecipeV2 }) {
@@ -170,6 +161,9 @@ function HairAccessory({ recipe }: { recipe: AvatarRecipeV2 }) {
 
 export function AvatarCanvas({ recipe, className = '', label = '冒險家頭像' }: AvatarCanvasProps) {
   const skin = SKIN_COLORS[recipe.skinTone];
+  const maskId = `face-mask-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  const maskSource = faceAssetUrl(recipe.face, 'mask');
+  const detailsSource = faceAssetUrl(recipe.face, 'details');
   return (
     <svg
       className={`avatar-canvas ${className}`.trim()}
@@ -178,15 +172,30 @@ export function AvatarCanvas({ recipe, className = '', label = '冒險家頭像'
       aria-label={label || undefined}
       aria-hidden={label ? undefined : true}
     >
+      <defs>
+        <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+          <image
+            href={maskSource}
+            x="0"
+            y="0"
+            width="512"
+            height="512"
+            transform="matrix(.65 0 0 .78 89.6 80)"
+          />
+        </mask>
+      </defs>
       <circle cx="256" cy="256" r="244" fill="#dff4f0" />
       <path d="M99 512q18-113 157-113t157 113Z" fill="#3b82a0" />
-      <path d="M220 375h72v73h-72Z" fill={skin} />
       <HairBack recipe={recipe} />
-      <g fill={skin} stroke="#7c4a34" strokeWidth="7">
-        <ellipse cx="137" cy="270" rx="29" ry="39" />
-        <ellipse cx="375" cy="270" rx="29" ry="39" />
-      </g>
-      <FaceShape recipe={recipe} />
+      <rect x="0" y="0" width="512" height="512" fill={skin} mask={`url(#${maskId})`} />
+      <image
+        href={detailsSource}
+        x="0"
+        y="0"
+        width="512"
+        height="512"
+        transform="matrix(.65 0 0 .78 89.6 80)"
+      />
       <HairFront recipe={recipe} />
       <Brows recipe={recipe} />
       <Eyes recipe={recipe} />

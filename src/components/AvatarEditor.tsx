@@ -34,7 +34,21 @@ type Category = {
 };
 
 const CATEGORIES: Category[] = [
-  { key: 'face', label: '臉型', options: FACE_OPTIONS, optionLabels: { round: '圓臉', oval: '長臉', 'soft-square': '方圓臉' } },
+  {
+    key: 'face',
+    label: '臉型',
+    options: FACE_OPTIONS,
+    optionLabels: {
+      round: '圓臉',
+      oval: '鵝蛋臉',
+      diamond: '菱形臉',
+      square01: '方臉 1',
+      square02: '方臉 2',
+      square03: '方臉 3',
+      long01: '長臉 1',
+      long02: '長臉 2'
+    }
+  },
   { key: 'skinTone', label: '膚色', options: SKIN_TONE_OPTIONS, optionLabels: { peach: '粉嫩', warm: '暖膚', golden: '蜜糖', tan: '小麥', deep: '深膚' } },
   { key: 'hair', label: '髮型', options: HAIR_OPTIONS, optionLabels: { short: '短髮', bob: '鮑伯頭', curly: '捲髮', 'twin-tails': '雙馬尾', 'side-sweep': '側分', spiky: '活力尖髮' } },
   { key: 'hairColor', label: '髮色', options: HAIR_COLOR_OPTIONS, optionLabels: { black: '墨黑', brown: '深棕', chestnut: '栗子', golden: '金黃', blue: '海洋藍', pink: '莓果粉' } },

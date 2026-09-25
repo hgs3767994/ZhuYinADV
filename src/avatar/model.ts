@@ -1,4 +1,13 @@
-export const FACE_OPTIONS = ['round', 'oval', 'soft-square'] as const;
+export const FACE_OPTIONS = [
+  'round',
+  'oval',
+  'diamond',
+  'square01',
+  'square02',
+  'square03',
+  'long01',
+  'long02'
+] as const;
 export const SKIN_TONE_OPTIONS = ['peach', 'warm', 'golden', 'tan', 'deep'] as const;
 export const HAIR_OPTIONS = ['short', 'bob', 'curly', 'twin-tails', 'side-sweep', 'spiky'] as const;
 export const HAIR_COLOR_OPTIONS = ['black', 'brown', 'chestnut', 'golden', 'blue', 'pink'] as const;
@@ -110,7 +119,16 @@ export function avatarRecipeFromSeed(seedValue: string): AvatarRecipeV2 {
 }
 
 export function normalizeAvatarRecipe(recipe: AvatarRecipe): AvatarRecipeV2 {
-  return recipe.version === 2 ? { ...recipe } : avatarRecipeFromSeed(recipe.seed);
+  if (recipe.version !== 2) return avatarRecipeFromSeed(recipe.seed);
+
+  const storedFace = recipe.face as string;
+  const face = storedFace === 'soft-square'
+    ? 'square02'
+    : FACE_OPTIONS.includes(storedFace as FaceOption)
+      ? storedFace as FaceOption
+      : DEFAULT_AVATAR_RECIPE.face;
+
+  return { ...recipe, face };
 }
 
 export function randomAvatarRecipe(): AvatarRecipeV2 {
