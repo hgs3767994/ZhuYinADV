@@ -39,8 +39,7 @@ const HAIR_FACE_SCALE_X: Record<FaceOption, number> = {
   square01: 1,
   square02: 1,
   square03: 1,
-  long01: 0.92,
-  long02: 0.88
+  long01: 0.92
 };
 
 function centeredScaleX(scaleX: number): string {
@@ -84,6 +83,7 @@ function HairLayer({ recipe, maskId, back = false }: HairLayerProps) {
 
 function Brows({ recipe }: { recipe: AvatarRecipeV2 }) {
   const common = { fill: 'none', stroke: '#5b382d', strokeWidth: 9, strokeLinecap: 'round' as const };
+  if (recipe.brows === 'none') return null;
   if (recipe.brows === 'straight') {
     return <g {...common}><path d="M178 228h48" /><path d="M286 228h48" /></g>;
   }
@@ -212,12 +212,14 @@ export function AvatarCanvas({ recipe, className = '', label = '冒險家頭像'
         <image href={detailsSource} x="0" y="0" width="512" height="512" />
       </g>
       <HairLayer recipe={recipe} maskId={hairMaskId} />
-      <Brows recipe={recipe} />
-      <Eyes recipe={recipe} />
-      <Nose recipe={recipe} />
-      <Cheeks recipe={recipe} />
-      <Mouth recipe={recipe} />
-      <Glasses recipe={recipe} />
+      <g transform="translate(0 18)">
+        <Brows recipe={recipe} />
+        <Eyes recipe={recipe} />
+        <Nose recipe={recipe} />
+        <Cheeks recipe={recipe} />
+        <Mouth recipe={recipe} />
+        <Glasses recipe={recipe} />
+      </g>
       <HairAccessory recipe={recipe} />
     </svg>
   );

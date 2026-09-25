@@ -230,6 +230,13 @@ button:disabled {
   height: 100%;
 }
 
+.profile-choice .profile-avatar-art,
+.login-form .profile-avatar-art,
+.active-profile-badge .profile-avatar-art {
+  transform: scale(1.22);
+  transform-origin: center;
+}
+
 .guest-avatar {
   background: #2563eb;
 }
@@ -453,15 +460,6 @@ button:disabled {
 .active-profile-badge span {
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.active-profile-badge small {
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 58px;
-  color: #dbeafe;
-  font-size: 0.66rem;
   white-space: nowrap;
 }
 

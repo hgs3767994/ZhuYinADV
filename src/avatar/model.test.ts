@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_AVATAR_RECIPE,
+  BROW_OPTIONS,
   FACE_OPTIONS,
   HAIR_OPTIONS,
   avatarRecipeFromSeed,
@@ -21,16 +22,25 @@ describe('avatar recipes', () => {
     expect(normalizeAvatarRecipe(DEFAULT_AVATAR_RECIPE)).toEqual(DEFAULT_AVATAR_RECIPE);
   });
 
-  it('offers all eight finished face assets', () => {
+  it('offers the seven selected face assets', () => {
     expect(FACE_OPTIONS).toEqual([
       'round', 'oval', 'diamond', 'square01',
-      'square02', 'square03', 'long01', 'long02'
+      'square02', 'square03', 'long01'
     ]);
   });
 
   it('migrates the retired soft-square face without changing other choices', () => {
     const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, face: 'soft-square' } as unknown as AvatarRecipeV2;
     expect(normalizeAvatarRecipe(legacyV2).face).toBe('square02');
+  });
+
+  it('migrates the retired long02 face to long01', () => {
+    const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, face: 'long02' } as unknown as AvatarRecipeV2;
+    expect(normalizeAvatarRecipe(legacyV2).face).toBe('long01');
+  });
+
+  it('allows an avatar to have no eyebrows', () => {
+    expect(BROW_OPTIONS).toContain('none');
   });
 
   it('offers the thirteen selected hairstyles', () => {

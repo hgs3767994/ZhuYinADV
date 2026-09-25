@@ -42,11 +42,10 @@ const CATEGORIES: Category[] = [
       round: '圓臉',
       oval: '鵝蛋臉',
       diamond: '菱形臉',
-      square01: '方臉 1',
-      square02: '方臉 2',
-      square03: '方臉 3',
-      long01: '長臉 1',
-      long02: '長臉 2'
+      square01: '方型臉 1',
+      square02: '方型臉 2',
+      square03: '方型臉 3',
+      long01: '長型臉'
     }
   },
   { key: 'skinTone', label: '膚色', options: SKIN_TONE_OPTIONS, optionLabels: { peach: '粉嫩', warm: '暖膚', golden: '蜜糖', tan: '小麥', deep: '深膚' } },
@@ -71,7 +70,7 @@ const CATEGORIES: Category[] = [
     }
   },
   { key: 'hairColor', label: '髮色', options: HAIR_COLOR_OPTIONS, optionLabels: { black: '墨黑', brown: '深棕', chestnut: '栗子', golden: '金黃', blue: '海洋藍', pink: '莓果粉' } },
-  { key: 'brows', label: '眉毛', options: BROW_OPTIONS, optionLabels: { soft: '柔和眉', straight: '一字眉', arched: '彎彎眉', cheerful: '開心眉' } },
+  { key: 'brows', label: '眉毛', options: BROW_OPTIONS, optionLabels: { none: '無', soft: '柔和眉', straight: '一字眉', arched: '彎彎眉', cheerful: '開心眉' } },
   { key: 'eyes', label: '眼睛', options: EYE_OPTIONS, optionLabels: { round: '圓眼', smile: '笑眼', sparkle: '星星眼', gentle: '溫柔眼', bright: '亮亮眼', wink: '眨眼' } },
   { key: 'nose', label: '鼻子', options: NOSE_OPTIONS, optionLabels: { dot: '小圓鼻', soft: '柔和鼻', button: '鈕扣鼻' } },
   { key: 'mouth', label: '嘴巴', options: MOUTH_OPTIONS, optionLabels: { smile: '微笑', 'open-smile': '開心笑', tiny: '小嘴', cat: '貓咪嘴', grin: '露齒笑' } },

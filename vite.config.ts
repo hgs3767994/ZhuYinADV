@@ -54,9 +54,9 @@ export default defineConfig({
             urlPattern: ({ request }) => request.destination === 'image',
             handler: 'CacheFirst',
             options: {
-              cacheName: 'zhuyin-images-v1',
+              cacheName: 'zhuyin-images-v2',
               cacheableResponse: { statuses: [0, 200] },
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 30 }
+              expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 }
             }
           },
           {

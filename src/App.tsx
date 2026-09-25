@@ -36,7 +36,14 @@ import {
   type PlayerProfile
 } from './services/profileRepository';
 import { resultRepository } from './services/resultsRepository';
-import { assetUrl, preloadImage, resetImagePreloads } from './utils/assets';
+import {
+  assetUrl,
+  cleanupPreviousImageCache,
+  hasMissingOfflineImages,
+  preloadImage,
+  prepareOfflineImage,
+  resetImagePreloads
+} from './utils/assets';
 import { delay, isResourceTimeoutError, trackLoadingTasks } from './utils/loading';
 import { runCriticalResource } from './utils/resourcePriority';
 import {
@@ -129,7 +136,7 @@ const ADVENTURE_IMAGES = Array.from(new Set([
   ...AVATAR_FACE_ASSETS,
   ...AVATAR_HAIR_ASSETS
 ]));
-const ADVENTURE_ASSET_VERSION = '3';
+const ADVENTURE_ASSET_VERSION = '4';
 const ADVENTURE_ASSET_VERSION_KEY = 'zhuyin-adventure-asset-version';
 
 function hasCurrentAdventureAssetVersion(): boolean {
@@ -489,8 +496,11 @@ export function App() {
     adventurePreparationRunningRef.current = true;
 
     try {
-      const missingAudio = await audioService.hasMissingOfflineAudio();
-      const missingAssets = !hasCurrentAdventureAssetVersion() || missingAudio;
+      const [missingAudio, missingImages] = await Promise.all([
+        audioService.hasMissingOfflineAudio(),
+        hasMissingOfflineImages(ADVENTURE_IMAGES)
+      ]);
+      const missingAssets = !hasCurrentAdventureAssetVersion() || missingAudio || missingImages;
       if (!missingAssets) {
         adventurePreparedRef.current = true;
         navigate('profiles');
@@ -514,7 +524,7 @@ export function App() {
       });
 
       for (const source of ADVENTURE_IMAGES) {
-        await trackLoadingTasks([preloadImage(source)], () => undefined);
+        await trackLoadingTasks([prepareOfflineImage(source)], () => undefined);
         completedImages += 1;
         setAdventurePreparation({
           progress: Math.round((completedImages / total) * 100),
@@ -529,6 +539,7 @@ export function App() {
         });
       });
 
+      await cleanupPreviousImageCache();
       rememberAdventureAssetVersion();
       adventurePreparedRef.current = true;
       setAdventurePreparation(null);
@@ -898,7 +909,6 @@ export function App() {
             >
               <ProfileAvatar profile={activeProfile} />
               <span>{activeProfile.name}</span>
-              <small>編輯頭像</small>
             </button>
           )}
           <div className="menu-stack">

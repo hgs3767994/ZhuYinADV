@@ -5,8 +5,7 @@ export const FACE_OPTIONS = [
   'square01',
   'square02',
   'square03',
-  'long01',
-  'long02'
+  'long01'
 ] as const;
 export const SKIN_TONE_OPTIONS = ['peach', 'warm', 'golden', 'tan', 'deep'] as const;
 export const HAIR_OPTIONS = [
@@ -14,7 +13,7 @@ export const HAIR_OPTIONS = [
   'b01', 'b02', 'b05', 'b06', 'b07'
 ] as const;
 export const HAIR_COLOR_OPTIONS = ['black', 'brown', 'chestnut', 'golden', 'blue', 'pink'] as const;
-export const BROW_OPTIONS = ['soft', 'straight', 'arched', 'cheerful'] as const;
+export const BROW_OPTIONS = ['none', 'soft', 'straight', 'arched', 'cheerful'] as const;
 export const EYE_OPTIONS = ['round', 'smile', 'sparkle', 'gentle', 'bright', 'wink'] as const;
 export const NOSE_OPTIONS = ['dot', 'soft', 'button'] as const;
 export const MOUTH_OPTIONS = ['smile', 'open-smile', 'tiny', 'cat', 'grin'] as const;
@@ -127,9 +126,11 @@ export function normalizeAvatarRecipe(recipe: AvatarRecipe): AvatarRecipeV2 {
   const storedFace = recipe.face as string;
   const face = storedFace === 'soft-square'
     ? 'square02'
-    : FACE_OPTIONS.includes(storedFace as FaceOption)
-      ? storedFace as FaceOption
-      : DEFAULT_AVATAR_RECIPE.face;
+    : storedFace === 'long02'
+      ? 'long01'
+      : FACE_OPTIONS.includes(storedFace as FaceOption)
+        ? storedFace as FaceOption
+        : DEFAULT_AVATAR_RECIPE.face;
 
   const storedHair = recipe.hair as string;
   const legacyHair: Record<string, HairOption> = {
