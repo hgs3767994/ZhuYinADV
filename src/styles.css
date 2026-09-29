@@ -260,6 +260,14 @@ button:disabled {
   text-align: center;
 }
 
+.offline-ready-status {
+  margin: -2px 0 4px;
+  color: #86efac;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: center;
+}
+
 .account-actions {
   display: flex;
   width: 100%;

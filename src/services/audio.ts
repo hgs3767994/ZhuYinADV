@@ -1,5 +1,5 @@
 import { assetUrl } from '../utils/assets';
-import { ResourceTimeoutError } from '../utils/loading';
+import { ResourceTimeoutError, runTaskPool } from '../utils/loading';
 import { runCriticalResource, waitForCriticalResources } from '../utils/resourcePriority';
 
 const ZHUYIN_AUDIO_FILES: Record<string, string> = {
@@ -16,8 +16,8 @@ const SFX_FILES = {
   wrong: assetUrl('assets/audio/wrong.mp3')
 } as const;
 
-const AUDIO_CACHE_NAME = 'zhuyin-audio-v2';
-const PREVIOUS_AUDIO_CACHE_NAME = 'zhuyin-audio-v1';
+const AUDIO_CACHE_NAME = 'zhuyin-audio-v3';
+const PREVIOUS_AUDIO_CACHE_NAMES = ['zhuyin-audio-v1', 'zhuyin-audio-v2'];
 const BGM_FILE = assetUrl('assets/audio/bgm.mp3');
 const OFFLINE_AUDIO_FILES = [
   BGM_FILE,
@@ -33,8 +33,7 @@ const DECODED_AUDIO_FILES = [
   )
 ];
 
-export const ADVENTURE_AUDIO_PREPARATION_STEPS =
-  OFFLINE_AUDIO_FILES.length + DECODED_AUDIO_FILES.length;
+export const ADVENTURE_AUDIO_CACHE_STEPS = OFFLINE_AUDIO_FILES.length;
 
 type SafariWindow = Window & typeof globalThis & {
   webkitAudioContext?: typeof AudioContext;
@@ -49,7 +48,8 @@ class AudioService {
   private unlocked = false;
   private bgmStartTimer: number | null = null;
   private bgmRequested = false;
-  private adventurePreparation: Promise<void> | null = null;
+  private audioCachePreparation: Promise<void> | null = null;
+  private audioWarmup: Promise<void> | null = null;
 
   constructor() {
     this.bgm.loop = true;
@@ -104,12 +104,21 @@ class AudioService {
     }
   }
 
-  prepareAdventureAudio(onProgress?: (completed: number, total: number) => void): Promise<void> {
-    if (this.adventurePreparation) return this.adventurePreparation;
-    this.adventurePreparation = this.prepareAllAudio(onProgress).finally(() => {
-      this.adventurePreparation = null;
+  cacheAdventureAudio(onProgress?: (completed: number, total: number) => void): Promise<void> {
+    if (this.audioCachePreparation) return this.audioCachePreparation;
+    this.audioCachePreparation = this.cacheAllAudio(onProgress).finally(() => {
+      this.audioCachePreparation = null;
     });
-    return this.adventurePreparation;
+    return this.audioCachePreparation;
+  }
+
+  warmAdventureAudio(onProgress?: (completed: number, total: number) => void): Promise<void> {
+    if (this.audioWarmup) return this.audioWarmup;
+    this.audioWarmup = this.decodeAllAudio(onProgress).catch((error) => {
+      this.audioWarmup = null;
+      throw error;
+    });
+    return this.audioWarmup;
   }
 
   async prepareVoice(symbol: string): Promise<void> {
@@ -168,7 +177,7 @@ class AudioService {
     const context = this.ensureContext();
     if (!context) return Promise.reject(new Error('Web Audio API is unavailable'));
 
-    const pending = fetch(source)
+    const pending = this.loadAudioResponse(source)
       .then((response) => {
         if (!response.ok) throw new Error(`Audio request failed: ${response.status}`);
         return response.arrayBuffer();
@@ -180,6 +189,16 @@ class AudioService {
       });
     this.bufferPromises.set(source, pending);
     return pending;
+  }
+
+  private async loadAudioResponse(source: string): Promise<Response> {
+    if ('caches' in window) {
+      const cached = await (await caches.open(AUDIO_CACHE_NAME)).match(source);
+      if (cached) return cached.clone();
+      const legacy = await caches.match(source);
+      if (legacy) return legacy.clone();
+    }
+    return fetch(source);
   }
 
   private async prepareSource(source: string): Promise<void> {
@@ -194,16 +213,15 @@ class AudioService {
     }
   }
 
-  private async prepareAllAudio(
+  private async cacheAllAudio(
     onProgress?: (completed: number, total: number) => void
   ): Promise<void> {
-    const total = ADVENTURE_AUDIO_PREPARATION_STEPS;
-    let completed = 0;
-    onProgress?.(completed, total);
+    const total = OFFLINE_AUDIO_FILES.length;
+    onProgress?.(0, total);
 
     if ('caches' in window) {
       const cache = await caches.open(AUDIO_CACHE_NAME);
-      for (const source of OFFLINE_AUDIO_FILES) {
+      await runTaskPool(OFFLINE_AUDIO_FILES, async (source) => {
         await waitForCriticalResources();
         const cached = await cache.match(source);
         if (!cached) {
@@ -216,15 +234,31 @@ class AudioService {
             await cache.put(source, response.clone());
           }
         }
-        completed += 1;
-        onProgress?.(completed, total);
-        await new Promise<void>((resolve) => window.setTimeout(resolve, 20));
-      }
+        const verified = await cache.match(source);
+        if (!verified || (!verified.ok && verified.status !== 0)) {
+          throw new Error(`Audio cache verification failed: ${source}`);
+        }
+      }, (completed) => onProgress?.(completed, total));
     } else {
-      completed = OFFLINE_AUDIO_FILES.length;
-      onProgress?.(completed, total);
+      await runTaskPool(OFFLINE_AUDIO_FILES, async (source) => {
+        const response = await this.withTimeout(fetch(source), 10_000);
+        if (!response.ok) throw new Error(`Audio request failed: ${response.status}`);
+      }, (completed) => onProgress?.(completed, total));
     }
 
+    if ('caches' in window) {
+      await Promise.all(PREVIOUS_AUDIO_CACHE_NAMES.map((name) =>
+        caches.delete(name).catch(() => false)
+      ));
+    }
+  }
+
+  private async decodeAllAudio(
+    onProgress?: (completed: number, total: number) => void
+  ): Promise<void> {
+    const total = DECODED_AUDIO_FILES.length;
+    let completed = 0;
+    onProgress?.(completed, total);
     await this.resumeContext();
     for (const source of DECODED_AUDIO_FILES) {
       await waitForCriticalResources();
@@ -236,11 +270,6 @@ class AudioService {
       }
       completed += 1;
       onProgress?.(completed, total);
-      await new Promise<void>((resolve) => window.setTimeout(resolve, 15));
-    }
-
-    if ('caches' in window) {
-      await caches.delete(PREVIOUS_AUDIO_CACHE_NAME).catch(() => false);
     }
   }
 

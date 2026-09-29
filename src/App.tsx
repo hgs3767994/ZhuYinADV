@@ -26,7 +26,7 @@ import type {
   LeaderboardPage
 } from './game/types';
 import {
-  ADVENTURE_AUDIO_PREPARATION_STEPS,
+  ADVENTURE_AUDIO_CACHE_STEPS,
   audioService
 } from './services/audio';
 import { parentSecurity } from './services/parentSecurity';
@@ -38,13 +38,18 @@ import {
 import { resultRepository } from './services/resultsRepository';
 import {
   assetUrl,
+  cacheOfflineImage,
   cleanupPreviousImageCache,
   hasMissingOfflineImages,
   preloadImage,
-  prepareOfflineImage,
   resetImagePreloads
 } from './utils/assets';
-import { delay, isResourceTimeoutError, trackLoadingTasks } from './utils/loading';
+import { delay, isResourceTimeoutError, runTaskPool, trackLoadingTasks } from './utils/loading';
+import {
+  OfflineShellUnavailableError,
+  ensureOfflineShellControl,
+  requestPersistentOfflineStorage
+} from './utils/offline';
 import { runCriticalResource } from './utils/resourcePriority';
 import {
   requestPortraitOrientation,
@@ -100,7 +105,7 @@ interface PendingPageLoad {
 
 interface AdventurePreparationState {
   progress: number;
-  error: 'timeout' | 'network' | null;
+  error: 'timeout' | 'network' | 'offline-shell' | null;
 }
 
 type LeaderboardOrigin = 'menu' | 'result';
@@ -127,31 +132,37 @@ const DIFFICULTY_IMAGES = [
   assetUrl('assets/images/Backward_button.webp')
 ];
 
-const ADVENTURE_IMAGES = Array.from(new Set([
+const CORE_ADVENTURE_IMAGES = Array.from(new Set([
   ...WELCOME_IMAGES,
   ...MODE_IMAGES,
   ...DIFFICULTY_IMAGES,
   assetUrl('assets/images/bg_endless.webp'),
-  ...Object.values(DIFFICULTY_CONFIG).map((config) => config.background),
+  ...Object.values(DIFFICULTY_CONFIG).map((config) => config.background)
+]));
+
+const ADVENTURE_IMAGES = Array.from(new Set([
+  ...CORE_ADVENTURE_IMAGES,
   ...AVATAR_FACE_ASSETS,
   ...AVATAR_HAIR_ASSETS
 ]));
-const ADVENTURE_ASSET_VERSION = '4';
-const ADVENTURE_ASSET_VERSION_KEY = 'zhuyin-adventure-asset-version';
+const IMAGE_ASSET_VERSION = '3';
+const AUDIO_ASSET_VERSION = '3';
+const IMAGE_ASSET_VERSION_KEY = 'zhuyin-image-asset-version';
+const AUDIO_ASSET_VERSION_KEY = 'zhuyin-audio-asset-version';
 
-function hasCurrentAdventureAssetVersion(): boolean {
+function hasAssetVersion(key: string, version: string): boolean {
   try {
-    return localStorage.getItem(ADVENTURE_ASSET_VERSION_KEY) === ADVENTURE_ASSET_VERSION;
+    return localStorage.getItem(key) === version;
   } catch {
     return false;
   }
 }
 
-function rememberAdventureAssetVersion(): void {
+function rememberAssetVersion(key: string, version: string): void {
   try {
-    localStorage.setItem(ADVENTURE_ASSET_VERSION_KEY, ADVENTURE_ASSET_VERSION);
+    localStorage.setItem(key, version);
   } catch {
-    // Storage can be unavailable in restrictive browser modes; cache checks still protect audio.
+    // Cache checks still protect offline use when localStorage is unavailable.
   }
 }
 
@@ -200,6 +211,7 @@ export function App() {
   const [pageLoading, setPageLoading] = useState<PageLoadingState | null>(null);
   const [adventurePreparation, setAdventurePreparation] =
     useState<AdventurePreparationState | null>(null);
+  const [offlineContentReady, setOfflineContentReady] = useState(false);
   const pageLoadSequenceRef = useRef(0);
   const pendingPageLoadRef = useRef<PendingPageLoad | null>(null);
   const gameHistoryPositionRef = useRef<GameHistoryPosition>(null);
@@ -208,11 +220,20 @@ export function App() {
   const adventurePreparedRef = useRef(false);
   const adventurePreparationRunningRef = useRef(false);
   const profileCreationCompletionRef = useRef(false);
+  const serviceWorkerRegistrationFailedRef = useRef(false);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker
-  } = useRegisterSW({ immediate: true });
+  } = useRegisterSW({
+    immediate: true,
+    onRegisteredSW: (_url, registration) => {
+      serviceWorkerRegistrationFailedRef.current = !registration;
+    },
+    onRegisterError: () => {
+      serviceWorkerRegistrationFailedRef.current = true;
+    }
+  });
 
   const applyScreen = useCallback((next: Screen) => {
     screenRef.current = next;
@@ -496,19 +517,26 @@ export function App() {
     adventurePreparationRunningRef.current = true;
 
     try {
+      if (serviceWorkerRegistrationFailedRef.current) {
+        throw new OfflineShellUnavailableError();
+      }
+      await ensureOfflineShellControl();
       const [missingAudio, missingImages] = await Promise.all([
         audioService.hasMissingOfflineAudio(),
         hasMissingOfflineImages(ADVENTURE_IMAGES)
       ]);
-      const missingAssets = !hasCurrentAdventureAssetVersion() || missingAudio || missingImages;
-      if (!missingAssets) {
+      const needsAudio = !hasAssetVersion(AUDIO_ASSET_VERSION_KEY, AUDIO_ASSET_VERSION) || missingAudio;
+      const needsImages = !hasAssetVersion(IMAGE_ASSET_VERSION_KEY, IMAGE_ASSET_VERSION) || missingImages;
+      if (!needsAudio && !needsImages) {
         adventurePreparedRef.current = true;
+        setOfflineContentReady(true);
+        void requestPersistentOfflineStorage();
         navigate('profiles');
         void (async () => {
-          for (const source of ADVENTURE_IMAGES) {
+          for (const source of CORE_ADVENTURE_IMAGES) {
             await preloadImage(source);
           }
-          await audioService.prepareAdventureAudio();
+          await audioService.warmAdventureAudio();
         })().catch((error: unknown) => {
           console.warn('無法在背景完成冒險元件預熱', error);
         });
@@ -516,39 +544,55 @@ export function App() {
       }
 
       audioService.pauseBgm();
-      const total = ADVENTURE_IMAGES.length + ADVENTURE_AUDIO_PREPARATION_STEPS;
-      let completedImages = 0;
+      const total = (needsImages ? ADVENTURE_IMAGES.length : 0) +
+        (needsAudio ? ADVENTURE_AUDIO_CACHE_STEPS : 0);
+      let completed = 0;
       setAdventurePreparation({
         progress: 0,
         error: null
       });
 
-      for (const source of ADVENTURE_IMAGES) {
-        await trackLoadingTasks([prepareOfflineImage(source)], () => undefined);
-        completedImages += 1;
-        setAdventurePreparation({
-          progress: Math.round((completedImages / total) * 100),
-          error: null
+      if (needsImages) {
+        await runTaskPool(ADVENTURE_IMAGES, cacheOfflineImage, (imageCompleted) => {
+          setAdventurePreparation({
+            progress: Math.round(((completed + imageCompleted) / total) * 100),
+            error: null
+          });
         });
+        completed += ADVENTURE_IMAGES.length;
+        await cleanupPreviousImageCache();
+        rememberAssetVersion(IMAGE_ASSET_VERSION_KEY, IMAGE_ASSET_VERSION);
       }
 
-      await audioService.prepareAdventureAudio((completedAudio) => {
-        setAdventurePreparation({
-          progress: Math.round(((completedImages + completedAudio) / total) * 100),
-          error: null
+      if (needsAudio) {
+        await audioService.cacheAdventureAudio((completedAudio) => {
+          setAdventurePreparation({
+            progress: Math.round(((completed + completedAudio) / total) * 100),
+            error: null
+          });
         });
-      });
+        completed += ADVENTURE_AUDIO_CACHE_STEPS;
+        rememberAssetVersion(AUDIO_ASSET_VERSION_KEY, AUDIO_ASSET_VERSION);
+      }
 
-      await cleanupPreviousImageCache();
-      rememberAdventureAssetVersion();
+      await requestPersistentOfflineStorage();
       adventurePreparedRef.current = true;
+      setOfflineContentReady(true);
       setAdventurePreparation(null);
       navigate('profiles');
+      void (async () => {
+        for (const source of CORE_ADVENTURE_IMAGES) await preloadImage(source);
+        await audioService.warmAdventureAudio();
+      })().catch((error: unknown) => {
+        console.warn('無法在背景完成冒險元件預熱', error);
+      });
     } catch (error) {
       resetImagePreloads(ADVENTURE_IMAGES);
       setAdventurePreparation((current) => ({
         progress: current?.progress ?? 0,
-        error: isResourceTimeoutError(error) ? 'timeout' : 'network'
+        error: error instanceof OfflineShellUnavailableError
+          ? 'offline-shell'
+          : isResourceTimeoutError(error) ? 'timeout' : 'network'
       }));
     } finally {
       adventurePreparationRunningRef.current = false;
@@ -782,6 +826,7 @@ export function App() {
           onParentManagement={() => press(() => beginParentAction('manage'))}
           onBack={() => press(() => history.back())}
           onRetry={() => void loadProfiles()}
+          offlineContentReady={offlineContentReady}
         />
       )}
 
@@ -1066,7 +1111,11 @@ export function App() {
         <aside className="page-loading adventure-preparation" role="status" aria-live="polite">
           <div className="page-loading-card">
             <strong>{adventurePreparation.error
-              ? adventurePreparation.error === 'timeout' ? '準備時間較久' : '準備失敗'
+              ? adventurePreparation.error === 'timeout'
+                ? '準備時間較久'
+                : adventurePreparation.error === 'offline-shell'
+                  ? '離線功能尚未就緒'
+                  : '準備失敗'
               : '發現新冒險元件，正在為您準備中'}</strong>
             {!adventurePreparation.error && (
               <>
@@ -1089,7 +1138,9 @@ export function App() {
               <>
                 <p>{adventurePreparation.error === 'timeout'
                   ? '裝置準備冒險元件的時間較久，請再試一次。'
-                  : '尚有冒險元件未完成，請檢查網路連線後再試一次。'}</p>
+                  : adventurePreparation.error === 'offline-shell'
+                    ? '請先保持網路連線並重新開啟程式，完成離線功能安裝。'
+                    : '尚有冒險元件未完成，請檢查網路連線後再試一次。'}</p>
                 <div className="modal-actions horizontal">
                   <button className="secondary-button" onClick={cancelAdventurePreparation}>
                     返回
@@ -1104,7 +1155,7 @@ export function App() {
         </aside>
       )}
 
-      {needRefresh && screen !== 'game' && !result && (
+      {needRefresh && screen !== 'game' && !result && !pageLoading && !adventurePreparation && (
         <aside className="update-banner" role="status">
           <span>新版本已準備好</span>
           <button onClick={() => updateServiceWorker(true)}>安全更新</button>

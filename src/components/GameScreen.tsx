@@ -188,16 +188,13 @@ export function GameScreen({
     const loadingTimer = window.setTimeout(() => {
       if (loadingAttemptRef.current === attempt) setShowLoading(true);
     }, 150);
-    const current = sessionRef.current;
     const background = backgroundFor(mode, difficulty);
     void runCriticalResource(() => trackLoadingTasks([
       preloadImage(background),
-      audioService.prepareVoice(current.currentAnswer),
-      audioService.prepareEffect('correct'),
-      audioService.prepareEffect('wrong')
+      audioService.warmAdventureAudio()
     ], (progress) => {
       if (loadingAttemptRef.current === attempt) setLoadingProgress(progress);
-    })).then(() => {
+    }, 20_000)).then(() => {
       window.clearTimeout(loadingTimer);
       if (!activeRef.current || loadingAttemptRef.current !== attempt) return;
       startedAtRef.current = performance.now();

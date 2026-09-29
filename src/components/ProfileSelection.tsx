@@ -12,6 +12,7 @@ interface ProfileSelectionProps {
   onParentManagement: () => void;
   onBack: () => void;
   onRetry: () => void;
+  offlineContentReady: boolean;
 }
 
 export function ProfileSelection({
@@ -24,7 +25,8 @@ export function ProfileSelection({
   parentConfigured,
   onParentManagement,
   onBack,
-  onRetry
+  onRetry,
+  offlineContentReady
 }: ProfileSelectionProps) {
   return (
     <main className="screen account-screen">
@@ -32,6 +34,11 @@ export function ProfileSelection({
       <section className="account-panel" aria-labelledby="profile-selection-title">
         <h1 id="profile-selection-title">選擇冒險家</h1>
         <p className="account-hint">選擇自己的帳號，繼續累積冒險紀錄。</p>
+        {offlineContentReady && (
+          <p className="offline-ready-status" role="status">
+            ✓ 離線冒險內容已準備完成
+          </p>
+        )}
 
         <div className="profile-list">
           {loading ? (

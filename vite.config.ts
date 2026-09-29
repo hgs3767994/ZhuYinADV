@@ -44,19 +44,23 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,webp,svg,webmanifest}'],
+        globPatterns: [
+          '**/*.{js,css,html,webmanifest}',
+          'assets/images/start_banner.webp',
+          'assets/images/title.webp',
+          'assets/images/start_button.webp'
+        ],
+        globIgnores: ['**/preview*.html'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: true,
         navigateFallback: 'index.html',
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.destination === 'image',
             handler: 'CacheFirst',
             options: {
-              cacheName: 'zhuyin-images-v2',
-              cacheableResponse: { statuses: [0, 200] },
-              expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 }
+              cacheName: 'zhuyin-images-v3',
+              cacheableResponse: { statuses: [0, 200] }
             }
           },
           {
@@ -64,10 +68,9 @@ export default defineConfig({
               request.destination === 'audio' || url.pathname.endsWith('.mp3'),
             handler: 'CacheFirst',
             options: {
-              cacheName: 'zhuyin-audio-v2',
+              cacheName: 'zhuyin-audio-v3',
               rangeRequests: true,
-              cacheableResponse: { statuses: [0, 200] },
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 }
+              cacheableResponse: { statuses: [0, 200] }
             }
           }
         ]

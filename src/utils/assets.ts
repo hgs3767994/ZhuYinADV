@@ -5,8 +5,8 @@ export function assetUrl(path: string): string {
 
 const imagePreloads = new Map<string, Promise<void>>();
 const IMAGE_DECODE_GRACE_MS = 1_000;
-export const OFFLINE_IMAGE_CACHE_NAME = 'zhuyin-images-v2';
-const PREVIOUS_IMAGE_CACHE_NAME = 'zhuyin-images-v1';
+export const OFFLINE_IMAGE_CACHE_NAME = 'zhuyin-images-v3';
+const PREVIOUS_IMAGE_CACHE_NAMES = ['zhuyin-images-v1', 'zhuyin-images-v2'];
 
 export async function hasMissingOfflineImages(sources: string[]): Promise<boolean> {
   if (!('caches' in window)) return true;
@@ -21,9 +21,10 @@ export async function hasMissingOfflineImages(sources: string[]): Promise<boolea
   }
 }
 
-export async function prepareOfflineImage(source: string): Promise<void> {
+export async function cacheOfflineImage(source: string): Promise<void> {
   if (!('caches' in window)) {
-    await preloadImage(source);
+    const response = await fetch(source);
+    if (!response.ok) throw new Error(`Image request failed: ${source}`);
     return;
   }
 
@@ -38,12 +39,22 @@ export async function prepareOfflineImage(source: string): Promise<void> {
       await cache.put(source, response.clone());
     }
   }
+  const cached = await cache.match(source);
+  if (!cached || (!cached.ok && cached.status !== 0)) {
+    throw new Error(`Image cache verification failed: ${source}`);
+  }
+}
+
+export async function prepareOfflineImage(source: string): Promise<void> {
+  await cacheOfflineImage(source);
   await preloadImage(source);
 }
 
 export async function cleanupPreviousImageCache(): Promise<void> {
   if (!('caches' in window)) return;
-  await caches.delete(PREVIOUS_IMAGE_CACHE_NAME).catch(() => false);
+  await Promise.all(PREVIOUS_IMAGE_CACHE_NAMES.map((name) =>
+    caches.delete(name).catch(() => false)
+  ));
 }
 
 export function resetImagePreloads(sources: string[]): void {
