@@ -41,7 +41,7 @@ export function Leaderboard({ initialPage = 'easy', profileId, onClose }: Leader
   }, [page, profileId]);
 
   return (
-    <Modal title="🏆 冒險紀錄殿堂" labelledBy="leaderboard-title">
+    <Modal title="🏆 冒險紀錄殿堂" labelledBy="leaderboard-title" className="leaderboard-modal">
       <div className="leaderboard-tabs" role="tablist" aria-label="排行榜模式">
         {PAGES.map((item) => (
           <button
