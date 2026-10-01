@@ -54,19 +54,10 @@ const CATEGORIES: Category[] = [
     label: '髮型',
     options: HAIR_OPTIONS,
     optionLabels: {
-      a01: '瀏海短髮',
-      a02: '刺蝟短髮',
-      a03: '經典側分',
-      a04: '蓬鬆後梳',
-      a05: '中長捲髮',
-      a06: '斜瀏海',
-      a07: '蓬鬆中分',
-      a08: '活力碎髮',
-      b01: '俐落平頭',
-      b02: '復古側分',
-      b05: '整齊後梳',
-      b06: '尖刺短髮',
-      b07: '短捲髮'
+      '01': '髮型 1',
+      '02': '髮型 2',
+      '03': '髮型 3',
+      '05': '髮型 5'
     }
   },
   { key: 'hairColor', label: '髮色', options: HAIR_COLOR_OPTIONS, optionLabels: { black: '墨黑', brown: '深棕', chestnut: '栗子', golden: '金黃', blue: '海洋藍', pink: '莓果粉' } },

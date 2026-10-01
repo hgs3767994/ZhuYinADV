@@ -59,7 +59,7 @@ export default defineConfig({
             urlPattern: ({ request }) => request.destination === 'image',
             handler: 'CacheFirst',
             options: {
-              cacheName: 'zhuyin-images-v3',
+              cacheName: 'zhuyin-images-v4',
               cacheableResponse: { statuses: [0, 200] }
             }
           },

@@ -43,22 +43,25 @@ describe('avatar recipes', () => {
     expect(BROW_OPTIONS).toContain('none');
   });
 
-  it('offers the thirteen selected hairstyles', () => {
-    expect(HAIR_OPTIONS).toEqual([
-      'a01', 'a02', 'a03', 'a04', 'a05', 'a06', 'a07', 'a08',
-      'b01', 'b02', 'b05', 'b06', 'b07'
-    ]);
+  it('offers only the four approved hairstyles', () => {
+    expect(HAIR_OPTIONS).toEqual(['01', '02', '03', '05']);
   });
 
-  it('migrates every retired procedural hairstyle to a selected SVG hairstyle', () => {
+  it('migrates matching retired hairstyles to the approved replacements', () => {
     const mappings = {
-      short: 'a01', bob: 'a05', curly: 'a05', 'twin-tails': 'a05',
-      'side-sweep': 'a06', spiky: 'a08'
+      a01: '01', a02: '02', a03: '03', a05: '05',
+      short: '01', bob: '05', curly: '05', 'twin-tails': '05',
+      'side-sweep': '01', spiky: '01'
     } as const;
     for (const [hair, expected] of Object.entries(mappings)) {
       const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, hair } as unknown as AvatarRecipeV2;
       expect(normalizeAvatarRecipe(legacyV2).hair).toBe(expected);
     }
+  });
+
+  it('falls back safely when a retired hairstyle has no approved replacement', () => {
+    const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, hair: 'b07' } as unknown as AvatarRecipeV2;
+    expect(normalizeAvatarRecipe(legacyV2).hair).toBe('01');
   });
 
   it('creates complete random recipes', () => {

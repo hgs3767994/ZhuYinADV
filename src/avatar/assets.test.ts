@@ -3,8 +3,7 @@ import {
   AVATAR_FACE_ASSETS,
   AVATAR_HAIR_ASSETS,
   faceAssetUrl,
-  hairAssetUrl,
-  hairHasBackLayer
+  hairAssetUrl
 } from './assets';
 import { FACE_OPTIONS, HAIR_OPTIONS } from './model';
 
@@ -21,16 +20,12 @@ describe('avatar face assets', () => {
     }
   });
 
-  it('maps every selected hairstyle to its production layers', () => {
-    expect(AVATAR_HAIR_ASSETS).toHaveLength(HAIR_OPTIONS.length * 2 + 2);
+  it('maps every approved hairstyle to one calibrated transparent PNG', () => {
+    expect(AVATAR_HAIR_ASSETS).toHaveLength(HAIR_OPTIONS.length);
     for (const hair of HAIR_OPTIONS) {
-      expect(hairAssetUrl(hair, 'mask')).toMatch(
-        new RegExp(`assets/avatar-parts/hair/candidates/hair-${hair}-mask\\.svg$`)
-      );
-      expect(hairAssetUrl(hair, 'details')).toMatch(
-        new RegExp(`assets/avatar-parts/hair/candidates/hair-${hair}-details\\.svg$`)
+      expect(hairAssetUrl(hair)).toMatch(
+        new RegExp(`assets/avatar-parts/hair/approved/hair-${hair}\\.png$`)
       );
     }
-    expect(hairHasBackLayer('a05')).toBe(true);
   });
 });

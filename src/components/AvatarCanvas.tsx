@@ -1,8 +1,12 @@
 import { useId } from 'react';
-import { faceAssetUrl, hairAssetUrl, hairHasBackLayer } from '../avatar/assets';
+import { faceAssetUrl, hairAssetUrl } from '../avatar/assets';
+import {
+  HAIR_FACE_CALIBRATIONS,
+  faceTransform,
+  hairTransform
+} from '../avatar/hairCalibration';
 import type {
   AvatarRecipeV2,
-  FaceOption,
   HairColorOption,
   SkinToneOption
 } from '../avatar/model';
@@ -30,55 +34,19 @@ export const HAIR_COLORS: Record<HairColorOption, string> = {
   pink: '#b84f78'
 };
 
-const HEAD_TRANSFORM = 'matrix(.65 0 0 .78 89.6 80)';
-
-const HAIR_FACE_SCALE_X: Record<FaceOption, number> = {
-  round: 1,
-  oval: 0.94,
-  diamond: 0.94,
-  square01: 1,
-  square02: 1,
-  square03: 1,
-  long01: 0.92
-};
-
-function centeredScaleX(scaleX: number): string {
-  return `matrix(${scaleX} 0 0 1 ${256 * (1 - scaleX)} 0)`;
-}
-
-interface HairLayerProps {
-  recipe: AvatarRecipeV2;
-  maskId: string;
-  back?: boolean;
-}
-
-function HairLayer({ recipe, maskId, back = false }: HairLayerProps) {
-  if (back && !hairHasBackLayer(recipe.hair)) return null;
-
-  const prefix = back ? 'back-' : '';
-  const detailsSource = hairAssetUrl(recipe.hair, `${prefix}details`);
-  const hairTransform = centeredScaleX(HAIR_FACE_SCALE_X[recipe.face]);
-
-  return (
-    <g transform={HEAD_TRANSFORM}>
-      <rect
-        x="0"
-        y="0"
-        width="512"
-        height="512"
-        fill={HAIR_COLORS[recipe.hairColor]}
-        mask={`url(#${maskId})`}
-      />
-      <image
-        href={detailsSource}
-        x="0"
-        y="0"
-        width="512"
-        height="512"
-        transform={hairTransform}
-      />
-    </g>
-  );
+function hairTintMatrix(color: string): string {
+  const channels = color.match(/[a-f\d]{2}/gi)?.map((channel) => Number.parseInt(channel, 16));
+  const [red = 93, green = 64, blue = 55] = channels ?? [];
+  const referenceLuminance = 86;
+  const redScale = red / referenceLuminance;
+  const greenScale = green / referenceLuminance;
+  const blueScale = blue / referenceLuminance;
+  return [
+    0.2126 * redScale, 0.7152 * redScale, 0.0722 * redScale, 0, 0,
+    0.2126 * greenScale, 0.7152 * greenScale, 0.0722 * greenScale, 0, 0,
+    0.2126 * blueScale, 0.7152 * blueScale, 0.0722 * blueScale, 0, 0,
+    0, 0, 0, 1, 0
+  ].join(' ');
 }
 
 function Brows({ recipe }: { recipe: AvatarRecipeV2 }) {
@@ -164,12 +132,13 @@ export function AvatarCanvas({ recipe, className = '', label = '冒險家頭像'
   const skin = SKIN_COLORS[recipe.skinTone];
   const instanceId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const faceMaskId = `face-mask-${instanceId}`;
-  const hairMaskId = `hair-mask-${instanceId}`;
-  const hairBackMaskId = `hair-back-mask-${instanceId}`;
+  const hairTintId = `hair-tint-${instanceId}`;
   const maskSource = faceAssetUrl(recipe.face, 'mask');
   const detailsSource = faceAssetUrl(recipe.face, 'details');
-  const hairTransform = centeredScaleX(HAIR_FACE_SCALE_X[recipe.face]);
-  const hasHairBack = hairHasBackLayer(recipe.hair);
+  const calibration = HAIR_FACE_CALIBRATIONS[recipe.hair][recipe.face];
+  const calibratedHairTransform = hairTransform(calibration);
+  const calibratedFaceTransform = faceTransform(calibration);
+  const tintHair = recipe.hairColor !== 'brown';
   return (
     <svg
       className={`avatar-canvas ${className}`.trim()}
@@ -182,45 +151,37 @@ export function AvatarCanvas({ recipe, className = '', label = '冒險家頭像'
         <mask id={faceMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
           <image href={maskSource} x="0" y="0" width="512" height="512" />
         </mask>
-        <mask id={hairMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
-          <image
-            href={hairAssetUrl(recipe.hair, 'mask')}
-            x="0"
-            y="0"
-            width="512"
-            height="512"
-            transform={hairTransform}
-          />
-        </mask>
-        {hasHairBack && (
-          <mask id={hairBackMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
-            <image
-              href={hairAssetUrl(recipe.hair, 'back-mask')}
-              x="0"
-              y="0"
-              width="512"
-              height="512"
-              transform={hairTransform}
-            />
-          </mask>
-        )}
+        <filter id={hairTintId} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
+          <feColorMatrix type="matrix" values={hairTintMatrix(HAIR_COLORS[recipe.hairColor])} />
+        </filter>
       </defs>
       <circle cx="256" cy="256" r="244" fill="#dff4f0" />
-      <HairLayer recipe={recipe} maskId={hairBackMaskId} back />
-      <g transform={HEAD_TRANSFORM}>
+      <g transform={calibratedFaceTransform}>
         <rect x="0" y="0" width="512" height="512" fill={skin} mask={`url(#${faceMaskId})`} />
         <image href={detailsSource} x="0" y="0" width="512" height="512" />
       </g>
-      <HairLayer recipe={recipe} maskId={hairMaskId} />
-      <g transform="translate(0 18)">
-        <Brows recipe={recipe} />
-        <Eyes recipe={recipe} />
-        <Nose recipe={recipe} />
-        <Cheeks recipe={recipe} />
-        <Mouth recipe={recipe} />
-        <Glasses recipe={recipe} />
+      <image
+        href={hairAssetUrl(recipe.hair)}
+        x="0"
+        y="0"
+        width="512"
+        height="512"
+        transform={calibratedHairTransform}
+        filter={tintHair ? `url(#${hairTintId})` : undefined}
+      />
+      <g transform={calibratedFaceTransform}>
+        <g transform="translate(0 18)">
+          <Brows recipe={recipe} />
+          <Eyes recipe={recipe} />
+          <Nose recipe={recipe} />
+          <Cheeks recipe={recipe} />
+          <Mouth recipe={recipe} />
+          <Glasses recipe={recipe} />
+        </g>
       </g>
-      <HairAccessory recipe={recipe} />
+      <g transform={calibratedHairTransform}>
+        <HairAccessory recipe={recipe} />
+      </g>
     </svg>
   );
 }
