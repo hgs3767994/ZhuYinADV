@@ -24,6 +24,23 @@ describe('avatar recipes', () => {
     expect(normalizeAvatarRecipe(DEFAULT_AVATAR_RECIPE)).toEqual(DEFAULT_AVATAR_RECIPE);
   });
 
+  it('uses the first remaining option in every category as the default', () => {
+    expect(DEFAULT_AVATAR_RECIPE).toEqual({
+      version: 2,
+      face: FACE_OPTIONS[0],
+      skinTone: 'peach',
+      hair: HAIR_OPTIONS[0],
+      hairColor: 'black',
+      brows: 'none',
+      eyes: 'round',
+      nose: 'dot',
+      mouth: 'smile',
+      cheeks: 'none',
+      glasses: 'none',
+      hairAccessory: 'none'
+    });
+  });
+
   it('offers the seven selected face assets', () => {
     expect(FACE_OPTIONS).toEqual([
       'round', 'oval', 'diamond', 'square01',
@@ -77,9 +94,20 @@ describe('avatar recipes', () => {
     expect(normalizeAvatarRecipe(legacyV2).hair).toBe('a01');
   });
 
+  it('removes retired glasses and hair accessories from stored avatars', () => {
+    const decorated = {
+      ...DEFAULT_AVATAR_RECIPE,
+      glasses: 'star',
+      hairAccessory: 'explorer-hat'
+    } as AvatarRecipeV2;
+    expect(normalizeAvatarRecipe(decorated)).toEqual(DEFAULT_AVATAR_RECIPE);
+  });
+
   it('creates complete random recipes', () => {
     const recipe = randomAvatarRecipe();
     expect(recipe.version).toBe(2);
+    expect(recipe.glasses).toBe('none');
+    expect(recipe.hairAccessory).toBe('none');
     expect(Object.keys(recipe)).toHaveLength(Object.keys(DEFAULT_AVATAR_RECIPE).length);
   });
 });

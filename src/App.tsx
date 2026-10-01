@@ -16,7 +16,7 @@ import { ProfileLogin } from './components/ProfileLogin';
 import { ProfileSelection } from './components/ProfileSelection';
 import { ResetProfilePassword } from './components/ResetProfilePassword';
 import { ResultModal } from './components/ResultModal';
-import { randomAvatarRecipe, type AvatarRecipeV2 } from './avatar/model';
+import { DEFAULT_AVATAR_RECIPE, type AvatarRecipeV2 } from './avatar/model';
 import { AVATAR_FACE_ASSETS, AVATAR_HAIR_ASSETS } from './avatar/assets';
 import { APP_VERSION, DIFFICULTY_CONFIG } from './game/config';
 import type {
@@ -619,7 +619,7 @@ export function App() {
     const draft: ProfileDraft = {
       name,
       password,
-      avatar: profileDraftRef.current?.avatar ?? randomAvatarRecipe()
+      avatar: profileDraftRef.current?.avatar ?? { ...DEFAULT_AVATAR_RECIPE }
     };
     profileDraftRef.current = draft;
     setProfileDraft(draft);
@@ -942,7 +942,7 @@ export function App() {
           <div className="dark-overlay" />
           {activeProfile.isGuest ? (
             <div className="active-profile-badge">
-              <ProfileAvatar profile={activeProfile} />
+              <ProfileAvatar profile={activeProfile} frameless />
               <span>{activeProfile.name}</span>
             </div>
           ) : (
@@ -952,7 +952,7 @@ export function App() {
               aria-label={`編輯 ${activeProfile.name} 的頭像`}
               onClick={() => press(() => navigate('edit-avatar'))}
             >
-              <ProfileAvatar profile={activeProfile} />
+              <ProfileAvatar profile={activeProfile} frameless />
               <span>{activeProfile.name}</span>
             </button>
           )}

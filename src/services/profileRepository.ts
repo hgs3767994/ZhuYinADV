@@ -1,8 +1,8 @@
 import { createCredential, verifyCredential, type PasswordCredential } from './credential';
 import {
   avatarRecipeFromSeed,
+  DEFAULT_AVATAR_RECIPE,
   normalizeAvatarRecipe,
-  randomAvatarRecipe,
   type AvatarRecipe,
   type AvatarRecipeV2
 } from '../avatar/model';
@@ -148,7 +148,7 @@ class IndexedDbProfileRepository implements ProfileRepository {
   async create(
     name: string,
     password: string,
-    avatar: AvatarRecipeV2 = randomAvatarRecipe()
+    avatar: AvatarRecipeV2 = { ...DEFAULT_AVATAR_RECIPE }
   ): Promise<PlayerProfile> {
     const displayName = validateProfileName(name);
     validatePassword(password);

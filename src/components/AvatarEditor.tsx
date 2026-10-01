@@ -5,8 +5,6 @@ import {
   DEFAULT_AVATAR_RECIPE,
   EYE_OPTIONS,
   FACE_OPTIONS,
-  GLASSES_OPTIONS,
-  HAIR_ACCESSORY_OPTIONS,
   HAIR_COLOR_OPTIONS,
   HAIR_OPTIONS,
   MOUTH_OPTIONS,
@@ -78,9 +76,7 @@ const CATEGORIES: Category[] = [
   { key: 'eyes', label: '眼睛', options: EYE_OPTIONS, optionLabels: { round: '圓眼', smile: '笑眼', sparkle: '星星眼', gentle: '溫柔眼', bright: '亮亮眼', wink: '眨眼' } },
   { key: 'nose', label: '鼻子', options: NOSE_OPTIONS, optionLabels: { dot: '小圓鼻', soft: '柔和鼻', button: '鈕扣鼻' } },
   { key: 'mouth', label: '嘴巴', options: MOUTH_OPTIONS, optionLabels: { smile: '微笑', 'open-smile': '開心笑', tiny: '小嘴', cat: '貓咪嘴', grin: '露齒笑' } },
-  { key: 'cheeks', label: '臉頰', options: CHEEK_OPTIONS, optionLabels: { none: '無', blush: '腮紅', freckles: '雀斑', swirl: '漩渦', 'shy-lines': '害羞', stars: '星星' } },
-  { key: 'glasses', label: '眼鏡', options: GLASSES_OPTIONS, optionLabels: { none: '無', round: '圓框', square: '方框', star: '星星框' } },
-  { key: 'hairAccessory', label: '髮飾', options: HAIR_ACCESSORY_OPTIONS, optionLabels: { none: '無', 'star-clip': '星星髮夾', bow: '蝴蝶結', leaf: '葉子', 'explorer-hat': '探險帽' } }
+  { key: 'cheeks', label: '臉頰', options: CHEEK_OPTIONS, optionLabels: { none: '無', blush: '腮紅', freckles: '雀斑', swirl: '漩渦', 'shy-lines': '害羞', stars: '星星' } }
 ];
 
 export function AvatarEditor({
@@ -157,6 +153,7 @@ export function AvatarEditor({
                 type="button"
                 className={`avatar-option ${selected ? 'selected' : ''}`}
                 aria-pressed={selected}
+                aria-label={category.optionLabels[option]}
                 onClick={() => selectOption(category.key, option)}
               >
                 {isColor ? (
@@ -164,7 +161,6 @@ export function AvatarEditor({
                 ) : (
                   <AvatarCanvas recipe={optionRecipe} className="avatar-option-preview" label="" />
                 )}
-                <span>{category.optionLabels[option]}</span>
               </button>
             );
           })}

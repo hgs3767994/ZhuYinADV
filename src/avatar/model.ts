@@ -63,14 +63,14 @@ export type AvatarRecipeKey = Exclude<keyof AvatarRecipeV2, 'version'>;
 export const DEFAULT_AVATAR_RECIPE: AvatarRecipeV2 = {
   version: 2,
   face: 'round',
-  skinTone: 'warm',
+  skinTone: 'peach',
   hair: 'a01',
-  hairColor: 'brown',
-  brows: 'soft',
+  hairColor: 'black',
+  brows: 'none',
   eyes: 'round',
-  nose: 'soft',
+  nose: 'dot',
   mouth: 'smile',
-  cheeks: 'blush',
+  cheeks: 'none',
   glasses: 'none',
   hairAccessory: 'none'
 };
@@ -149,7 +149,7 @@ export function normalizeAvatarRecipe(recipe: AvatarRecipe): AvatarRecipeV2 {
     ? storedHair as HairOption
     : legacyHair[storedHair] ?? DEFAULT_AVATAR_RECIPE.hair;
 
-  return { ...recipe, face, hair };
+  return { ...recipe, face, hair, glasses: 'none', hairAccessory: 'none' };
 }
 
 export function randomAvatarRecipe(): AvatarRecipeV2 {
@@ -164,7 +164,7 @@ export function randomAvatarRecipe(): AvatarRecipeV2 {
     nose: randomFrom(NOSE_OPTIONS),
     mouth: randomFrom(MOUTH_OPTIONS),
     cheeks: randomFrom(CHEEK_OPTIONS),
-    glasses: randomFrom(GLASSES_OPTIONS),
-    hairAccessory: randomFrom(HAIR_ACCESSORY_OPTIONS)
+    glasses: 'none',
+    hairAccessory: 'none'
   };
 }

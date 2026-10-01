@@ -23,7 +23,11 @@ describe('AvatarCanvas approved hairstyles', () => {
   });
 
   it('keeps the approved brown artwork unchanged and tints other hair colors', () => {
-    const brownRecipe = { ...DEFAULT_AVATAR_RECIPE, hair: '01' as const };
+    const brownRecipe = {
+      ...DEFAULT_AVATAR_RECIPE,
+      hair: '01' as const,
+      hairColor: 'brown' as const
+    };
     const brown = renderToStaticMarkup(<AvatarCanvas recipe={brownRecipe} />);
     const blue = renderToStaticMarkup(
       <AvatarCanvas recipe={{ ...brownRecipe, hairColor: 'blue' }} />
@@ -43,5 +47,22 @@ describe('AvatarCanvas approved hairstyles', () => {
     expect(markup).toContain('hair-a05-back-mask.svg');
     expect(markup).toContain('hair-a05-back-details.svg');
     expect(markup).not.toContain('approved/hair-a05.png');
+  });
+
+  it('can render a complete frameless avatar without retired decorations', () => {
+    const markup = renderToStaticMarkup(
+      <AvatarCanvas
+        recipe={{
+          ...DEFAULT_AVATAR_RECIPE,
+          glasses: 'star',
+          hairAccessory: 'explorer-hat'
+        }}
+        showBackground={false}
+      />
+    );
+
+    expect(markup).not.toContain('fill="#dff4f0"');
+    expect(markup).not.toContain('stroke="#7c3aed"');
+    expect(markup).not.toContain('fill="#d4a95f"');
   });
 });

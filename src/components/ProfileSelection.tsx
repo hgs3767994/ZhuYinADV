@@ -56,7 +56,7 @@ export function ProfileSelection({
               key={profile.id}
               onClick={() => onSelect(profile)}
             >
-              <ProfileAvatar profile={profile} size="large" />
+              <ProfileAvatar profile={profile} size="large" frameless />
               <strong>{profile.name}</strong>
             </button>
           ))}

@@ -23,6 +23,7 @@ interface AvatarCanvasProps {
   recipe: AvatarRecipeV2;
   className?: string;
   label?: string;
+  showBackground?: boolean;
 }
 
 export const SKIN_COLORS: Record<SkinToneOption, string> = {
@@ -177,23 +178,12 @@ function Cheeks({ recipe }: { recipe: AvatarRecipeV2 }) {
   return <g fill="#f59e0b"><path d="m166 303 6 12 14 2-10 10 3 14-13-7-13 7 3-14-10-10 14-2Z" /><path d="m346 303 6 12 14 2-10 10 3 14-13-7-13 7 3-14-10-10 14-2Z" /></g>;
 }
 
-function Glasses({ recipe }: { recipe: AvatarRecipeV2 }) {
-  if (recipe.glasses === 'none') return null;
-  const common = { fill: 'none', stroke: '#334155', strokeWidth: 9 };
-  if (recipe.glasses === 'square') return <g {...common}><rect x="164" y="239" width="76" height="58" rx="12" /><rect x="272" y="239" width="76" height="58" rx="12" /><path d="M240 261h32M164 254l-29-10m213 10 29-10" /></g>;
-  if (recipe.glasses === 'star') return <g fill="none" stroke="#7c3aed" strokeWidth="8"><path d="m204 230 12 23 26 4-19 18 5 26-24-12-24 12 5-26-19-18 26-4Z" /><path d="m308 230 12 23 26 4-19 18 5 26-24-12-24 12 5-26-19-18 26-4Z" /><path d="M242 261h28" /></g>;
-  return <g {...common}><circle cx="204" cy="265" r="39" /><circle cx="308" cy="265" r="39" /><path d="M243 258q13-11 26 0M165 251l-27-10m209 10 27-10" /></g>;
-}
-
-function HairAccessory({ recipe }: { recipe: AvatarRecipeV2 }) {
-  if (recipe.hairAccessory === 'none') return null;
-  if (recipe.hairAccessory === 'star-clip') return <path d="m344 122 10 21 23 3-17 16 4 23-20-11-21 11 4-23-17-16 24-3Z" fill="#facc15" stroke="#a16207" strokeWidth="6" />;
-  if (recipe.hairAccessory === 'bow') return <g fill="#f06292" stroke="#9d174d" strokeWidth="6"><path d="M310 130q-43-44-54 9 20 30 54 14Z" /><path d="M326 130q43-44 54 9-20 30-54 14Z" /><circle cx="318" cy="143" r="18" /></g>;
-  if (recipe.hairAccessory === 'leaf') return <g fill="#65a30d" stroke="#3f6212" strokeWidth="6"><path d="M326 132q22-54 67-47-1 47-57 61Z" /><path d="M340 134q26-22 48-42" fill="none" /></g>;
-  return <g stroke="#6b4f2f" strokeWidth="7"><path d="M143 131q113-97 226 0l-19 42H162Z" fill="#d4a95f" /><path d="M119 165q137-31 274 0-16 29-137 29t-137-29Z" fill="#b9843d" /><path d="M188 134h136" stroke="#4f8aa8" strokeWidth="15" /></g>;
-}
-
-export function AvatarCanvas({ recipe, className = '', label = '冒險家頭像' }: AvatarCanvasProps) {
+export function AvatarCanvas({
+  recipe,
+  className = '',
+  label = '冒險家頭像',
+  showBackground = true
+}: AvatarCanvasProps) {
   const skin = SKIN_COLORS[recipe.skinTone];
   const instanceId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const faceMaskId = `face-mask-${instanceId}`;
@@ -248,7 +238,7 @@ export function AvatarCanvas({ recipe, className = '', label = '冒險家頭像'
           </mask>
         )}
       </defs>
-      <circle cx="256" cy="256" r="244" fill="#dff4f0" />
+      {showBackground && <circle cx="256" cy="256" r="244" fill="#dff4f0" />}
       {legacyHair && (
         <LegacyHairLayer
           hair={legacyHair}
@@ -287,11 +277,7 @@ export function AvatarCanvas({ recipe, className = '', label = '冒險家頭像'
           <Nose recipe={recipe} />
           <Cheeks recipe={recipe} />
           <Mouth recipe={recipe} />
-          <Glasses recipe={recipe} />
         </g>
-      </g>
-      <g transform={calibration ? calibratedHairTransform : undefined}>
-        <HairAccessory recipe={recipe} />
       </g>
     </svg>
   );
