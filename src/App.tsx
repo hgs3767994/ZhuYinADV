@@ -145,7 +145,7 @@ const ADVENTURE_IMAGES = Array.from(new Set([
   ...AVATAR_FACE_ASSETS,
   ...AVATAR_HAIR_ASSETS
 ]));
-const IMAGE_ASSET_VERSION = '4';
+const IMAGE_ASSET_VERSION = '5';
 const AUDIO_ASSET_VERSION = '3';
 const IMAGE_ASSET_VERSION_KEY = 'zhuyin-image-asset-version';
 const AUDIO_ASSET_VERSION_KEY = 'zhuyin-audio-asset-version';

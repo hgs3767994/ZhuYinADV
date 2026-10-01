@@ -23,12 +23,25 @@ describe('AvatarCanvas approved hairstyles', () => {
   });
 
   it('keeps the approved brown artwork unchanged and tints other hair colors', () => {
-    const brown = renderToStaticMarkup(<AvatarCanvas recipe={DEFAULT_AVATAR_RECIPE} />);
+    const brownRecipe = { ...DEFAULT_AVATAR_RECIPE, hair: '01' as const };
+    const brown = renderToStaticMarkup(<AvatarCanvas recipe={brownRecipe} />);
     const blue = renderToStaticMarkup(
-      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, hairColor: 'blue' }} />
+      <AvatarCanvas recipe={{ ...brownRecipe, hairColor: 'blue' }} />
     );
 
     expect(brown).not.toMatch(/<image[^>]+hair-01\.png[^>]+filter=/);
     expect(blue).toMatch(/<image[^>]+hair-01\.png[^>]+filter="url\(#hair-tint-/);
+  });
+
+  it('renders an existing layered SVG hairstyle without replacing its id', () => {
+    const markup = renderToStaticMarkup(
+      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, hair: 'a05' }} />
+    );
+
+    expect(markup).toContain('hair-a05-mask.svg');
+    expect(markup).toContain('hair-a05-details.svg');
+    expect(markup).toContain('hair-a05-back-mask.svg');
+    expect(markup).toContain('hair-a05-back-details.svg');
+    expect(markup).not.toContain('approved/hair-a05.png');
   });
 });

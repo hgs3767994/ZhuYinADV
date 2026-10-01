@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_AVATAR_RECIPE,
+  APPROVED_HAIR_OPTIONS,
   BROW_OPTIONS,
   FACE_OPTIONS,
   HAIR_OPTIONS,
+  LEGACY_HAIR_OPTIONS,
   avatarRecipeFromSeed,
   normalizeAvatarRecipe,
   randomAvatarRecipe,
@@ -43,15 +45,26 @@ describe('avatar recipes', () => {
     expect(BROW_OPTIONS).toContain('none');
   });
 
-  it('offers only the four approved hairstyles', () => {
-    expect(HAIR_OPTIONS).toEqual(['01', '02', '03', '05']);
+  it('keeps the thirteen existing hairstyles and adds the four calibrated hairstyles', () => {
+    expect(LEGACY_HAIR_OPTIONS).toEqual([
+      'a01', 'a02', 'a03', 'a04', 'a05', 'a06', 'a07', 'a08',
+      'b01', 'b02', 'b05', 'b06', 'b07'
+    ]);
+    expect(APPROVED_HAIR_OPTIONS).toEqual(['01', '02', '03', '05']);
+    expect(HAIR_OPTIONS).toHaveLength(17);
   });
 
-  it('migrates matching retired hairstyles to the approved replacements', () => {
+  it('preserves every existing hairstyle id unchanged', () => {
+    for (const hair of LEGACY_HAIR_OPTIONS) {
+      const existing = { ...DEFAULT_AVATAR_RECIPE, hair };
+      expect(normalizeAvatarRecipe(existing).hair).toBe(hair);
+    }
+  });
+
+  it('migrates retired procedural hairstyles to the original selected hairstyles', () => {
     const mappings = {
-      a01: '01', a02: '02', a03: '03', a05: '05',
-      short: '01', bob: '05', curly: '05', 'twin-tails': '05',
-      'side-sweep': '01', spiky: '01'
+      short: 'a01', bob: 'a05', curly: 'a05', 'twin-tails': 'a05',
+      'side-sweep': 'a06', spiky: 'a08'
     } as const;
     for (const [hair, expected] of Object.entries(mappings)) {
       const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, hair } as unknown as AvatarRecipeV2;
@@ -59,9 +72,9 @@ describe('avatar recipes', () => {
     }
   });
 
-  it('falls back safely when a retired hairstyle has no approved replacement', () => {
-    const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, hair: 'b07' } as unknown as AvatarRecipeV2;
-    expect(normalizeAvatarRecipe(legacyV2).hair).toBe('01');
+  it('falls back safely for an unknown hairstyle', () => {
+    const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, hair: 'unknown' } as unknown as AvatarRecipeV2;
+    expect(normalizeAvatarRecipe(legacyV2).hair).toBe('a01');
   });
 
   it('creates complete random recipes', () => {

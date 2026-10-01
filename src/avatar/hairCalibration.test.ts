@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FACE_OPTIONS, HAIR_OPTIONS } from './model';
+import { APPROVED_HAIR_OPTIONS, FACE_OPTIONS } from './model';
 import {
   HAIR_FACE_CALIBRATIONS,
   faceTransform,
@@ -8,7 +8,7 @@ import {
 
 describe('approved hair calibration', () => {
   it('contains one calibration for every approved hair and face combination', () => {
-    for (const hair of HAIR_OPTIONS) {
+    for (const hair of APPROVED_HAIR_OPTIONS) {
       expect(Object.keys(HAIR_FACE_CALIBRATIONS[hair])).toEqual([...FACE_OPTIONS]);
     }
   });

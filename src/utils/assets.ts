@@ -5,8 +5,13 @@ export function assetUrl(path: string): string {
 
 const imagePreloads = new Map<string, Promise<void>>();
 const IMAGE_DECODE_GRACE_MS = 1_000;
-export const OFFLINE_IMAGE_CACHE_NAME = 'zhuyin-images-v4';
-const PREVIOUS_IMAGE_CACHE_NAMES = ['zhuyin-images-v1', 'zhuyin-images-v2', 'zhuyin-images-v3'];
+export const OFFLINE_IMAGE_CACHE_NAME = 'zhuyin-images-v5';
+const PREVIOUS_IMAGE_CACHE_NAMES = [
+  'zhuyin-images-v1',
+  'zhuyin-images-v2',
+  'zhuyin-images-v3',
+  'zhuyin-images-v4'
+];
 
 export async function hasMissingOfflineImages(sources: string[]): Promise<boolean> {
   if (!('caches' in window)) return true;

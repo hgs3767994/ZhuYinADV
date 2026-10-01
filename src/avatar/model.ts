@@ -8,7 +8,12 @@ export const FACE_OPTIONS = [
   'long01'
 ] as const;
 export const SKIN_TONE_OPTIONS = ['peach', 'warm', 'golden', 'tan', 'deep'] as const;
-export const HAIR_OPTIONS = ['01', '02', '03', '05'] as const;
+export const LEGACY_HAIR_OPTIONS = [
+  'a01', 'a02', 'a03', 'a04', 'a05', 'a06', 'a07', 'a08',
+  'b01', 'b02', 'b05', 'b06', 'b07'
+] as const;
+export const APPROVED_HAIR_OPTIONS = ['01', '02', '03', '05'] as const;
+export const HAIR_OPTIONS = [...LEGACY_HAIR_OPTIONS, ...APPROVED_HAIR_OPTIONS] as const;
 export const HAIR_COLOR_OPTIONS = ['black', 'brown', 'chestnut', 'golden', 'blue', 'pink'] as const;
 export const BROW_OPTIONS = ['none', 'soft', 'straight', 'arched', 'cheerful'] as const;
 export const EYE_OPTIONS = ['round', 'smile', 'sparkle', 'gentle', 'bright', 'wink'] as const;
@@ -20,6 +25,8 @@ export const HAIR_ACCESSORY_OPTIONS = ['none', 'star-clip', 'bow', 'leaf', 'expl
 
 export type FaceOption = typeof FACE_OPTIONS[number];
 export type SkinToneOption = typeof SKIN_TONE_OPTIONS[number];
+export type LegacyHairOption = typeof LEGACY_HAIR_OPTIONS[number];
+export type ApprovedHairOption = typeof APPROVED_HAIR_OPTIONS[number];
 export type HairOption = typeof HAIR_OPTIONS[number];
 export type HairColorOption = typeof HAIR_COLOR_OPTIONS[number];
 export type BrowOption = typeof BROW_OPTIONS[number];
@@ -57,7 +64,7 @@ export const DEFAULT_AVATAR_RECIPE: AvatarRecipeV2 = {
   version: 2,
   face: 'round',
   skinTone: 'warm',
-  hair: '01',
+  hair: 'a01',
   hairColor: 'brown',
   brows: 'soft',
   eyes: 'round',
@@ -131,16 +138,12 @@ export function normalizeAvatarRecipe(recipe: AvatarRecipe): AvatarRecipeV2 {
 
   const storedHair = recipe.hair as string;
   const legacyHair: Record<string, HairOption> = {
-    a01: '01',
-    a02: '02',
-    a03: '03',
-    a05: '05',
-    short: '01',
-    bob: '05',
-    curly: '05',
-    'twin-tails': '05',
-    'side-sweep': '01',
-    spiky: '01'
+    short: 'a01',
+    bob: 'a05',
+    curly: 'a05',
+    'twin-tails': 'a05',
+    'side-sweep': 'a06',
+    spiky: 'a08'
   };
   const hair = HAIR_OPTIONS.includes(storedHair as HairOption)
     ? storedHair as HairOption

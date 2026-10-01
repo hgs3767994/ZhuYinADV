@@ -1,4 +1,4 @@
-import type { FaceOption, HairOption } from './model';
+import type { ApprovedHairOption, FaceOption } from './model';
 
 export interface HairFaceCalibration {
   translateX: number;
@@ -8,7 +8,7 @@ export interface HairFaceCalibration {
   faceScale: number;
 }
 
-type HairCalibrationMap = Record<HairOption, Record<FaceOption, HairFaceCalibration>>;
+type HairCalibrationMap = Record<ApprovedHairOption, Record<FaceOption, HairFaceCalibration>>;
 
 const DEFAULT_CALIBRATION: HairFaceCalibration = {
   translateX: 0,
