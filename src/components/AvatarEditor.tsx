@@ -42,7 +42,6 @@ const CATEGORIES: Category[] = [
       diamond: '菱形臉',
       square01: '方型臉 1',
       square02: '方型臉 2',
-      square03: '方型臉 3',
       long01: '長型臉'
     }
   },
@@ -55,13 +54,10 @@ const CATEGORIES: Category[] = [
       a01: '瀏海短髮',
       a02: '刺蝟短髮',
       a03: '經典側分',
-      a04: '蓬鬆後梳',
-      a05: '中長捲髮',
       a06: '斜瀏海',
       a07: '蓬鬆中分',
       a08: '活力碎髮',
       b01: '俐落平頭',
-      b02: '復古側分',
       b05: '整齊後梳',
       b06: '尖刺短髮',
       b07: '短捲髮',
@@ -114,7 +110,12 @@ export function AvatarEditor({
         <h1 id="avatar-editor-title">{title}</h1>
 
         <div className="avatar-preview-wrap">
-          <AvatarCanvas recipe={recipe} className="avatar-preview" label="目前的冒險家頭像預覽" />
+          <AvatarCanvas
+            recipe={recipe}
+            className="avatar-preview"
+            label="目前的冒險家頭像預覽"
+            showBackground={false}
+          />
           <div className="avatar-quick-actions">
             <button type="button" className="secondary-button compact-button"
               onClick={() => setRecipe(randomAvatarRecipe())}>🎲 隨機產生</button>

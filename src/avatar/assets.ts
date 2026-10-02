@@ -28,22 +28,16 @@ export function approvedHairAssetUrl(hair: ApprovedHairOption): string {
   return assetUrl(`assets/avatar-parts/hair/approved/hair-${hair}.png`);
 }
 
-export type LegacyHairAssetLayer = 'mask' | 'details' | 'back-mask' | 'back-details';
+export type LegacyHairAssetLayer = 'mask' | 'details';
 
 export function legacyHairAssetUrl(hair: LegacyHairOption, layer: LegacyHairAssetLayer): string {
   return assetUrl(`assets/avatar-parts/hair/candidates/hair-${hair}-${layer}.svg`);
 }
 
-export function legacyHairHasBackLayer(hair: LegacyHairOption): boolean {
-  return hair === 'a05';
-}
-
 export const AVATAR_HAIR_ASSETS = [
-  ...LEGACY_HAIR_OPTIONS.flatMap((hair) => {
-    const front = [legacyHairAssetUrl(hair, 'mask'), legacyHairAssetUrl(hair, 'details')];
-    return legacyHairHasBackLayer(hair)
-      ? [...front, legacyHairAssetUrl(hair, 'back-mask'), legacyHairAssetUrl(hair, 'back-details')]
-      : front;
-  }),
+  ...LEGACY_HAIR_OPTIONS.flatMap((hair) => [
+    legacyHairAssetUrl(hair, 'mask'),
+    legacyHairAssetUrl(hair, 'details')
+  ]),
   ...APPROVED_HAIR_OPTIONS.map(approvedHairAssetUrl)
 ];

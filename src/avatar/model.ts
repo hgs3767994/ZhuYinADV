@@ -4,13 +4,12 @@ export const FACE_OPTIONS = [
   'diamond',
   'square01',
   'square02',
-  'square03',
   'long01'
 ] as const;
 export const SKIN_TONE_OPTIONS = ['peach', 'warm', 'golden', 'tan', 'deep'] as const;
 export const LEGACY_HAIR_OPTIONS = [
-  'a01', 'a02', 'a03', 'a04', 'a05', 'a06', 'a07', 'a08',
-  'b01', 'b02', 'b05', 'b06', 'b07'
+  'a01', 'a02', 'a03', 'a06', 'a07', 'a08',
+  'b01', 'b05', 'b06', 'b07'
 ] as const;
 export const APPROVED_HAIR_OPTIONS = ['01', '02', '03', '05'] as const;
 export const HAIR_OPTIONS = [...LEGACY_HAIR_OPTIONS, ...APPROVED_HAIR_OPTIONS] as const;
@@ -139,9 +138,9 @@ export function normalizeAvatarRecipe(recipe: AvatarRecipe): AvatarRecipeV2 {
   const storedHair = recipe.hair as string;
   const legacyHair: Record<string, HairOption> = {
     short: 'a01',
-    bob: 'a05',
-    curly: 'a05',
-    'twin-tails': 'a05',
+    bob: '01',
+    curly: 'b07',
+    'twin-tails': '02',
     'side-sweep': 'a06',
     spiky: 'a08'
   };

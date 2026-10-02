@@ -4,8 +4,7 @@ import {
   AVATAR_HAIR_ASSETS,
   approvedHairAssetUrl,
   faceAssetUrl,
-  legacyHairAssetUrl,
-  legacyHairHasBackLayer
+  legacyHairAssetUrl
 } from './assets';
 import { APPROVED_HAIR_OPTIONS, FACE_OPTIONS, LEGACY_HAIR_OPTIONS } from './model';
 
@@ -31,7 +30,7 @@ describe('avatar face assets', () => {
   });
 
   it('maps every existing hairstyle to its original SVG layers', () => {
-    const expectedLegacyAssets = LEGACY_HAIR_OPTIONS.length * 2 + 2;
+    const expectedLegacyAssets = LEGACY_HAIR_OPTIONS.length * 2;
     expect(AVATAR_HAIR_ASSETS).toHaveLength(
       expectedLegacyAssets + APPROVED_HAIR_OPTIONS.length
     );
@@ -43,6 +42,5 @@ describe('avatar face assets', () => {
         new RegExp(`assets/avatar-parts/hair/candidates/hair-${hair}-details\\.svg$`)
       );
     }
-    expect(legacyHairHasBackLayer('a05')).toBe(true);
   });
 });

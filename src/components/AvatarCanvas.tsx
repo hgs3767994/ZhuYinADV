@@ -3,10 +3,10 @@ import {
   approvedHairAssetUrl,
   faceAssetUrl,
   isApprovedHair,
-  legacyHairAssetUrl,
-  legacyHairHasBackLayer
+  legacyHairAssetUrl
 } from '../avatar/assets';
 import {
+  CANONICAL_FACE_TRANSFORM,
   HAIR_FACE_CALIBRATIONS,
   faceTransform,
   hairTransform
@@ -43,15 +43,12 @@ export const HAIR_COLORS: Record<HairColorOption, string> = {
   pink: '#b84f78'
 };
 
-const LEGACY_HEAD_TRANSFORM = 'matrix(.65 0 0 .78 89.6 80)';
-
 const LEGACY_HAIR_FACE_SCALE_X: Record<FaceOption, number> = {
   round: 1,
   oval: 0.94,
   diamond: 0.94,
   square01: 1,
   square02: 1,
-  square03: 1,
   long01: 0.92
 };
 
@@ -65,21 +62,16 @@ interface LegacyHairLayerProps {
   face: FaceOption;
   hairColor: HairColorOption;
   maskId: string;
-  back?: boolean;
 }
 
 function LegacyHairLayer({
   hair,
   face,
   hairColor,
-  maskId,
-  back = false
+  maskId
 }: LegacyHairLayerProps) {
-  if (back && !legacyHairHasBackLayer(hair)) return null;
-
-  const layer = back ? 'back-details' : 'details';
   return (
-    <g transform={LEGACY_HEAD_TRANSFORM}>
+    <g transform={CANONICAL_FACE_TRANSFORM}>
       <rect
         x="0"
         y="0"
@@ -89,7 +81,7 @@ function LegacyHairLayer({
         mask={`url(#${maskId})`}
       />
       <image
-        href={legacyHairAssetUrl(hair, layer)}
+        href={legacyHairAssetUrl(hair, 'details')}
         x="0"
         y="0"
         width="512"
@@ -189,14 +181,13 @@ export function AvatarCanvas({
   const faceMaskId = `face-mask-${instanceId}`;
   const hairTintId = `hair-tint-${instanceId}`;
   const legacyHairMaskId = `legacy-hair-mask-${instanceId}`;
-  const legacyHairBackMaskId = `legacy-hair-back-mask-${instanceId}`;
   const maskSource = faceAssetUrl(recipe.face, 'mask');
   const detailsSource = faceAssetUrl(recipe.face, 'details');
   const approvedHair = isApprovedHair(recipe.hair) ? recipe.hair : null;
   const legacyHair = approvedHair ? null : recipe.hair as LegacyHairOption;
   const calibration = approvedHair ? HAIR_FACE_CALIBRATIONS[approvedHair][recipe.face] : null;
   const calibratedHairTransform = calibration ? hairTransform(calibration) : undefined;
-  const calibratedFaceTransform = calibration ? faceTransform(calibration) : LEGACY_HEAD_TRANSFORM;
+  const canonicalFaceTransform = faceTransform();
   const tintHair = recipe.hairColor !== 'brown';
   return (
     <svg
@@ -225,30 +216,9 @@ export function AvatarCanvas({
             />
           </mask>
         )}
-        {legacyHair && legacyHairHasBackLayer(legacyHair) && (
-          <mask id={legacyHairBackMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
-            <image
-              href={legacyHairAssetUrl(legacyHair, 'back-mask')}
-              x="0"
-              y="0"
-              width="512"
-              height="512"
-              transform={legacyHairTransform(recipe.face)}
-            />
-          </mask>
-        )}
       </defs>
       {showBackground && <circle cx="256" cy="256" r="244" fill="#dff4f0" />}
-      {legacyHair && (
-        <LegacyHairLayer
-          hair={legacyHair}
-          face={recipe.face}
-          hairColor={recipe.hairColor}
-          maskId={legacyHairBackMaskId}
-          back
-        />
-      )}
-      <g transform={calibratedFaceTransform}>
+      <g transform={canonicalFaceTransform}>
         <rect x="0" y="0" width="512" height="512" fill={skin} mask={`url(#${faceMaskId})`} />
         <image href={detailsSource} x="0" y="0" width="512" height="512" />
       </g>
@@ -270,14 +240,12 @@ export function AvatarCanvas({
           maskId={legacyHairMaskId}
         />
       ) : null}
-      <g transform={calibration ? calibratedFaceTransform : undefined}>
-        <g transform="translate(0 18)">
-          <Brows recipe={recipe} />
-          <Eyes recipe={recipe} />
-          <Nose recipe={recipe} />
-          <Cheeks recipe={recipe} />
-          <Mouth recipe={recipe} />
-        </g>
+      <g transform="translate(0 18)">
+        <Brows recipe={recipe} />
+        <Eyes recipe={recipe} />
+        <Nose recipe={recipe} />
+        <Cheeks recipe={recipe} />
+        <Mouth recipe={recipe} />
       </g>
     </svg>
   );

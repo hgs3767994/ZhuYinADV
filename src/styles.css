@@ -543,6 +543,7 @@ button:disabled {
 .avatar-preview-wrap {
   display: flex;
   width: 100%;
+  margin: 24px 0 38px;
   align-items: center;
   justify-content: center;
   gap: 12px;
@@ -552,10 +553,6 @@ button:disabled {
   width: clamp(142px, 43vw, 188px);
   height: clamp(142px, 43vw, 188px);
   flex: 0 0 auto;
-  border: 4px solid var(--friendly-border);
-  border-radius: 50%;
-  background: #dff4f0;
-  box-shadow: 0 8px 24px var(--friendly-shadow);
 }
 
 .avatar-quick-actions {

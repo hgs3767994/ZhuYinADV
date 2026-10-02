@@ -10,16 +10,17 @@ describe('approved hair calibration', () => {
   it('contains one calibration for every approved hair and face combination', () => {
     for (const hair of APPROVED_HAIR_OPTIONS) {
       expect(Object.keys(HAIR_FACE_CALIBRATIONS[hair])).toEqual([...FACE_OPTIONS]);
+      for (const face of FACE_OPTIONS) {
+        expect(HAIR_FACE_CALIBRATIONS[hair][face]).not.toHaveProperty('faceScale');
+      }
     }
   });
 
-  it('preserves the exact transform order exported by the calibration tool', () => {
+  it('uses hair-only calibration with one canonical face transform', () => {
     const calibration = HAIR_FACE_CALIBRATIONS['02'].round;
     expect(hairTransform(calibration)).toBe(
-      'translate(-7 51) translate(256 256) scale(1.322 1.121) translate(-256 -256)'
+      'translate(-5.6875 73.405) translate(256 256) scale(1.0741 1.093) translate(-256 -256)'
     );
-    expect(faceTransform(calibration)).toBe(
-      'translate(256 256) scale(0.8) translate(-256 -256)'
-    );
+    expect(faceTransform()).toBe('matrix(.65 0 0 .78 89.6 80)');
   });
 });

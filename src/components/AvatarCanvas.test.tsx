@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_AVATAR_RECIPE } from '../avatar/model';
 import { AvatarCanvas } from './AvatarCanvas';
 
-describe('AvatarCanvas approved hairstyles', () => {
-  it('uses the approved single-layer image and exact face calibration', () => {
+describe('AvatarCanvas hairstyles', () => {
+  it('uses the approved single-layer image and canonical face layout', () => {
     const markup = renderToStaticMarkup(
       <AvatarCanvas
         recipe={{ ...DEFAULT_AVATAR_RECIPE, hair: '02', face: 'round' }}
@@ -13,11 +13,9 @@ describe('AvatarCanvas approved hairstyles', () => {
 
     expect(markup).toContain('assets/avatar-parts/hair/approved/hair-02.png');
     expect(markup).toContain(
-      'translate(-7 51) translate(256 256) scale(1.322 1.121) translate(-256 -256)'
+      'translate(-5.6875 73.405) translate(256 256) scale(1.0741 1.093) translate(-256 -256)'
     );
-    expect(markup).toContain(
-      'translate(256 256) scale(0.8) translate(-256 -256)'
-    );
+    expect(markup).toContain('matrix(.65 0 0 .78 89.6 80)');
     expect(markup).not.toContain('back-mask');
     expect(markup).not.toContain('candidates');
   });
@@ -37,16 +35,29 @@ describe('AvatarCanvas approved hairstyles', () => {
     expect(blue).toMatch(/<image[^>]+hair-01\.png[^>]+filter="url\(#hair-tint-/);
   });
 
-  it('renders an existing layered SVG hairstyle without replacing its id', () => {
+  it('keeps facial feature geometry fixed when the hairstyle changes', () => {
+    const first = renderToStaticMarkup(
+      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, hair: '01' }} />
+    );
+    const fifth = renderToStaticMarkup(
+      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, hair: '05' }} />
+    );
+    const featureStart = '<g transform="translate(0 18)">';
+
+    expect(first.slice(first.lastIndexOf(featureStart))).toBe(
+      fifth.slice(fifth.lastIndexOf(featureStart))
+    );
+  });
+
+  it('renders a remaining layered SVG hairstyle without replacing its id', () => {
     const markup = renderToStaticMarkup(
-      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, hair: 'a05' }} />
+      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, hair: 'a06' }} />
     );
 
-    expect(markup).toContain('hair-a05-mask.svg');
-    expect(markup).toContain('hair-a05-details.svg');
-    expect(markup).toContain('hair-a05-back-mask.svg');
-    expect(markup).toContain('hair-a05-back-details.svg');
-    expect(markup).not.toContain('approved/hair-a05.png');
+    expect(markup).toContain('hair-a06-mask.svg');
+    expect(markup).toContain('hair-a06-details.svg');
+    expect(markup).not.toContain('back-mask');
+    expect(markup).not.toContain('approved/hair-a06.png');
   });
 
   it('can render a complete frameless avatar without retired decorations', () => {

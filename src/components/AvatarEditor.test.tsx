@@ -19,5 +19,15 @@ describe('AvatarEditor', () => {
     expect(markup).not.toContain('<span>圓臉</span>');
     expect(markup).not.toContain('>眼鏡</button>');
     expect(markup).not.toContain('>髮飾</button>');
+    expect(markup).not.toContain('aria-label="蓬鬆後梳"');
+    expect(markup).not.toContain('aria-label="中長捲髮"');
+    expect(markup).not.toContain('aria-label="復古側分"');
+    expect(markup).not.toContain('aria-label="方型臉 3"');
+
+    const livePreview = markup.match(
+      /<svg[^>]+aria-label="目前的冒險家頭像預覽"[\s\S]*?<\/svg>/
+    )?.[0];
+    expect(livePreview).toBeDefined();
+    expect(livePreview).not.toContain('<circle cx="256" cy="256" r="244"');
   });
 });

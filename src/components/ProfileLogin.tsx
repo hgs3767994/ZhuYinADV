@@ -38,7 +38,7 @@ export function ProfileLogin({
     <main className="screen account-screen">
       <div className="dark-overlay" />
       <form className="account-panel account-form login-form" onSubmit={submit}>
-        <ProfileAvatar profile={profile} size="large" />
+        <ProfileAvatar profile={profile} size="large" frameless />
         <h1>{profile.name}</h1>
         {notice && <p className="success-message" role="status">{notice}</p>}
         <label>
