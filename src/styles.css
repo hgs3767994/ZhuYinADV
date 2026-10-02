@@ -145,8 +145,20 @@ button:disabled {
   transition: transform 120ms ease;
 }
 
+.normal-mode-button {
+  width: 84.483%;
+}
+
+.infinity-mode-button {
+  width: 82.931%;
+}
+
+.record-menu-button {
+  width: 84.31%;
+}
+
 .back-image-button {
-  width: 60%;
+  width: 43.375%;
   margin-top: clamp(8px, 2vh, 24px);
 }
 

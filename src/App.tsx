@@ -960,6 +960,7 @@ export function App() {
             <ImageMenuButton
               image={assetUrl('assets/images/normal_mode_button.webp')}
               label="一般模式"
+              className="normal-mode-button"
               onClick={() => press(() => loadPageImages(
                 DIFFICULTY_IMAGES,
                 () => navigate('difficulty')
@@ -968,11 +969,13 @@ export function App() {
             <ImageMenuButton
               image={assetUrl('assets/images/infinity_mode_button.webp')}
               label="無限模式"
+              className="infinity-mode-button"
               onClick={() => startGame('endless', null)}
             />
             <ImageMenuButton
               image={assetUrl('assets/images/record_button.webp')}
               label="冒險紀錄"
+              className="record-menu-button"
               onClick={openLeaderboardFromMenu}
             />
             <ImageMenuButton
