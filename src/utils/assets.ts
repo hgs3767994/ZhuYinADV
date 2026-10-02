@@ -5,13 +5,14 @@ export function assetUrl(path: string): string {
 
 const imagePreloads = new Map<string, Promise<void>>();
 const IMAGE_DECODE_GRACE_MS = 1_000;
-export const OFFLINE_IMAGE_CACHE_NAME = 'zhuyin-images-v6';
+export const OFFLINE_IMAGE_CACHE_NAME = 'zhuyin-images-v7';
 const PREVIOUS_IMAGE_CACHE_NAMES = [
   'zhuyin-images-v1',
   'zhuyin-images-v2',
   'zhuyin-images-v3',
   'zhuyin-images-v4',
-  'zhuyin-images-v5'
+  'zhuyin-images-v5',
+  'zhuyin-images-v6'
 ];
 
 export async function hasMissingOfflineImages(sources: string[]): Promise<boolean> {
@@ -36,14 +37,9 @@ export async function cacheOfflineImage(source: string): Promise<void> {
 
   const cache = await caches.open(OFFLINE_IMAGE_CACHE_NAME);
   if (!await cache.match(source)) {
-    const existing = await caches.match(source);
-    if (existing) {
-      await cache.put(source, existing.clone());
-    } else {
-      const response = await fetch(source);
-      if (!response.ok) throw new Error(`Image request failed: ${source}`);
-      await cache.put(source, response.clone());
-    }
+    const response = await fetch(source, { cache: 'reload' });
+    if (!response.ok) throw new Error(`Image request failed: ${source}`);
+    await cache.put(source, response.clone());
   }
   const cached = await cache.match(source);
   if (!cached || (!cached.ok && cached.status !== 0)) {
