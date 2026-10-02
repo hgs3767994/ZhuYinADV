@@ -157,6 +157,18 @@ button:disabled {
   width: 84.31%;
 }
 
+.difficulty-easy-button {
+  width: 95.69%;
+}
+
+.difficulty-normal-button {
+  width: 97.241%;
+}
+
+.difficulty-hard-button {
+  width: 97.414%;
+}
+
 .back-image-button {
   width: 43.375%;
   margin-top: clamp(8px, 2vh, 24px);

@@ -1013,6 +1013,7 @@ export function App() {
                 key={difficulty}
                 image={config.image}
                 label={config.label}
+                className={`difficulty-${difficulty}-button`}
                 onClick={() => startGame('normal', difficulty)}
               />
             ))}
