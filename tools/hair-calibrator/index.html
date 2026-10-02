@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>第 11 款髮型 × 臉型手動調校</title>
+  <style>
+    :root { color: #33251f; background: #eee7e0; font-family: "Microsoft JhengHei", system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: minmax(540px, 1fr) 370px; }
+    .workspace { display: grid; place-items: center; padding: 24px; min-width: 0; }
+    .stage-wrap { width: min(76vh, calc(100vw - 440px), 760px); min-width: 500px; }
+    .stage {
+      position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; touch-action: none;
+      border: 2px solid #6f5a4d; border-radius: 18px; outline: none; user-select: none;
+      background-color: #f7f7f7;
+      background-image: linear-gradient(45deg,#ddd 25%,transparent 25%),linear-gradient(-45deg,#ddd 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ddd 75%),linear-gradient(-45deg,transparent 75%,#ddd 75%);
+      background-size: 28px 28px; background-position: 0 0,0 14px,14px -14px,-14px 0;
+      box-shadow: 0 18px 45px rgb(72 48 35 / 18%);
+    }
+    .stage:focus-visible { box-shadow: 0 0 0 4px #2563eb55, 0 18px 45px rgb(72 48 35 / 18%); }
+    .stage svg { width: 100%; height: 100%; display: block; }
+    .stage::before, .stage::after { content: ""; position: absolute; pointer-events: none; background: rgb(37 99 235 / 18%); }
+    .stage::before { left: 50%; top: 0; bottom: 0; width: 1px; }
+    .stage::after { top: 50%; left: 0; right: 0; height: 1px; }
+    .hint { margin: 14px 0 0; text-align: center; color: #6b5a50; font-size: 14px; }
+    .panel { padding: 22px; background: #fffdfa; border-left: 1px solid #d8ccc3; overflow-y: auto; }
+    h1 { margin: 0 0 4px; font-size: 23px; }
+    .subtitle { margin: 0 0 18px; color: #76645a; font-size: 14px; }
+    .face-status { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; margin-bottom: 18px; border-radius: 12px; background: #f4ece6; }
+    .face-status strong { font-size: 18px; }
+    .badge { padding: 4px 9px; border-radius: 999px; background: #e5e7eb; color: #4b5563; font-size: 12px; }
+    .badge.confirmed { background: #dcfce7; color: #166534; }
+    .badge.dirty { background: #fef3c7; color: #92400e; }
+    .control { margin-bottom: 16px; }
+    .control-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+    .control label { font-weight: 700; font-size: 14px; }
+    .value-input { width: 86px; padding: 5px 7px; border: 1px solid #cdbfb5; border-radius: 7px; text-align: right; }
+    input[type="range"] { width: 100%; accent-color: #8d4b32; }
+    .lock-row { display: flex; align-items: center; gap: 8px; margin: -4px 0 16px; font-size: 14px; }
+    .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 18px; }
+    .button-grid .primary { grid-column: 1 / -1; }
+    button { min-height: 42px; padding: 8px 12px; border: 1px solid #bda99b; border-radius: 10px; background: #fff; color: #3f3029; font-weight: 700; }
+    button:hover:not(:disabled) { background: #f5ece6; }
+    button:disabled { cursor: not-allowed; opacity: .42; }
+    button.primary { border-color: #713e2e; background: #7a4634; color: #fff; }
+    button.primary:hover { background: #653727; }
+    button.danger { color: #991b1b; }
+    .data-card { margin-top: 20px; padding: 12px; border: 1px solid #ded4cc; border-radius: 12px; background: #faf7f4; }
+    .data-card h2 { margin: 0 0 8px; font-size: 15px; }
+    pre { margin: 0; max-height: 170px; overflow: auto; font: 12px/1.45 Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+    .small-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px); padding: 9px 15px; border-radius: 999px; background: #29211d; color: #fff; opacity: 0; pointer-events: none; transition: .18s ease; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } .panel { border-left: 0; border-top: 1px solid #d8ccc3; } .stage-wrap { width: min(94vw,680px); min-width: 0; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="workspace">
+      <div class="stage-wrap">
+        <div id="stage" class="stage" tabindex="0" aria-label="第 11 款髮型調校畫布，可拖曳或使用方向鍵微調">
+          <svg viewBox="0 0 512 512" aria-hidden="true">
+            <defs>
+              <mask id="face-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+                <image id="faceMaskImage" x="0" y="0" width="512" height="512" />
+              </mask>
+            </defs>
+            <g id="faceScaleGroup">
+              <g transform="matrix(.65 0 0 .78 89.6 80)">
+                <rect x="0" y="0" width="512" height="512" fill="#ffd7bd" mask="url(#face-mask)" />
+                <image id="faceDetailsImage" x="0" y="0" width="512" height="512" />
+              </g>
+            </g>
+            <image id="hairImage" href="/assets/avatar-parts/hair/approved/hair-01.png" x="0" y="0" width="512" height="512" />
+          </svg>
+        </div>
+        <p class="hint">拖曳髮型移動；方向鍵每次 1px，Shift＋方向鍵每次 10px。臉型使用程式目前的固定比例。</p>
+      </div>
+    </section>
+    <aside class="panel">
+      <h1>第 11 款髮型手動調校</h1>
+      <p class="subtitle">程式素材 01｜6 款現有臉型｜512×512 固定座標</p>
+      <div class="face-status">
+        <div><strong id="faceCounter"></strong><br><span id="faceName"></span></div>
+        <span id="statusBadge" class="badge">尚未確認</span>
+      </div>
+      <div class="control"><div class="control-head"><label for="translateX">左右位置 X</label><input id="translateXNumber" class="value-input" type="number" step="1"></div><input id="translateX" type="range" min="-220" max="220" step="1"></div>
+      <div class="control"><div class="control-head"><label for="translateY">上下位置 Y</label><input id="translateYNumber" class="value-input" type="number" step="1"></div><input id="translateY" type="range" min="-220" max="220" step="1"></div>
+      <div class="control"><div class="control-head"><label for="scaleX">水平縮放</label><input id="scaleXNumber" class="value-input" type="number" min="0.3" max="2.5" step="0.001"></div><input id="scaleX" type="range" min="0.3" max="2.5" step="0.001"></div>
+      <div class="control"><div class="control-head"><label for="scaleY">垂直縮放</label><input id="scaleYNumber" class="value-input" type="number" min="0.3" max="2.5" step="0.001"></div><input id="scaleY" type="range" min="0.3" max="2.5" step="0.001"></div>
+      <label class="lock-row"><input id="lockScale" type="checkbox">鎖定水平／垂直比例</label>
+      <div class="control"><div class="control-head"><label for="faceScale">臉型等比例縮放</label><input id="faceScaleNumber" class="value-input" type="number" min="0.5" max="1.5" step="0.001"></div><input id="faceScale" type="range" min="0.5" max="1.5" step="0.001"></div>
+      <div class="control"><div class="control-head"><label for="opacity">髮型透明度（僅供調校）</label><output id="opacityValue">100%</output></div><input id="opacity" type="range" min="20" max="100" step="1" value="100"></div>
+      <div class="button-grid">
+        <button id="confirm" class="primary">確定並記錄此臉型</button>
+        <button id="previous">上一個臉型</button><button id="next">下一個臉型</button>
+        <button id="reset" class="danger">重設目前臉型</button><button id="center">位置歸零</button>
+      </div>
+      <section class="data-card">
+        <h2>已確認資料</h2><pre id="dataPreview"></pre>
+        <div class="small-actions"><button id="copyJson">複製 JSON</button><button id="downloadJson">下載 JSON</button></div>
+      </section>
+    </aside>
+  </main>
+  <div id="toast" class="toast" role="status"></div>
+  <script>
+    const faces = [
+      { id: 'round', name: '圓形' }, { id: 'oval', name: '橢圓形' },
+      { id: 'diamond', name: '菱形' }, { id: 'square01', name: '方形 1' },
+      { id: 'square02', name: '方形 2' }, { id: 'long01', name: '長形' },
+    ];
+    const storageKey = 'zhuyin-hair11-asset01-calibration-v1';
+    const initialValue = () => ({ translateX: 0, translateY: 23.68, scaleX: .65, scaleY: .78 });
+    const defaultTransform = () => ({ ...initialValue(), faceScale: 1, confirmed: false, dirty: false, confirmedValue: null, updatedAt: null });
+    const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    const restoreTransform = value => ({ ...defaultTransform(), ...(value || {}) });
+    const state = {
+      faceIndex: Number.isInteger(saved.faceIndex) ? Math.min(faces.length - 1, Math.max(0, saved.faceIndex)) : 0,
+      transforms: Object.fromEntries(faces.map(face => [face.id, restoreTransform(saved.transforms?.[face.id])])), opacity: 1,
+    };
+    const $ = id => document.getElementById(id);
+    const stage = $('stage'), hairImage = $('hairImage');
+    const fields = { translateX: [$('translateX'),$('translateXNumber')], translateY: [$('translateY'),$('translateYNumber')], scaleX: [$('scaleX'),$('scaleXNumber')], scaleY: [$('scaleY'),$('scaleYNumber')], faceScale: [$('faceScale'),$('faceScaleNumber')] };
+    let dragState = null, toastTimer;
+    const currentFace = () => faces[state.faceIndex];
+    const currentTransform = () => state.transforms[currentFace().id];
+    const round = (value,digits=3) => Number(Number(value).toFixed(digits));
+    const persist = () => localStorage.setItem(storageKey, JSON.stringify({ faceIndex: state.faceIndex, transforms: state.transforms }));
+    function confirmedValue(value) { return value.confirmedValue || { translateX:value.translateX, translateY:value.translateY, scaleX:value.scaleX, scaleY:value.scaleY, faceScale:value.faceScale }; }
+    function exportData() {
+      return { version: 4, selectionIndex: 11, hairId: '01', coordinateSystem: { width:512, height:512, transformOrigin:{x:256,y:256} }, faceTransform: 'matrix(.65 0 0 .78 89.6 80)', faceScaleTransformOrder: 'translate(256,256) scale(faceScale) translate(-256,-256)', hairTransformOrder: 'translate(x,y) translate(256,256) scale(scaleX,scaleY) translate(-256,-256)', faces: Object.fromEntries(faces.flatMap(face => { const value=state.transforms[face.id]; if(!value.confirmed) return []; const fixed=confirmedValue(value); return [[face.id,{ translateX:round(fixed.translateX), translateY:round(fixed.translateY), scaleX:round(fixed.scaleX), scaleY:round(fixed.scaleY), faceScale:round(fixed.faceScale ?? 1), updatedAt:value.updatedAt }]]; })) };
+    }
+    function markEdited() { const value=currentTransform(); value.dirty=true; persist(); }
+    function render() {
+      const face=currentFace(), value=currentTransform();
+      $('faceMaskImage').setAttribute('href', `/assets/avatar-parts/face/face-${face.id}-mask.svg`);
+      $('faceDetailsImage').setAttribute('href', `/assets/avatar-parts/face/face-${face.id}-details.svg`);
+      hairImage.setAttribute('transform', `translate(${value.translateX} ${value.translateY}) translate(256 256) scale(${value.scaleX} ${value.scaleY}) translate(-256 -256)`);
+      hairImage.setAttribute('opacity', String(state.opacity));
+      $('faceScaleGroup').setAttribute('transform', `translate(256 256) scale(${value.faceScale}) translate(-256 -256)`);
+      $('faceCounter').textContent=`臉型 ${state.faceIndex+1} / ${faces.length}`; $('faceName').textContent=face.name;
+      const badge=$('statusBadge'); badge.className='badge'+(value.dirty?' dirty':value.confirmed?' confirmed':''); badge.textContent=value.dirty?'已修改，尚未更新':value.confirmed?'已確認':'尚未確認';
+      $('confirm').textContent=value.confirmed?'確定並更新此臉型':'確定並記錄此臉型';
+      $('previous').disabled=state.faceIndex===0; $('next').disabled=state.faceIndex===faces.length-1;
+      for(const [key,controls] of Object.entries(fields)) controls.forEach(control => control.value=(key.startsWith('scale')||key==='faceScale')?value[key].toFixed(3):value[key].toFixed(0));
+      $('opacityValue').textContent=`${Math.round(state.opacity*100)}%`; $('dataPreview').textContent=JSON.stringify(exportData(),null,2);
+    }
+    function updateValue(key, raw) { const value=currentTransform(), next=Number(raw); if(!Number.isFinite(next)) return; value[key]=key==='faceScale'?Math.min(1.5,Math.max(.5,next)):key.startsWith('scale')?Math.min(2.5,Math.max(.3,next)):Math.min(220,Math.max(-220,next)); if($('lockScale').checked&&key.startsWith('scale')) value[key==='scaleX'?'scaleY':'scaleX']=value[key]; markEdited(); render(); }
+    for(const [key,controls] of Object.entries(fields)) controls.forEach(control => control.addEventListener('input',event=>updateValue(key,event.target.value)));
+    $('opacity').addEventListener('input',event=>{state.opacity=Number(event.target.value)/100;render();});
+    stage.addEventListener('pointerdown',event=>{if(event.button!==0)return;stage.focus();stage.setPointerCapture(event.pointerId);const value=currentTransform();dragState={id:event.pointerId,x:event.clientX,y:event.clientY,startX:value.translateX,startY:value.translateY};});
+    stage.addEventListener('pointermove',event=>{if(!dragState||dragState.id!==event.pointerId)return;const rect=stage.getBoundingClientRect(),value=currentTransform();value.translateX=round(dragState.startX+(event.clientX-dragState.x)*512/rect.width);value.translateY=round(dragState.startY+(event.clientY-dragState.y)*512/rect.height);markEdited();render();});
+    const endDrag=event=>{if(dragState?.id===event.pointerId)dragState=null;}; stage.addEventListener('pointerup',endDrag);stage.addEventListener('pointercancel',endDrag);
+    window.addEventListener('keydown',event=>{if(['INPUT','TEXTAREA'].includes(document.activeElement?.tagName))return;const step=event.shiftKey?10:1,delta={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[event.key];if(!delta)return;event.preventDefault();const value=currentTransform();value.translateX+=delta[0];value.translateY+=delta[1];markEdited();render();});
+    function showToast(text){const toast=$('toast');toast.textContent=text;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),1600);}
+    $('confirm').addEventListener('click',()=>{const value=currentTransform();value.confirmed=true;value.dirty=false;value.confirmedValue={translateX:value.translateX,translateY:value.translateY,scaleX:value.scaleX,scaleY:value.scaleY,faceScale:value.faceScale};value.updatedAt=new Date().toISOString();persist();render();showToast(`${currentFace().name}資料已記錄`);});
+    function moveFace(delta){state.faceIndex=Math.min(faces.length-1,Math.max(0,state.faceIndex+delta));persist();render();stage.focus();}
+    $('previous').addEventListener('click',()=>moveFace(-1));$('next').addEventListener('click',()=>moveFace(1));
+    $('reset').addEventListener('click',()=>{state.transforms[currentFace().id]=defaultTransform();persist();render();showToast('目前臉型已重設');});
+    $('center').addEventListener('click',()=>{const value=currentTransform();value.translateX=0;value.translateY=0;markEdited();render();});
+    $('copyJson').addEventListener('click',async()=>{await navigator.clipboard.writeText(JSON.stringify(exportData(),null,2));showToast('JSON 已複製');});
+    $('downloadJson').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(exportData(),null,2)],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='hair-11-face-calibration.json';link.click();URL.revokeObjectURL(link.href);showToast('JSON 已下載');});
+    render(); stage.focus();
+  </script>
+</body>
+</html>

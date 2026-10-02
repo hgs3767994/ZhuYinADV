@@ -23,4 +23,15 @@ describe('approved hair calibration', () => {
     );
     expect(faceTransform()).toBe('matrix(.65 0 0 .78 89.6 80)');
   });
+
+  it('uses the confirmed per-face calibration for hairstyle 11 (asset 01)', () => {
+    expect(HAIR_FACE_CALIBRATIONS['01']).toEqual({
+      round: { translateX: -9, translateY: -7, scaleX: 0.92, scaleY: 0.946 },
+      oval: { translateX: -9, translateY: -2, scaleX: 0.835, scaleY: 0.994 },
+      diamond: { translateX: -9, translateY: -6, scaleX: 0.855, scaleY: 0.983 },
+      square01: { translateX: -9, translateY: -6, scaleX: 0.933, scaleY: 0.985 },
+      square02: { translateX: -9, translateY: -7, scaleX: 0.91, scaleY: 1.01 },
+      long01: { translateX: -9, translateY: -7, scaleX: 0.752, scaleY: 0.947 }
+    });
+  });
 });

@@ -13,24 +13,15 @@ type HairCalibrationMap = Record<ApprovedHairOption, Record<FaceOption, HairFace
 // canonical face transform makes neck width and head size independent of hair.
 export const CANONICAL_FACE_TRANSFORM = 'matrix(.65 0 0 .78 89.6 80)';
 
-const HAIR_01_CALIBRATION: HairFaceCalibration = {
-  translateX: 0,
-  translateY: 23.68,
-  scaleX: 0.65,
-  scaleY: 0.78
-};
-
-const sameForEveryFace = (calibration: HairFaceCalibration): Record<FaceOption, HairFaceCalibration> => ({
-  round: calibration,
-  oval: calibration,
-  diamond: calibration,
-  square01: calibration,
-  square02: calibration,
-  long01: calibration
-});
-
 export const HAIR_FACE_CALIBRATIONS: HairCalibrationMap = {
-  '01': sameForEveryFace(HAIR_01_CALIBRATION),
+  '01': {
+    round: { translateX: -9, translateY: -7, scaleX: 0.92, scaleY: 0.946 },
+    oval: { translateX: -9, translateY: -2, scaleX: 0.835, scaleY: 0.994 },
+    diamond: { translateX: -9, translateY: -6, scaleX: 0.855, scaleY: 0.983 },
+    square01: { translateX: -9, translateY: -6, scaleX: 0.933, scaleY: 0.985 },
+    square02: { translateX: -9, translateY: -7, scaleX: 0.91, scaleY: 1.01 },
+    long01: { translateX: -9, translateY: -7, scaleX: 0.752, scaleY: 0.947 }
+  },
   '02': {
     round: { translateX: -5.6875, translateY: 73.405, scaleX: 1.0741, scaleY: 1.093 },
     oval: { translateX: -5.6875, translateY: 73.405, scaleX: 0.9506, scaleY: 1.17 },
