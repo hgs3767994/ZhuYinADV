@@ -4,6 +4,14 @@ import { DEFAULT_AVATAR_RECIPE } from '../avatar/model';
 import { AvatarCanvas } from './AvatarCanvas';
 
 describe('AvatarCanvas hairstyles', () => {
+  it('renders the selected vector eyebrow asset', () => {
+    const markup = renderToStaticMarkup(
+      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, brows: '06' }} />
+    );
+
+    expect(markup).toContain('assets/avatar-parts/brows/brow-06.svg');
+  });
+
   it('uses the approved single-layer image and canonical face layout', () => {
     const markup = renderToStaticMarkup(
       <AvatarCanvas
@@ -35,17 +43,19 @@ describe('AvatarCanvas hairstyles', () => {
     expect(blue).toMatch(/<image[^>]+hair-01\.png[^>]+filter="url\(#hair-tint-/);
   });
 
-  it('keeps facial feature geometry fixed when the hairstyle changes', () => {
-    const first = renderToStaticMarkup(
-      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, hair: '01' }} />
-    );
-    const fifth = renderToStaticMarkup(
+  it('renders the hairstyle above the eyebrows and facial features', () => {
+    const markup = renderToStaticMarkup(
       <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, hair: '05' }} />
     );
-    const featureStart = '<g transform="translate(0 18)">';
 
-    expect(first.slice(first.lastIndexOf(featureStart))).toBe(
-      fifth.slice(fifth.lastIndexOf(featureStart))
+    expect(markup.indexOf('brow-01.svg')).toBeLessThan(
+      markup.indexOf('data-avatar-layer="features"')
+    );
+    expect(markup.indexOf('data-avatar-layer="features"')).toBeLessThan(
+      markup.indexOf('data-avatar-layer="hair"')
+    );
+    expect(markup.indexOf('data-avatar-layer="hair"')).toBeLessThan(
+      markup.indexOf('hair-05.png')
     );
   });
 

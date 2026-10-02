@@ -31,7 +31,7 @@ describe('avatar recipes', () => {
       skinTone: 'peach',
       hair: HAIR_OPTIONS[0],
       hairColor: 'black',
-      brows: 'none',
+      brows: BROW_OPTIONS[0],
       eyes: 'round',
       nose: 'dot',
       mouth: 'smile',
@@ -63,17 +63,27 @@ describe('avatar recipes', () => {
     expect(normalizeAvatarRecipe(legacyV2).face).toBe('long01');
   });
 
-  it('allows an avatar to have no eyebrows', () => {
-    expect(BROW_OPTIONS).toContain('none');
+  it('offers the nine vector eyebrow choices', () => {
+    expect(BROW_OPTIONS).toEqual(['01', '02', '03', '04', '05', '06', '07', '08', '09']);
   });
 
-  it('keeps the ten remaining existing hairstyles and adds the four calibrated hairstyles', () => {
+  it('migrates every retired procedural eyebrow safely', () => {
+    const mappings = {
+      none: '01', soft: '01', straight: '02', arched: '04', cheerful: '07'
+    } as const;
+    for (const [brows, expected] of Object.entries(mappings)) {
+      const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, brows } as unknown as AvatarRecipeV2;
+      expect(normalizeAvatarRecipe(legacyV2).brows).toBe(expected);
+    }
+  });
+
+  it('keeps the ten remaining existing hairstyles and adds the calibrated hairstyles', () => {
     expect(LEGACY_HAIR_OPTIONS).toEqual([
       'a01', 'a02', 'a03', 'a06', 'a07', 'a08',
       'b01', 'b05', 'b06', 'b07'
     ]);
-    expect(APPROVED_HAIR_OPTIONS).toEqual(['01', '02', '03', '05']);
-    expect(HAIR_OPTIONS).toHaveLength(14);
+    expect(APPROVED_HAIR_OPTIONS).toEqual(['01', '02', '03', '05', '07', '08', '09', '11']);
+    expect(HAIR_OPTIONS).toHaveLength(18);
   });
 
   it('preserves every existing hairstyle id unchanged', () => {

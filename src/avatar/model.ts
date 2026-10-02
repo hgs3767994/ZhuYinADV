@@ -11,10 +11,10 @@ export const LEGACY_HAIR_OPTIONS = [
   'a01', 'a02', 'a03', 'a06', 'a07', 'a08',
   'b01', 'b05', 'b06', 'b07'
 ] as const;
-export const APPROVED_HAIR_OPTIONS = ['01', '02', '03', '05'] as const;
+export const APPROVED_HAIR_OPTIONS = ['01', '02', '03', '05', '07', '08', '09', '11'] as const;
 export const HAIR_OPTIONS = [...LEGACY_HAIR_OPTIONS, ...APPROVED_HAIR_OPTIONS] as const;
 export const HAIR_COLOR_OPTIONS = ['black', 'brown', 'chestnut', 'golden', 'blue', 'pink'] as const;
-export const BROW_OPTIONS = ['none', 'soft', 'straight', 'arched', 'cheerful'] as const;
+export const BROW_OPTIONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09'] as const;
 export const EYE_OPTIONS = ['round', 'smile', 'sparkle', 'gentle', 'bright', 'wink'] as const;
 export const NOSE_OPTIONS = ['dot', 'soft', 'button'] as const;
 export const MOUTH_OPTIONS = ['smile', 'open-smile', 'tiny', 'cat', 'grin'] as const;
@@ -65,7 +65,7 @@ export const DEFAULT_AVATAR_RECIPE: AvatarRecipeV2 = {
   skinTone: 'peach',
   hair: 'a01',
   hairColor: 'black',
-  brows: 'none',
+  brows: '01',
   eyes: 'round',
   nose: 'dot',
   mouth: 'smile',
@@ -148,7 +148,19 @@ export function normalizeAvatarRecipe(recipe: AvatarRecipe): AvatarRecipeV2 {
     ? storedHair as HairOption
     : legacyHair[storedHair] ?? DEFAULT_AVATAR_RECIPE.hair;
 
-  return { ...recipe, face, hair, glasses: 'none', hairAccessory: 'none' };
+  const storedBrows = recipe.brows as string;
+  const legacyBrows: Record<string, BrowOption> = {
+    none: '01',
+    soft: '01',
+    straight: '02',
+    arched: '04',
+    cheerful: '07'
+  };
+  const brows = BROW_OPTIONS.includes(storedBrows as BrowOption)
+    ? storedBrows as BrowOption
+    : legacyBrows[storedBrows] ?? DEFAULT_AVATAR_RECIPE.brows;
+
+  return { ...recipe, face, hair, brows, glasses: 'none', hairAccessory: 'none' };
 }
 
 export function randomAvatarRecipe(): AvatarRecipeV2 {

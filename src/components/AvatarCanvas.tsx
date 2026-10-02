@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import {
   approvedHairAssetUrl,
+  browAssetUrl,
   faceAssetUrl,
   isApprovedHair,
   legacyHairAssetUrl
@@ -108,18 +109,15 @@ function hairTintMatrix(color: string): string {
 }
 
 function Brows({ recipe }: { recipe: AvatarRecipeV2 }) {
-  const common = { fill: 'none', stroke: '#5b382d', strokeWidth: 9, strokeLinecap: 'round' as const };
-  if (recipe.brows === 'none') return null;
-  if (recipe.brows === 'straight') {
-    return <g {...common}><path d="M178 228h48" /><path d="M286 228h48" /></g>;
-  }
-  if (recipe.brows === 'arched') {
-    return <g {...common}><path d="M177 231q24-25 50 0" /><path d="M285 231q24-25 50 0" /></g>;
-  }
-  if (recipe.brows === 'cheerful') {
-    return <g {...common}><path d="M179 222q24 18 47 0" /><path d="M286 222q24 18 47 0" /></g>;
-  }
-  return <g {...common}><path d="M180 228q23-13 46 0" /><path d="M286 228q23-13 46 0" /></g>;
+  return (
+    <image
+      href={browAssetUrl(recipe.brows)}
+      x="0"
+      y="0"
+      width="512"
+      height="512"
+    />
+  );
 }
 
 function Eyes({ recipe }: { recipe: AvatarRecipeV2 }) {
@@ -222,30 +220,32 @@ export function AvatarCanvas({
         <rect x="0" y="0" width="512" height="512" fill={skin} mask={`url(#${faceMaskId})`} />
         <image href={detailsSource} x="0" y="0" width="512" height="512" />
       </g>
-      {approvedHair ? (
-        <image
-          href={approvedHairAssetUrl(approvedHair)}
-          x="0"
-          y="0"
-          width="512"
-          height="512"
-          transform={calibratedHairTransform}
-          filter={tintHair ? `url(#${hairTintId})` : undefined}
-        />
-      ) : legacyHair ? (
-        <LegacyHairLayer
-          hair={legacyHair}
-          face={recipe.face}
-          hairColor={recipe.hairColor}
-          maskId={legacyHairMaskId}
-        />
-      ) : null}
-      <g transform="translate(0 18)">
-        <Brows recipe={recipe} />
+      <Brows recipe={recipe} />
+      <g data-avatar-layer="features" transform="translate(0 18)">
         <Eyes recipe={recipe} />
         <Nose recipe={recipe} />
         <Cheeks recipe={recipe} />
         <Mouth recipe={recipe} />
+      </g>
+      <g data-avatar-layer="hair">
+        {approvedHair ? (
+          <image
+            href={approvedHairAssetUrl(approvedHair)}
+            x="0"
+            y="0"
+            width="512"
+            height="512"
+            transform={calibratedHairTransform}
+            filter={tintHair ? `url(#${hairTintId})` : undefined}
+          />
+        ) : legacyHair ? (
+          <LegacyHairLayer
+            hair={legacyHair}
+            face={recipe.face}
+            hairColor={recipe.hairColor}
+            maskId={legacyHairMaskId}
+          />
+        ) : null}
       </g>
     </svg>
   );

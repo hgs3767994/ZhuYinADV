@@ -75,7 +75,7 @@
                 <image id="faceDetailsImage" x="0" y="0" width="512" height="512" />
               </g>
             </g>
-            <image id="hairImage" href="/assets/avatar-parts/hair/approved/hair-01.png" x="0" y="0" width="512" height="512" />
+            <image id="hairImage" href="./hair-11.png" x="0" y="0" width="512" height="512" />
           </svg>
         </div>
         <p class="hint">拖曳髮型移動；方向鍵每次 1px，Shift＋方向鍵每次 10px。臉型使用程式目前的固定比例。</p>
@@ -83,7 +83,7 @@
     </section>
     <aside class="panel">
       <h1>第 11 款髮型手動調校</h1>
-      <p class="subtitle">程式素材 01｜6 款現有臉型｜512×512 固定座標</p>
+      <p class="subtitle">程式素材 11｜6 款現有臉型｜512×512 固定座標</p>
       <div class="face-status">
         <div><strong id="faceCounter"></strong><br><span id="faceName"></span></div>
         <span id="statusBadge" class="badge">尚未確認</span>
@@ -113,8 +113,8 @@
       { id: 'diamond', name: '菱形' }, { id: 'square01', name: '方形 1' },
       { id: 'square02', name: '方形 2' }, { id: 'long01', name: '長形' },
     ];
-    const storageKey = 'zhuyin-hair11-asset01-calibration-v1';
-    const initialValue = () => ({ translateX: 0, translateY: 23.68, scaleX: .65, scaleY: .78 });
+    const storageKey = 'zhuyin-hair11-asset11-calibration-v1';
+    const initialValue = () => ({ translateX: 0, translateY: 0, scaleX: 1, scaleY: 1 });
     const defaultTransform = () => ({ ...initialValue(), faceScale: 1, confirmed: false, dirty: false, confirmedValue: null, updatedAt: null });
     const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
     const restoreTransform = value => ({ ...defaultTransform(), ...(value || {}) });
@@ -132,7 +132,7 @@
     const persist = () => localStorage.setItem(storageKey, JSON.stringify({ faceIndex: state.faceIndex, transforms: state.transforms }));
     function confirmedValue(value) { return value.confirmedValue || { translateX:value.translateX, translateY:value.translateY, scaleX:value.scaleX, scaleY:value.scaleY, faceScale:value.faceScale }; }
     function exportData() {
-      return { version: 4, selectionIndex: 11, hairId: '01', coordinateSystem: { width:512, height:512, transformOrigin:{x:256,y:256} }, faceTransform: 'matrix(.65 0 0 .78 89.6 80)', faceScaleTransformOrder: 'translate(256,256) scale(faceScale) translate(-256,-256)', hairTransformOrder: 'translate(x,y) translate(256,256) scale(scaleX,scaleY) translate(-256,-256)', faces: Object.fromEntries(faces.flatMap(face => { const value=state.transforms[face.id]; if(!value.confirmed) return []; const fixed=confirmedValue(value); return [[face.id,{ translateX:round(fixed.translateX), translateY:round(fixed.translateY), scaleX:round(fixed.scaleX), scaleY:round(fixed.scaleY), faceScale:round(fixed.faceScale ?? 1), updatedAt:value.updatedAt }]]; })) };
+      return { version: 4, selectionIndex: 11, hairId: '11', coordinateSystem: { width:512, height:512, transformOrigin:{x:256,y:256} }, faceTransform: 'matrix(.65 0 0 .78 89.6 80)', faceScaleTransformOrder: 'translate(256,256) scale(faceScale) translate(-256,-256)', hairTransformOrder: 'translate(x,y) translate(256,256) scale(scaleX,scaleY) translate(-256,-256)', faces: Object.fromEntries(faces.flatMap(face => { const value=state.transforms[face.id]; if(!value.confirmed) return []; const fixed=confirmedValue(value); return [[face.id,{ translateX:round(fixed.translateX), translateY:round(fixed.translateY), scaleX:round(fixed.scaleX), scaleY:round(fixed.scaleY), faceScale:round(fixed.faceScale ?? 1), updatedAt:value.updatedAt }]]; })) };
     }
     function markEdited() { const value=currentTransform(); value.dirty=true; persist(); }
     function render() {

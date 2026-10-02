@@ -64,11 +64,15 @@ const CATEGORIES: Category[] = [
       '01': '髮型 1',
       '02': '髮型 2',
       '03': '髮型 3',
-      '05': '髮型 5'
+      '05': '髮型 5',
+      '07': '髮型 7',
+      '08': '髮型 8',
+      '09': '髮型 9',
+      '11': '髮型 11'
     }
   },
   { key: 'hairColor', label: '髮色', options: HAIR_COLOR_OPTIONS, optionLabels: { black: '墨黑', brown: '深棕', chestnut: '栗子', golden: '金黃', blue: '海洋藍', pink: '莓果粉' } },
-  { key: 'brows', label: '眉毛', options: BROW_OPTIONS, optionLabels: { none: '無', soft: '柔和眉', straight: '一字眉', arched: '彎彎眉', cheerful: '開心眉' } },
+  { key: 'brows', label: '眉毛', options: BROW_OPTIONS, optionLabels: { '01': '眉型 1', '02': '眉型 2', '03': '眉型 3', '04': '眉型 4', '05': '眉型 5', '06': '眉型 6', '07': '眉型 7', '08': '眉型 8', '09': '眉型 9' } },
   { key: 'eyes', label: '眼睛', options: EYE_OPTIONS, optionLabels: { round: '圓眼', smile: '笑眼', sparkle: '星星眼', gentle: '溫柔眼', bright: '亮亮眼', wink: '眨眼' } },
   { key: 'nose', label: '鼻子', options: NOSE_OPTIONS, optionLabels: { dot: '小圓鼻', soft: '柔和鼻', button: '鈕扣鼻' } },
   { key: 'mouth', label: '嘴巴', options: MOUTH_OPTIONS, optionLabels: { smile: '微笑', 'open-smile': '開心笑', tiny: '小嘴', cat: '貓咪嘴', grin: '露齒笑' } },

@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   AVATAR_FACE_ASSETS,
+  AVATAR_BROW_ASSETS,
   AVATAR_HAIR_ASSETS,
   approvedHairAssetUrl,
+  browAssetUrl,
   faceAssetUrl,
   legacyHairAssetUrl
 } from './assets';
-import { APPROVED_HAIR_OPTIONS, FACE_OPTIONS, LEGACY_HAIR_OPTIONS } from './model';
+import { APPROVED_HAIR_OPTIONS, BROW_OPTIONS, FACE_OPTIONS, LEGACY_HAIR_OPTIONS } from './model';
 
 describe('avatar face assets', () => {
   it('maps every face to one mask and one details SVG', () => {
@@ -25,6 +27,15 @@ describe('avatar face assets', () => {
     for (const hair of APPROVED_HAIR_OPTIONS) {
       expect(approvedHairAssetUrl(hair)).toMatch(
         new RegExp(`assets/avatar-parts/hair/approved/hair-${hair}\\.png$`)
+      );
+    }
+  });
+
+  it('maps every eyebrow to one vector SVG', () => {
+    expect(AVATAR_BROW_ASSETS).toHaveLength(BROW_OPTIONS.length);
+    for (const brows of BROW_OPTIONS) {
+      expect(browAssetUrl(brows)).toMatch(
+        new RegExp(`assets/avatar-parts/brows/brow-${brows}\\.svg$`)
       );
     }
   });

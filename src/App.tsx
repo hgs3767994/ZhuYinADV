@@ -17,7 +17,7 @@ import { ProfileSelection } from './components/ProfileSelection';
 import { ResetProfilePassword } from './components/ResetProfilePassword';
 import { ResultModal } from './components/ResultModal';
 import { DEFAULT_AVATAR_RECIPE, type AvatarRecipeV2 } from './avatar/model';
-import { AVATAR_FACE_ASSETS, AVATAR_HAIR_ASSETS } from './avatar/assets';
+import { AVATAR_BROW_ASSETS, AVATAR_FACE_ASSETS, AVATAR_HAIR_ASSETS } from './avatar/assets';
 import { APP_VERSION, DIFFICULTY_CONFIG } from './game/config';
 import type {
   Difficulty,
@@ -143,9 +143,10 @@ const CORE_ADVENTURE_IMAGES = Array.from(new Set([
 const ADVENTURE_IMAGES = Array.from(new Set([
   ...CORE_ADVENTURE_IMAGES,
   ...AVATAR_FACE_ASSETS,
-  ...AVATAR_HAIR_ASSETS
+  ...AVATAR_HAIR_ASSETS,
+  ...AVATAR_BROW_ASSETS
 ]));
-const IMAGE_ASSET_VERSION = '5';
+const IMAGE_ASSET_VERSION = '10';
 const AUDIO_ASSET_VERSION = '3';
 const IMAGE_ASSET_VERSION_KEY = 'zhuyin-image-asset-version';
 const AUDIO_ASSET_VERSION_KEY = 'zhuyin-audio-asset-version';
