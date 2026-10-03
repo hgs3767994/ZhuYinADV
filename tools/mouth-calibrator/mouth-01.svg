@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Mouth 01 - wide open smile with teeth and tongue</title>
+  <defs>
+    <linearGradient id="cavity" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7f2225"/><stop offset="1" stop-color="#54191f"/>
+    </linearGradient>
+    <linearGradient id="tongue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff7185"/><stop offset="1" stop-color="#ff6076"/>
+    </linearGradient>
+    <linearGradient id="lip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff7e91"/><stop offset="1" stop-color="#d84662"/>
+    </linearGradient>
+  </defs>
+  <g id="mouth-01" stroke="#292626" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M198 320 Q256 339 314 320 Q307 383 256 391 Q205 383 198 320Z" fill="url(#cavity)"/>
+      <path d="M202 322 Q256 337 310 322 Q304 346 284 348 Q267 347 256 339 Q245 348 228 347 Q208 345 202 322Z" fill="#fff"/>
+      <path d="M218 373 Q236 350 256 365 Q276 350 294 373 Q279 386 256 388 Q233 386 218 373Z" fill="url(#tongue)" stroke="none"/>
+      <path d="M256 365 L256 384" fill="none" stroke="#9f283e" stroke-width="3"/>
+      <ellipse cx="235" cy="369" rx="8" ry="4" fill="#ffabb5" stroke="none" transform="rotate(-18 235 369)"/>
+      <path d="M198 320 l-8 -8 M314 320 l8 -8" fill="none"/>
+    </g>
+</svg>

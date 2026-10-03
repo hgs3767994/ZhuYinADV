@@ -4,8 +4,13 @@ import {
   APPROVED_HAIR_OPTIONS,
   BROW_OPTIONS,
   FACE_OPTIONS,
+  HAIR_COLOR_OPTIONS,
   HAIR_OPTIONS,
   LEGACY_HAIR_OPTIONS,
+  MOUTH_OPTIONS,
+  NOSE_OPTIONS,
+  VECTOR_EYE_OPTIONS,
+  EYE_OPTIONS,
   avatarRecipeFromSeed,
   normalizeAvatarRecipe,
   randomAvatarRecipe,
@@ -32,10 +37,9 @@ describe('avatar recipes', () => {
       hair: HAIR_OPTIONS[0],
       hairColor: 'black',
       brows: BROW_OPTIONS[0],
-      eyes: 'round',
-      nose: 'dot',
-      mouth: 'smile',
-      cheeks: 'none',
+      eyes: EYE_OPTIONS[0],
+      nose: NOSE_OPTIONS[0],
+      mouth: MOUTH_OPTIONS[0],
       glasses: 'none',
       hairAccessory: 'none'
     });
@@ -65,6 +69,54 @@ describe('avatar recipes', () => {
 
   it('offers the nine vector eyebrow choices', () => {
     expect(BROW_OPTIONS).toEqual(['01', '02', '03', '04', '05', '06', '07', '08', '09']);
+  });
+
+  it('offers only the five calibrated vector eyes', () => {
+    expect(VECTOR_EYE_OPTIONS).toEqual(['01', '02', '03', '04', '05']);
+    expect(EYE_OPTIONS).toEqual(VECTOR_EYE_OPTIONS);
+  });
+
+  it('offers the eight calibrated vector noses', () => {
+    expect(NOSE_OPTIONS).toEqual(['01', '02', '03', '04', '05', '06', '07', '08']);
+  });
+
+  it('migrates every retired procedural nose to a vector nose', () => {
+    const mappings = { dot: '01', soft: '03', button: '02' } as const;
+    for (const [nose, expected] of Object.entries(mappings)) {
+      const retired = { ...DEFAULT_AVATAR_RECIPE, nose } as unknown as AvatarRecipeV2;
+      expect(normalizeAvatarRecipe(retired).nose).toBe(expected);
+    }
+  });
+
+  it('offers the nine retained vector mouths', () => {
+    expect(MOUTH_OPTIONS).toEqual(['01', '02', '04', '05', '06', '07', '08', '10', '14']);
+  });
+
+  it('migrates every retired procedural mouth to a vector mouth', () => {
+    const mappings = {
+      smile: '02', 'open-smile': '07', tiny: '02', cat: '06', grin: '08'
+    } as const;
+    for (const [mouth, expected] of Object.entries(mappings)) {
+      const retired = { ...DEFAULT_AVATAR_RECIPE, mouth } as unknown as AvatarRecipeV2;
+      expect(normalizeAvatarRecipe(retired).mouth).toBe(expected);
+    }
+  });
+
+  it('offers the three additional hair colors after the existing choices', () => {
+    expect(HAIR_COLOR_OPTIONS).toEqual([
+      'black', 'brown', 'chestnut', 'golden', 'blue', 'pink',
+      'green', 'wine', 'gray'
+    ]);
+  });
+
+  it('migrates every retired procedural eye to a vector eye', () => {
+    const mappings = {
+      round: '02', smile: '04', sparkle: '05', gentle: '02', bright: '05', wink: '01'
+    } as const;
+    for (const [eyes, expected] of Object.entries(mappings)) {
+      const retired = { ...DEFAULT_AVATAR_RECIPE, eyes } as unknown as AvatarRecipeV2;
+      expect(normalizeAvatarRecipe(retired).eyes).toBe(expected);
+    }
   });
 
   it('migrates every retired procedural eyebrow safely', () => {
@@ -123,6 +175,15 @@ describe('avatar recipes', () => {
       hairAccessory: 'explorer-hat'
     } as AvatarRecipeV2;
     expect(normalizeAvatarRecipe(decorated)).toEqual(DEFAULT_AVATAR_RECIPE);
+  });
+
+  it('removes the retired cheek decoration field from stored avatars', () => {
+    const decorated = {
+      ...DEFAULT_AVATAR_RECIPE,
+      cheeks: 'freckles'
+    } as unknown as AvatarRecipeV2;
+    expect(normalizeAvatarRecipe(decorated)).toEqual(DEFAULT_AVATAR_RECIPE);
+    expect(normalizeAvatarRecipe(decorated)).not.toHaveProperty('cheeks');
   });
 
   it('creates complete random recipes', () => {

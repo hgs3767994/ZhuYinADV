@@ -13,12 +13,15 @@ export const LEGACY_HAIR_OPTIONS = [
 ] as const;
 export const APPROVED_HAIR_OPTIONS = ['01', '02', '03', '05', '07', '08', '09', '11'] as const;
 export const HAIR_OPTIONS = [...LEGACY_HAIR_OPTIONS, ...APPROVED_HAIR_OPTIONS] as const;
-export const HAIR_COLOR_OPTIONS = ['black', 'brown', 'chestnut', 'golden', 'blue', 'pink'] as const;
+export const HAIR_COLOR_OPTIONS = [
+  'black', 'brown', 'chestnut', 'golden', 'blue', 'pink',
+  'green', 'wine', 'gray'
+] as const;
 export const BROW_OPTIONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09'] as const;
-export const EYE_OPTIONS = ['round', 'smile', 'sparkle', 'gentle', 'bright', 'wink'] as const;
-export const NOSE_OPTIONS = ['dot', 'soft', 'button'] as const;
-export const MOUTH_OPTIONS = ['smile', 'open-smile', 'tiny', 'cat', 'grin'] as const;
-export const CHEEK_OPTIONS = ['none', 'blush', 'freckles', 'swirl', 'shy-lines', 'stars'] as const;
+export const VECTOR_EYE_OPTIONS = ['01', '02', '03', '04', '05'] as const;
+export const EYE_OPTIONS = VECTOR_EYE_OPTIONS;
+export const NOSE_OPTIONS = ['01', '02', '03', '04', '05', '06', '07', '08'] as const;
+export const MOUTH_OPTIONS = ['01', '02', '04', '05', '06', '07', '08', '10', '14'] as const;
 export const GLASSES_OPTIONS = ['none', 'round', 'square', 'star'] as const;
 export const HAIR_ACCESSORY_OPTIONS = ['none', 'star-clip', 'bow', 'leaf', 'explorer-hat'] as const;
 
@@ -29,10 +32,10 @@ export type ApprovedHairOption = typeof APPROVED_HAIR_OPTIONS[number];
 export type HairOption = typeof HAIR_OPTIONS[number];
 export type HairColorOption = typeof HAIR_COLOR_OPTIONS[number];
 export type BrowOption = typeof BROW_OPTIONS[number];
+export type VectorEyeOption = typeof VECTOR_EYE_OPTIONS[number];
 export type EyeOption = typeof EYE_OPTIONS[number];
 export type NoseOption = typeof NOSE_OPTIONS[number];
 export type MouthOption = typeof MOUTH_OPTIONS[number];
-export type CheekOption = typeof CHEEK_OPTIONS[number];
 export type GlassesOption = typeof GLASSES_OPTIONS[number];
 export type HairAccessoryOption = typeof HAIR_ACCESSORY_OPTIONS[number];
 
@@ -51,7 +54,6 @@ export interface AvatarRecipeV2 {
   eyes: EyeOption;
   nose: NoseOption;
   mouth: MouthOption;
-  cheeks: CheekOption;
   glasses: GlassesOption;
   hairAccessory: HairAccessoryOption;
 }
@@ -66,10 +68,9 @@ export const DEFAULT_AVATAR_RECIPE: AvatarRecipeV2 = {
   hair: 'a01',
   hairColor: 'black',
   brows: '01',
-  eyes: 'round',
-  nose: 'dot',
-  mouth: 'smile',
-  cheeks: 'none',
+  eyes: '01',
+  nose: '01',
+  mouth: '01',
   glasses: 'none',
   hairAccessory: 'none'
 };
@@ -117,7 +118,6 @@ export function avatarRecipeFromSeed(seedValue: string): AvatarRecipeV2 {
     eyes: pickFromSeed(EYE_OPTIONS, seed, 5),
     nose: pickFromSeed(NOSE_OPTIONS, seed, 6),
     mouth: pickFromSeed(MOUTH_OPTIONS, seed, 7),
-    cheeks: pickFromSeed(CHEEK_OPTIONS, seed, 8),
     glasses: pickFromSeed(GLASSES_OPTIONS, seed, 9),
     hairAccessory: pickFromSeed(HAIR_ACCESSORY_OPTIONS, seed, 10)
   };
@@ -160,7 +160,54 @@ export function normalizeAvatarRecipe(recipe: AvatarRecipe): AvatarRecipeV2 {
     ? storedBrows as BrowOption
     : legacyBrows[storedBrows] ?? DEFAULT_AVATAR_RECIPE.brows;
 
-  return { ...recipe, face, hair, brows, glasses: 'none', hairAccessory: 'none' };
+  const storedEyes = recipe.eyes as string;
+  const retiredEyes: Record<string, EyeOption> = {
+    round: '02',
+    smile: '04',
+    sparkle: '05',
+    gentle: '02',
+    bright: '05',
+    wink: '01'
+  };
+  const eyes = EYE_OPTIONS.includes(storedEyes as EyeOption)
+    ? storedEyes as EyeOption
+    : retiredEyes[storedEyes] ?? DEFAULT_AVATAR_RECIPE.eyes;
+
+  const storedNose = recipe.nose as string;
+  const retiredNoses: Record<string, NoseOption> = {
+    dot: '01',
+    soft: '03',
+    button: '02'
+  };
+  const nose = NOSE_OPTIONS.includes(storedNose as NoseOption)
+    ? storedNose as NoseOption
+    : retiredNoses[storedNose] ?? DEFAULT_AVATAR_RECIPE.nose;
+
+  const storedMouth = recipe.mouth as string;
+  const retiredMouths: Record<string, MouthOption> = {
+    smile: '02',
+    'open-smile': '07',
+    tiny: '02',
+    cat: '06',
+    grin: '08'
+  };
+  const mouth = MOUTH_OPTIONS.includes(storedMouth as MouthOption)
+    ? storedMouth as MouthOption
+    : retiredMouths[storedMouth] ?? DEFAULT_AVATAR_RECIPE.mouth;
+
+  return {
+    version: 2,
+    face,
+    skinTone: recipe.skinTone,
+    hair,
+    hairColor: recipe.hairColor,
+    brows,
+    eyes,
+    nose,
+    mouth,
+    glasses: 'none',
+    hairAccessory: 'none'
+  };
 }
 
 export function randomAvatarRecipe(): AvatarRecipeV2 {
@@ -174,7 +221,6 @@ export function randomAvatarRecipe(): AvatarRecipeV2 {
     eyes: randomFrom(EYE_OPTIONS),
     nose: randomFrom(NOSE_OPTIONS),
     mouth: randomFrom(MOUTH_OPTIONS),
-    cheeks: randomFrom(CHEEK_OPTIONS),
     glasses: 'none',
     hairAccessory: 'none'
   };

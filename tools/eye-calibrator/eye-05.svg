@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Eye style 05 - large lashes</title>
+  <defs>
+    <radialGradient id="iris-left" cx="38%" cy="28%" r="74%"><stop offset="0" stop-color="#bd7440"/><stop offset=".55" stop-color="#84401f"/><stop offset="1" stop-color="#4a2113"/></radialGradient>
+    <radialGradient id="iris-right" cx="62%" cy="28%" r="74%"><stop offset="0" stop-color="#bd7440"/><stop offset=".55" stop-color="#84401f"/><stop offset="1" stop-color="#4a2113"/></radialGradient>
+  </defs>
+  <g id="eyes" transform="translate(256 263) scale(.95614 .97973) translate(-255.5 -262.5)" stroke="#161313" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="173" cy="263" rx="65" ry="70" fill="#fff" stroke-width="7.5"/>
+    <ellipse cx="173" cy="266" rx="52" ry="58" fill="url(#iris-left)" stroke-width="3.5"/>
+    <ellipse cx="181" cy="266" rx="29" ry="39" fill="#080606" stroke="none"/>
+    <ellipse cx="158" cy="239" rx="17" ry="20" fill="#fff" stroke="none"/>
+    <circle cx="200" cy="282" r="9" fill="#fff" stroke="none"/>
+    <ellipse cx="339" cy="263" rx="65" ry="70" fill="#fff" stroke-width="7.5"/>
+    <ellipse cx="339" cy="266" rx="52" ry="58" fill="url(#iris-right)" stroke-width="3.5"/>
+    <ellipse cx="331" cy="266" rx="29" ry="39" fill="#080606" stroke="none"/>
+    <ellipse cx="354" cy="239" rx="17" ry="20" fill="#fff" stroke="none"/>
+    <circle cx="312" cy="282" r="9" fill="#fff" stroke="none"/>
+    <path d="M116 226Q102 224 94 214M111 242Q97 241 90 233M109 258Q96 260 89 254" fill="none" stroke-width="7"/>
+    <path d="M396 226Q410 224 418 214M401 242Q415 241 422 233M403 258Q416 260 423 254" fill="none" stroke-width="7"/>
+  </g>
+</svg>

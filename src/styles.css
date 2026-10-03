@@ -532,7 +532,7 @@ button:disabled {
 }
 
 .avatar-editor-screen {
-  overflow-y: auto;
+  overflow: hidden;
   padding: max(14px, env(safe-area-inset-top)) 12px max(14px, env(safe-area-inset-bottom));
   background:
     radial-gradient(circle at 50% 12%, rgb(255 255 255 / 58%), transparent 32%),
@@ -544,7 +544,8 @@ button:disabled {
   z-index: 1;
   display: flex;
   width: min(100%, 410px);
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   margin: auto;
   padding: 16px 14px;
   flex-direction: column;
@@ -555,9 +556,11 @@ button:disabled {
   background: rgb(255 253 243 / 97%);
   box-shadow: 0 18px 45px var(--friendly-shadow);
   color: var(--friendly-text);
+  overflow: hidden;
 }
 
 .avatar-editor-panel h1 {
+  flex: 0 0 auto;
   margin: 0;
   color: var(--friendly-heading);
   font-size: clamp(1.45rem, 6vw, 1.9rem);
@@ -568,6 +571,7 @@ button:disabled {
   display: flex;
   width: 100%;
   margin: 24px 0 38px;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: 12px;
@@ -595,8 +599,11 @@ button:disabled {
 .avatar-category-tabs {
   display: flex;
   width: 100%;
+  min-height: 48px;
   padding: 3px 1px 7px;
   overflow-x: auto;
+  flex: 0 0 auto;
+  align-items: center;
   gap: 7px;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
@@ -608,6 +615,7 @@ button:disabled {
 
 .avatar-category-tabs button {
   min-width: 68px;
+  min-height: 38px;
   padding: 9px 10px;
   flex: 0 0 auto;
   scroll-snap-align: center;
@@ -618,6 +626,7 @@ button:disabled {
   cursor: pointer;
   font-size: 0.86rem;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .avatar-category-tabs button.selected {
@@ -629,10 +638,17 @@ button:disabled {
 .avatar-option-grid {
   display: grid;
   width: 100%;
-  min-height: 124px;
+  min-height: 0;
+  padding: 2px 3px 8px 1px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  flex: 1 1 auto;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-content: start;
   gap: 8px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
 }
 
 .avatar-option {
@@ -676,6 +692,7 @@ button:disabled {
   display: grid;
   width: 100%;
   margin-top: auto;
+  flex: 0 0 auto;
   grid-template-columns: 1.35fr 0.8fr;
   gap: 9px;
 }

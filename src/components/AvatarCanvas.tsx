@@ -2,16 +2,22 @@ import { useId } from 'react';
 import {
   approvedHairAssetUrl,
   browAssetUrl,
+  eyeAssetUrl,
   faceAssetUrl,
   isApprovedHair,
-  legacyHairAssetUrl
+  legacyHairAssetUrl,
+  mouthAssetUrl,
+  noseAssetUrl
 } from '../avatar/assets';
+import { EYE_SCALE_CALIBRATIONS, eyeTransform } from '../avatar/eyeCalibration';
 import {
   CANONICAL_FACE_TRANSFORM,
   HAIR_FACE_CALIBRATIONS,
   faceTransform,
   hairTransform
 } from '../avatar/hairCalibration';
+import { NOSE_SCALE_CALIBRATIONS, noseTransform } from '../avatar/noseCalibration';
+import { MOUTH_CALIBRATIONS, mouthTransform } from '../avatar/mouthCalibration';
 import type {
   AvatarRecipeV2,
   FaceOption,
@@ -41,7 +47,10 @@ export const HAIR_COLORS: Record<HairColorOption, string> = {
   chestnut: '#8d4b32',
   golden: '#d9a62e',
   blue: '#315f8c',
-  pink: '#b84f78'
+  pink: '#b84f78',
+  green: '#00DB00',
+  wine: '#82074e',
+  gray: '#8E8E8E'
 };
 
 const LEGACY_HAIR_FACE_SCALE_X: Record<FaceOption, number> = {
@@ -121,51 +130,66 @@ function Brows({ recipe }: { recipe: AvatarRecipeV2 }) {
 }
 
 function Eyes({ recipe }: { recipe: AvatarRecipeV2 }) {
-  const iris = recipe.hairColor === 'blue' ? '#224b70' : '#382822';
-  if (recipe.eyes === 'smile') {
-    return <g fill="none" stroke={iris} strokeWidth="10" strokeLinecap="round"><path d="M179 267q23-24 46 0" /><path d="M287 267q23-24 46 0" /></g>;
-  }
-  if (recipe.eyes === 'gentle') {
-    return <g fill="none" stroke={iris} strokeWidth="9" strokeLinecap="round"><path d="M179 261q23 15 46 0" /><path d="M287 261q23 15 46 0" /></g>;
-  }
-  if (recipe.eyes === 'wink') {
-    return <g><ellipse cx="204" cy="263" rx="13" ry="20" fill={iris} /><path d="M287 264q23-22 46 0" fill="none" stroke={iris} strokeWidth="10" strokeLinecap="round" /></g>;
-  }
-  if (recipe.eyes === 'sparkle') {
-    return (
-      <g fill={iris}>
-        <path d="m204 239 7 16 17 7-17 7-7 17-7-17-17-7 17-7Z" />
-        <path d="m308 239 7 16 17 7-17 7-7 17-7-17-17-7 17-7Z" />
-      </g>
-    );
-  }
-  if (recipe.eyes === 'bright') {
-    return <g fill={iris}><circle cx="204" cy="263" r="20" /><circle cx="308" cy="263" r="20" /><circle cx="198" cy="256" r="7" fill="#fff" /><circle cx="302" cy="256" r="7" fill="#fff" /></g>;
-  }
-  return <g fill={iris}><ellipse cx="204" cy="263" rx="13" ry="20" /><ellipse cx="308" cy="263" rx="13" ry="20" /><circle cx="200" cy="257" r="4" fill="#fff" /><circle cx="304" cy="257" r="4" fill="#fff" /></g>;
+  const calibration = EYE_SCALE_CALIBRATIONS[recipe.eyes];
+  return (
+    <g data-avatar-layer="eyes">
+      {(['left', 'right'] as const).map((side) => (
+        <image
+          key={side}
+          href={eyeAssetUrl(recipe.eyes, side)}
+          x="0"
+          y="0"
+          width="512"
+          height="512"
+          transform={eyeTransform(calibration, side)}
+        />
+      ))}
+    </g>
+  );
 }
 
-function Nose({ recipe }: { recipe: AvatarRecipeV2 }) {
-  if (recipe.nose === 'dot') return <circle cx="256" cy="301" r="5" fill="#9b604b" />;
-  if (recipe.nose === 'button') return <path d="M246 300q10 12 20 0q-1 18-10 18t-10-18Z" fill="#d58f70" stroke="#9b604b" strokeWidth="4" />;
-  return <path d="M256 287q-11 22 2 27" fill="none" stroke="#9b604b" strokeWidth="6" strokeLinecap="round" />;
+interface NoseProps {
+  recipe: AvatarRecipeV2;
+  skin: string;
+  maskId: string;
+}
+
+function Nose({ recipe, skin, maskId }: NoseProps) {
+  const transform = noseTransform(NOSE_SCALE_CALIBRATIONS[recipe.nose]);
+  return (
+    <g data-avatar-layer="nose">
+      <rect
+        x="0"
+        y="0"
+        width="512"
+        height="512"
+        fill={skin}
+        mask={`url(#${maskId})`}
+      />
+      <image
+        href={noseAssetUrl(recipe.nose, 'details')}
+        x="0"
+        y="0"
+        width="512"
+        height="512"
+        transform={transform}
+      />
+    </g>
+  );
 }
 
 function Mouth({ recipe }: { recipe: AvatarRecipeV2 }) {
-  if (recipe.mouth === 'open-smile') return <path d="M218 334q38 48 76 0Z" fill="#7f2639" stroke="#71303a" strokeWidth="6" />;
-  if (recipe.mouth === 'tiny') return <path d="M246 346q10 8 20 0" fill="none" stroke="#8b3546" strokeWidth="7" strokeLinecap="round" />;
-  if (recipe.mouth === 'cat') return <path d="M256 342q-18-15-31 2m31-2q18-15 31 2" fill="none" stroke="#8b3546" strokeWidth="7" strokeLinecap="round" />;
-  if (recipe.mouth === 'grin') return <path d="M218 337q38 38 76 0-9 44-38 44t-38-44Z" fill="#fff" stroke="#8b3546" strokeWidth="6" />;
-  return <path d="M222 339q34 31 68 0" fill="none" stroke="#8b3546" strokeWidth="8" strokeLinecap="round" />;
-}
-
-function Cheeks({ recipe }: { recipe: AvatarRecipeV2 }) {
-  if (recipe.cheeks === 'none') return null;
-  if (recipe.cheeks === 'blush') return <g fill="#ee8190" opacity=".65"><ellipse cx="170" cy="319" rx="28" ry="15" /><ellipse cx="342" cy="319" rx="28" ry="15" /></g>;
-  if (recipe.cheeks === 'freckles') return <g fill="#a76045"><circle cx="163" cy="314" r="4" /><circle cx="177" cy="321" r="4" /><circle cx="188" cy="312" r="4" /><circle cx="324" cy="312" r="4" /><circle cx="335" cy="321" r="4" /><circle cx="349" cy="314" r="4" /></g>;
-  if (recipe.cheeks === 'swirl') return <g fill="none" stroke="#e87887" strokeWidth="6" strokeLinecap="round"><path d="M148 319q18-25 39-5t-15 28" /><path d="M364 319q-18-25-39-5t15 28" /></g>;
-  if (recipe.cheeks === 'shy-lines') return <g stroke="#df6d7c" strokeWidth="6" strokeLinecap="round"><path d="m148 312-9 18m25-18-9 18m209-18 9 18m-25-18 9 18" /></g>;
-  return <g fill="#f59e0b"><path d="m166 303 6 12 14 2-10 10 3 14-13-7-13 7 3-14-10-10 14-2Z" /><path d="m346 303 6 12 14 2-10 10 3 14-13-7-13 7 3-14-10-10 14-2Z" /></g>;
+  return (
+    <image
+      data-avatar-layer="mouth"
+      href={mouthAssetUrl(recipe.mouth)}
+      x="0"
+      y="0"
+      width="512"
+      height="512"
+      transform={mouthTransform(MOUTH_CALIBRATIONS[recipe.mouth])}
+    />
+  );
 }
 
 export function AvatarCanvas({
@@ -179,6 +203,7 @@ export function AvatarCanvas({
   const faceMaskId = `face-mask-${instanceId}`;
   const hairTintId = `hair-tint-${instanceId}`;
   const legacyHairMaskId = `legacy-hair-mask-${instanceId}`;
+  const noseMaskId = `nose-mask-${instanceId}`;
   const maskSource = faceAssetUrl(recipe.face, 'mask');
   const detailsSource = faceAssetUrl(recipe.face, 'details');
   const approvedHair = isApprovedHair(recipe.hair) ? recipe.hair : null;
@@ -198,6 +223,16 @@ export function AvatarCanvas({
       <defs>
         <mask id={faceMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
           <image href={maskSource} x="0" y="0" width="512" height="512" />
+        </mask>
+        <mask id={noseMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+          <image
+            href={noseAssetUrl(recipe.nose, 'mask')}
+            x="0"
+            y="0"
+            width="512"
+            height="512"
+            transform={noseTransform(NOSE_SCALE_CALIBRATIONS[recipe.nose])}
+          />
         </mask>
         <filter id={hairTintId} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
           <feColorMatrix type="matrix" values={hairTintMatrix(HAIR_COLORS[recipe.hairColor])} />
@@ -223,8 +258,7 @@ export function AvatarCanvas({
       <Brows recipe={recipe} />
       <g data-avatar-layer="features" transform="translate(0 18)">
         <Eyes recipe={recipe} />
-        <Nose recipe={recipe} />
-        <Cheeks recipe={recipe} />
+        <Nose recipe={recipe} skin={skin} maskId={noseMaskId} />
         <Mouth recipe={recipe} />
       </g>
       <g data-avatar-layer="hair">

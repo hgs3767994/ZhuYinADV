@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>鼻型 × 臉型 1 手動縮放調校</title>
+  <style>
+    :root { color:#35271f; background:#eee7df; font-family:"Microsoft JhengHei",system-ui,sans-serif; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; padding:24px; }
+    button,input { font:inherit; }
+    .app { width:min(1120px,100%); margin:auto; display:grid; grid-template-columns:minmax(420px,1fr) 390px; gap:28px; }
+    .workspace,.panel { background:#fffdf6; border:2px solid #72b9dc; border-radius:28px; box-shadow:0 16px 40px #59402a22; }
+    .workspace { padding:24px; display:grid; place-items:center; }
+    .stage { width:min(72vh,100%); aspect-ratio:1; background:#dff4f0; border:2px solid #b3ded8; border-radius:24px; overflow:hidden; }
+    .stage svg { display:block; width:100%; height:100%; }
+    .fixed-note { margin:16px 0 0; max-width:560px; line-height:1.65; color:#6c5549; text-align:center; }
+    .panel { padding:24px; }
+    h1 { margin:0 0 4px; font-size:28px; color:#d9653b; }
+    .subtitle { margin:0 0 18px; color:#755e52; }
+    .status { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:#eef8fc; border-radius:18px; margin-bottom:20px; }
+    .badge { padding:6px 12px; border-radius:999px; background:#e8e1dc; color:#725f55; font-weight:700; }
+    .badge.confirmed { background:#d9f1df; color:#297243; }
+    .badge.dirty { background:#fff0bf; color:#8b6300; }
+    .control { margin:22px 0; }
+    .control-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; font-weight:700; }
+    .value-input { width:94px; padding:7px 9px; border:1px solid #9bcde4; border-radius:10px; text-align:right; background:#fff; }
+    input[type=range] { width:100%; accent-color:#e8794b; }
+    .lock-row { display:flex; align-items:center; gap:8px; margin:4px 0 22px; color:#665046; }
+    .button-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    button { min-height:48px; border:0; border-radius:14px; padding:10px 14px; background:#629dbc; color:#fff; font-weight:800; cursor:pointer; }
+    button.primary { background:#ef7647; }
+    button.secondary { background:#8e9aa0; }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    pre { max-height:220px; overflow:auto; padding:12px; border-radius:14px; background:#28221f; color:#f8efe8; font-size:12px; line-height:1.45; }
+    .toast { position:fixed; left:50%; bottom:30px; transform:translate(-50%,20px); opacity:0; background:#2e2926; color:#fff; padding:10px 18px; border-radius:999px; transition:.2s; pointer-events:none; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media (max-width:880px) { body{padding:12px}.app{grid-template-columns:1fr}.stage{width:min(92vw,560px)} }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="workspace">
+      <div>
+        <div class="stage" aria-label="鼻型縮放調校畫布，位置固定不可移動">
+          <svg viewBox="0 0 512 512" aria-hidden="true">
+            <defs>
+              <mask id="face-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+                <image href="/assets/avatar-parts/face/face-round-mask.svg" width="512" height="512"/>
+              </mask>
+              <mask id="nose-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+                <image id="noseMaskImage" href="./nose-01-mask.svg" width="512" height="512"/>
+              </mask>
+            </defs>
+            <circle cx="256" cy="256" r="256" fill="#dff4f0"/>
+            <g transform="matrix(.65 0 0 .78 89.6 80)">
+              <rect width="512" height="512" fill="#ffd7bd" mask="url(#face-mask)"/>
+              <image href="/assets/avatar-parts/face/face-round-details.svg" width="512" height="512"/>
+            </g>
+            <image href="/assets/avatar-parts/brows/brow-01.svg" width="512" height="512"/>
+            <g transform="translate(0 18)">
+              <image href="/assets/avatar-parts/eyes/eye-02-left.svg" width="512" height="512" transform="translate(-17.5 0) translate(256 263) scale(.362 .331) translate(-256 -263)"/>
+              <image href="/assets/avatar-parts/eyes/eye-02-right.svg" width="512" height="512" transform="translate(17.5 0) translate(256 263) scale(.362 .331) translate(-256 -263)"/>
+              <rect id="noseSkin" width="512" height="512" fill="#ffd7bd" mask="url(#nose-mask)"/>
+              <image id="noseDetailsImage" href="./nose-01-details.svg" width="512" height="512"/>
+              <path d="M222 339q34 31 68 0" fill="none" stroke="#8b3546" stroke-width="8" stroke-linecap="round"/>
+            </g>
+          </svg>
+        </div>
+        <p class="fixed-note">鼻型水平中心固定於程式既有五官座標，可使用「上下位置 Y」調整垂直位置；不提供拖曳、方向鍵或水平座標調整。此處設定會共同套用至所有臉型。</p>
+      </div>
+    </section>
+    <aside class="panel">
+      <h1>鼻型手動縮放調校</h1>
+      <p class="subtitle">固定臉型 1（圓臉）｜8 款鼻型｜512×512 座標</p>
+      <div class="status">
+        <div><strong id="noseCounter"></strong><br><span id="noseName"></span></div>
+        <span id="statusBadge" class="badge">尚未確認</span>
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="scaleX">水平縮放</label><input id="scaleXNumber" class="value-input" type="number" min="0.3" max="2.5" step="0.001"></div>
+        <input id="scaleX" type="range" min="0.3" max="2.5" step="0.001">
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="scaleY">垂直縮放</label><input id="scaleYNumber" class="value-input" type="number" min="0.3" max="2.5" step="0.001"></div>
+        <input id="scaleY" type="range" min="0.3" max="2.5" step="0.001">
+      </div>
+      <label class="lock-row"><input id="lockScale" type="checkbox">鎖定水平／垂直比例</label>
+      <div class="control">
+        <div class="control-head"><label for="translateY">上下位置 Y</label><input id="translateYNumber" class="value-input" type="number" min="-120" max="120" step="1"></div>
+        <input id="translateY" type="range" min="-120" max="120" step="1">
+      </div>
+      <div class="button-grid">
+        <button id="previous" class="secondary">上一個鼻型</button>
+        <button id="next" class="secondary">下一個鼻型</button>
+        <button id="reset">重設目前鼻型</button>
+        <button id="confirm" class="primary">確定並記錄</button>
+        <button id="copyJson">複製 JSON</button>
+        <button id="downloadJson">下載 JSON</button>
+      </div>
+      <pre id="dataPreview"></pre>
+    </aside>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script>
+    const noses = [
+      { id:'01', name:'鼻型 1（小圓鼻）' }, { id:'02', name:'鼻型 2（圓鈕鼻）' },
+      { id:'03', name:'鼻型 3（U 型鼻）' }, { id:'04', name:'鼻型 4（三角鼻）' },
+      { id:'05', name:'鼻型 5（鼻孔線條）' }, { id:'06', name:'鼻型 6（寬立體鼻）' },
+      { id:'07', name:'鼻型 7（長鼻）' }, { id:'08', name:'鼻型 8（寬圓鼻）' }
+    ];
+    const storageKey = id => `zhuyin-nose${id}-round-scale-calibration-v1`;
+    const defaults = () => ({ scaleX:1, scaleY:1, translateY:0, confirmed:false, dirty:false, confirmedValue:null, updatedAt:null });
+    const load = id => { try { return { ...defaults(), ...JSON.parse(localStorage.getItem(storageKey(id)) || '{}') }; } catch { return defaults(); } };
+    const state = { noseIndex:0, values:Object.fromEntries(noses.map(nose => [nose.id,load(nose.id)])) };
+    const $ = id => document.getElementById(id);
+    const currentNose = () => noses[state.noseIndex];
+    const currentValue = () => state.values[currentNose().id];
+    const round = value => Number(Number(value).toFixed(3));
+    let toastTimer;
+    function persist() { const nose=currentNose(); localStorage.setItem(storageKey(nose.id),JSON.stringify(currentValue())); }
+    function exportData() {
+      return {
+        version:1,
+        calibrationFace:'round',
+        appliesToAllFaces:true,
+        horizontalPositionFixed:true,
+        featureLayerTranslateY:18,
+        transformOrigin:{ x:256, y:315 },
+        transformOrder:'translate(0,18) translate(0,translateY) translate(256,315) scale(scaleX,scaleY) translate(-256,-315)',
+        noses:Object.fromEntries(noses.flatMap(nose => {
+          const value=state.values[nose.id];
+          if(!value.confirmed) return [];
+          const fixed=value.confirmedValue||value;
+          return [[nose.id,{scaleX:round(fixed.scaleX),scaleY:round(fixed.scaleY),translateY:round(fixed.translateY??value.translateY??0),updatedAt:value.updatedAt}]];
+        }))
+      };
+    }
+    function render() {
+      const nose=currentNose(),value=currentValue();
+      const transform=`translate(0 ${value.translateY}) translate(256 315) scale(${value.scaleX} ${value.scaleY}) translate(-256 -315)`;
+      $('noseMaskImage').setAttribute('href',`./nose-${nose.id}-mask.svg`);
+      $('noseDetailsImage').setAttribute('href',`./nose-${nose.id}-details.svg`);
+      $('noseMaskImage').setAttribute('transform',transform);
+      $('noseDetailsImage').setAttribute('transform',transform);
+      $('noseCounter').textContent=`鼻型 ${state.noseIndex+1} / ${noses.length}`;
+      $('noseName').textContent=nose.name;
+      const badge=$('statusBadge'); badge.className='badge'+(value.dirty?' dirty':value.confirmed?' confirmed':''); badge.textContent=value.dirty?'已修改，尚未更新':value.confirmed?'已確認':'尚未確認';
+      $('confirm').textContent=value.confirmed?'確定並更新':'確定並記錄';
+      $('previous').disabled=state.noseIndex===0; $('next').disabled=state.noseIndex===noses.length-1;
+      for(const key of ['scaleX','scaleY']) for(const control of [$(key),$(`${key}Number`)]) control.value=value[key].toFixed(3);
+      for(const control of [$('translateY'),$('translateYNumber')]) control.value=value.translateY.toFixed(0);
+      $('dataPreview').textContent=JSON.stringify(exportData(),null,2);
+    }
+    function update(key,raw) {
+      const numeric=Number(raw); if(!Number.isFinite(numeric)) return;
+      const next=key==='translateY'?Math.min(120,Math.max(-120,numeric)):Math.min(2.5,Math.max(.3,numeric));
+      const value=currentValue(); value[key]=next;
+      if($('lockScale').checked&&key.startsWith('scale')) value[key==='scaleX'?'scaleY':'scaleX']=next;
+      value.dirty=true; persist(); render();
+    }
+    for(const key of ['scaleX','scaleY']) for(const control of [$(key),$(`${key}Number`)]) control.addEventListener('input',event=>update(key,event.target.value));
+    for(const control of [$('translateY'),$('translateYNumber')]) control.addEventListener('input',event=>update('translateY',event.target.value));
+    function showToast(text) { const toast=$('toast');toast.textContent=text;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),1600); }
+    function move(delta) { state.noseIndex=Math.min(noses.length-1,Math.max(0,state.noseIndex+delta));render(); }
+    $('previous').addEventListener('click',()=>move(-1)); $('next').addEventListener('click',()=>move(1));
+    $('reset').addEventListener('click',()=>{state.values[currentNose().id]=defaults();persist();render();showToast('目前鼻型已重設');});
+    $('confirm').addEventListener('click',()=>{const value=currentValue();value.confirmed=true;value.dirty=false;value.confirmedValue={scaleX:value.scaleX,scaleY:value.scaleY,translateY:value.translateY};value.updatedAt=new Date().toISOString();persist();render();showToast(`${currentNose().name}資料已記錄`);});
+    $('copyJson').addEventListener('click',async()=>{await navigator.clipboard.writeText(JSON.stringify(exportData(),null,2));showToast('JSON 已複製');});
+    $('downloadJson').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(exportData(),null,2)],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='nose-face-calibration.json';link.click();URL.revokeObjectURL(link.href);showToast('JSON 已下載');});
+    render();
+  </script>
+</body>
+</html>

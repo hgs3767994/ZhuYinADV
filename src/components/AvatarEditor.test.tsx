@@ -19,10 +19,13 @@ describe('AvatarEditor', () => {
     expect(markup).not.toContain('<span>圓臉</span>');
     expect(markup).not.toContain('>眼鏡</button>');
     expect(markup).not.toContain('>髮飾</button>');
+    expect(markup).not.toContain('>臉頰</button>');
     expect(markup).not.toContain('aria-label="蓬鬆後梳"');
     expect(markup).not.toContain('aria-label="中長捲髮"');
     expect(markup).not.toContain('aria-label="復古側分"');
     expect(markup).not.toContain('aria-label="方型臉 3"');
+    expect(markup).toContain('class="avatar-option-grid"');
+    expect(markup).toContain('tabindex="0"');
 
     const livePreview = markup.match(
       /<svg[^>]+aria-label="目前的冒險家頭像預覽"[\s\S]*?<\/svg>/

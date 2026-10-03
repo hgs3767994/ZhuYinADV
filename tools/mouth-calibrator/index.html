@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>嘴型 × 臉型 1 手動調校</title>
+  <style>
+    :root { color:#35271f; background:#eee7df; font-family:"Microsoft JhengHei",system-ui,sans-serif; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; padding:24px; }
+    button,input { font:inherit; }
+    .app { width:min(1160px,100%); margin:auto; display:grid; grid-template-columns:minmax(420px,1fr) 410px; gap:28px; }
+    .workspace,.panel { background:#fffdf6; border:2px solid #72b9dc; border-radius:28px; box-shadow:0 16px 40px #59402a22; }
+    .workspace { padding:24px; display:grid; place-items:center; }
+    .stage { width:min(72vh,100%); aspect-ratio:1; background:#dff4f0; border:2px solid #b3ded8; border-radius:24px; overflow:hidden; touch-action:none; cursor:grab; outline:none; }
+    .stage:active { cursor:grabbing; }
+    .stage:focus-visible { box-shadow:0 0 0 4px #f4b15b; }
+    .stage svg { display:block; width:100%; height:100%; pointer-events:none; }
+    .fixed-note { margin:16px 0 0; max-width:600px; line-height:1.65; color:#6c5549; text-align:center; }
+    .panel { padding:24px; }
+    h1 { margin:0 0 4px; font-size:28px; color:#d9653b; }
+    .subtitle { margin:0 0 18px; color:#755e52; }
+    .status { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:#eef8fc; border-radius:18px; margin-bottom:18px; }
+    .badge { padding:6px 12px; border-radius:999px; background:#e8e1dc; color:#725f55; font-weight:700; }
+    .badge.confirmed { background:#d9f1df; color:#297243; }
+    .badge.dirty { background:#fff0bf; color:#8b6300; }
+    .control { margin:16px 0; }
+    .control-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:7px; font-weight:700; }
+    .value-input { width:94px; padding:7px 9px; border:1px solid #9bcde4; border-radius:10px; text-align:right; background:#fff; }
+    input[type=range] { width:100%; accent-color:#e8794b; }
+    .lock-row { display:flex; align-items:center; gap:8px; margin:2px 0 14px; color:#665046; }
+    .button-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:18px; }
+    button { min-height:48px; border:0; border-radius:14px; padding:10px 14px; background:#629dbc; color:#fff; font-weight:800; cursor:pointer; }
+    button.primary { background:#ef7647; }
+    button.secondary { background:#8e9aa0; }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    pre { max-height:230px; overflow:auto; padding:12px; border-radius:14px; background:#28221f; color:#f8efe8; font-size:12px; line-height:1.45; }
+    .toast { position:fixed; left:50%; bottom:30px; transform:translate(-50%,20px); opacity:0; background:#2e2926; color:#fff; padding:10px 18px; border-radius:999px; transition:.2s; pointer-events:none; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media (max-width:900px) { body{padding:12px}.app{grid-template-columns:1fr}.stage{width:min(92vw,560px)} }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="workspace">
+      <div>
+        <div id="stage" class="stage" tabindex="0" aria-label="嘴型調校畫布，可拖曳嘴型或使用方向鍵調整位置">
+          <svg viewBox="0 0 512 512" aria-hidden="true">
+            <defs>
+              <mask id="face-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+                <image href="/assets/avatar-parts/face/face-round-mask.svg" width="512" height="512"/>
+              </mask>
+              <mask id="nose-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+                <image href="/assets/avatar-parts/noses/nose-01-mask.svg" width="512" height="512" transform="translate(0 -9) translate(256 315) scale(.577 .577) translate(-256 -315)"/>
+              </mask>
+            </defs>
+            <circle cx="256" cy="256" r="256" fill="#dff4f0"/>
+            <g transform="matrix(.65 0 0 .78 89.6 80)">
+              <rect width="512" height="512" fill="#ffd7bd" mask="url(#face-mask)"/>
+              <image href="/assets/avatar-parts/face/face-round-details.svg" width="512" height="512"/>
+            </g>
+            <image href="/assets/avatar-parts/brows/brow-01.svg" width="512" height="512"/>
+            <g transform="translate(0 18)">
+              <image href="/assets/avatar-parts/eyes/eye-02-left.svg" width="512" height="512" transform="translate(-17.5 0) translate(256 263) scale(.362 .331) translate(-256 -263)"/>
+              <image href="/assets/avatar-parts/eyes/eye-02-right.svg" width="512" height="512" transform="translate(17.5 0) translate(256 263) scale(.362 .331) translate(-256 -263)"/>
+              <rect width="512" height="512" fill="#ffd7bd" mask="url(#nose-mask)"/>
+              <image href="/assets/avatar-parts/noses/nose-01-details.svg" width="512" height="512" transform="translate(0 -9) translate(256 315) scale(.577 .577) translate(-256 -315)"/>
+              <image id="mouthImage" href="./mouth-01.svg?v=2" width="512" height="512"/>
+            </g>
+          </svg>
+        </div>
+        <p class="fixed-note">臉型 1 固定不動。嘴型可用滑桿調整水平／垂直縮放與 X／Y 位置，也可直接拖曳；畫布取得焦點後可用方向鍵微調，按住 Shift 每次移動 5px。所有數值共同套用至全部臉型。</p>
+      </div>
+    </section>
+    <aside class="panel">
+      <h1>嘴型手動縮放調校</h1>
+      <p class="subtitle">固定臉型 1（圓臉）｜9 款嘴型｜512×512 座標</p>
+      <div class="status">
+        <div><strong id="mouthCounter"></strong><br><span id="mouthName"></span></div>
+        <span id="statusBadge" class="badge">尚未確認</span>
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="scaleX">水平縮放</label><input id="scaleXNumber" class="value-input" type="number" min="0.3" max="2.5" step="0.001"></div>
+        <input id="scaleX" type="range" min="0.3" max="2.5" step="0.001">
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="scaleY">垂直縮放</label><input id="scaleYNumber" class="value-input" type="number" min="0.3" max="2.5" step="0.001"></div>
+        <input id="scaleY" type="range" min="0.3" max="2.5" step="0.001">
+      </div>
+      <label class="lock-row"><input id="lockScale" type="checkbox">鎖定水平／垂直比例</label>
+      <div class="control">
+        <div class="control-head"><label for="translateX">左右位置 X</label><input id="translateXNumber" class="value-input" type="number" min="-160" max="160" step="1"></div>
+        <input id="translateX" type="range" min="-160" max="160" step="1">
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="translateY">上下位置 Y</label><input id="translateYNumber" class="value-input" type="number" min="-160" max="160" step="1"></div>
+        <input id="translateY" type="range" min="-160" max="160" step="1">
+      </div>
+      <div class="button-grid">
+        <button id="previous" class="secondary">上一個嘴型</button>
+        <button id="next" class="secondary">下一個嘴型</button>
+        <button id="reset">重設目前嘴型</button>
+        <button id="confirm" class="primary">確定並記錄</button>
+        <button id="copyJson">複製 JSON</button>
+        <button id="downloadJson">下載 JSON</button>
+      </div>
+      <pre id="dataPreview"></pre>
+    </aside>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script>
+    const mouths = [
+      { id:'01', name:'嘴型 1（大笑露齒）' }, { id:'02', name:'嘴型 2（閉嘴微笑）' },
+      { id:'04', name:'嘴型 4（側笑虎牙）' }, { id:'05', name:'嘴型 5（吐舌笑）' },
+      { id:'06', name:'嘴型 6（貓咪嘴）' }, { id:'07', name:'嘴型 7（小開口笑）' },
+      { id:'08', name:'嘴型 8（整齊露齒）' }, { id:'10', name:'嘴型 10（側笑露齒）' },
+      { id:'14', name:'嘴型 14（小驚訝嘴）' }
+    ];
+    const storageKey = id => `zhuyin-mouth${id}-round-transform-calibration-v1`;
+    const defaults = () => ({ scaleX:1, scaleY:1, translateX:0, translateY:0, confirmed:false, dirty:false, confirmedValue:null, updatedAt:null });
+    const load = id => { try { return { ...defaults(), ...JSON.parse(localStorage.getItem(storageKey(id)) || '{}') }; } catch { return defaults(); } };
+    const state = { mouthIndex:0, values:Object.fromEntries(mouths.map(mouth => [mouth.id,load(mouth.id)])) };
+    const $ = id => document.getElementById(id);
+    const currentMouth = () => mouths[state.mouthIndex];
+    const currentValue = () => state.values[currentMouth().id];
+    const round = value => Number(Number(value).toFixed(3));
+    const clamp = (value,min,max) => Math.min(max,Math.max(min,value));
+    let toastTimer;
+    function persist() { localStorage.setItem(storageKey(currentMouth().id),JSON.stringify(currentValue())); }
+    function exportData() {
+      return {
+        version:1,
+        calibrationFace:'round',
+        appliesToAllFaces:true,
+        featureLayerTranslateY:18,
+        transformOrigin:{ x:256, y:356 },
+        transformOrder:'translate(0,18) translate(translateX,translateY) translate(256,356) scale(scaleX,scaleY) translate(-256,-356)',
+        mouths:Object.fromEntries(mouths.flatMap(mouth => {
+          const value=state.values[mouth.id];
+          if(!value.confirmed) return [];
+          const fixed=value.confirmedValue||value;
+          return [[mouth.id,{scaleX:round(fixed.scaleX),scaleY:round(fixed.scaleY),translateX:round(fixed.translateX),translateY:round(fixed.translateY),updatedAt:value.updatedAt}]];
+        }))
+      };
+    }
+    function render() {
+      const mouth=currentMouth(),value=currentValue();
+      const transform=`translate(${value.translateX} ${value.translateY}) translate(256 356) scale(${value.scaleX} ${value.scaleY}) translate(-256 -356)`;
+      $('mouthImage').setAttribute('href',`./mouth-${mouth.id}.svg?v=2`);
+      $('mouthImage').setAttribute('transform',transform);
+      $('mouthCounter').textContent=`嘴型 ${state.mouthIndex+1} / ${mouths.length}`;
+      $('mouthName').textContent=mouth.name;
+      const badge=$('statusBadge');
+      badge.className='badge'+(value.dirty?' dirty':value.confirmed?' confirmed':'');
+      badge.textContent=value.dirty?'已修改，尚未更新':value.confirmed?'已確認':'尚未確認';
+      $('confirm').textContent=value.confirmed?'確定並更新':'確定並記錄';
+      $('previous').disabled=state.mouthIndex===0;
+      $('next').disabled=state.mouthIndex===mouths.length-1;
+      for(const key of ['scaleX','scaleY']) for(const control of [$(key),$(`${key}Number`)]) control.value=value[key].toFixed(3);
+      for(const key of ['translateX','translateY']) for(const control of [$(key),$(`${key}Number`)]) control.value=value[key].toFixed(0);
+      $('dataPreview').textContent=JSON.stringify(exportData(),null,2);
+    }
+    function update(key,raw) {
+      const numeric=Number(raw); if(!Number.isFinite(numeric)) return;
+      const next=key.startsWith('translate')?clamp(numeric,-160,160):clamp(numeric,.3,2.5);
+      const value=currentValue(); value[key]=next;
+      if($('lockScale').checked&&key.startsWith('scale')) value[key==='scaleX'?'scaleY':'scaleX']=next;
+      value.dirty=true; persist(); render();
+    }
+    for(const key of ['scaleX','scaleY','translateX','translateY']) {
+      for(const control of [$(key),$(`${key}Number`)]) control.addEventListener('input',event=>update(key,event.target.value));
+    }
+    function showToast(text) { const toast=$('toast');toast.textContent=text;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),1600); }
+    function move(delta) { state.mouthIndex=clamp(state.mouthIndex+delta,0,mouths.length-1);render(); }
+    $('previous').addEventListener('click',()=>move(-1));
+    $('next').addEventListener('click',()=>move(1));
+    $('reset').addEventListener('click',()=>{state.values[currentMouth().id]=defaults();persist();render();showToast('目前嘴型已重設');});
+    $('confirm').addEventListener('click',()=>{const value=currentValue();value.confirmed=true;value.dirty=false;value.confirmedValue={scaleX:value.scaleX,scaleY:value.scaleY,translateX:value.translateX,translateY:value.translateY};value.updatedAt=new Date().toISOString();persist();render();showToast(`${currentMouth().name}資料已記錄`);});
+    $('copyJson').addEventListener('click',async()=>{await navigator.clipboard.writeText(JSON.stringify(exportData(),null,2));showToast('JSON 已複製');});
+    $('downloadJson').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(exportData(),null,2)],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='mouth-face-calibration.json';link.click();URL.revokeObjectURL(link.href);showToast('JSON 已下載');});
+    const stage=$('stage');
+    let drag=null;
+    stage.addEventListener('pointerdown',event=>{stage.focus();stage.setPointerCapture(event.pointerId);drag={x:event.clientX,y:event.clientY,startX:currentValue().translateX,startY:currentValue().translateY};});
+    stage.addEventListener('pointermove',event=>{if(!drag)return;const rect=stage.getBoundingClientRect(),factor=512/rect.width;update('translateX',drag.startX+(event.clientX-drag.x)*factor);update('translateY',drag.startY+(event.clientY-drag.y)*factor);});
+    stage.addEventListener('pointerup',()=>{drag=null;});
+    stage.addEventListener('pointercancel',()=>{drag=null;});
+    stage.addEventListener('keydown',event=>{const amount=event.shiftKey?5:1;const directions={ArrowLeft:['translateX',-amount],ArrowRight:['translateX',amount],ArrowUp:['translateY',-amount],ArrowDown:['translateY',amount]};const action=directions[event.key];if(!action)return;event.preventDefault();update(action[0],currentValue()[action[0]]+action[1]);});
+    render();
+  </script>
+</body>
+</html>

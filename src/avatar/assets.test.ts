@@ -2,13 +2,19 @@ import { describe, expect, it } from 'vitest';
 import {
   AVATAR_FACE_ASSETS,
   AVATAR_BROW_ASSETS,
+  AVATAR_EYE_ASSETS,
   AVATAR_HAIR_ASSETS,
+  AVATAR_MOUTH_ASSETS,
+  AVATAR_NOSE_ASSETS,
   approvedHairAssetUrl,
   browAssetUrl,
+  eyeAssetUrl,
   faceAssetUrl,
-  legacyHairAssetUrl
+  legacyHairAssetUrl,
+  mouthAssetUrl,
+  noseAssetUrl
 } from './assets';
-import { APPROVED_HAIR_OPTIONS, BROW_OPTIONS, FACE_OPTIONS, LEGACY_HAIR_OPTIONS } from './model';
+import { APPROVED_HAIR_OPTIONS, BROW_OPTIONS, FACE_OPTIONS, LEGACY_HAIR_OPTIONS, MOUTH_OPTIONS, NOSE_OPTIONS, VECTOR_EYE_OPTIONS } from './model';
 
 describe('avatar face assets', () => {
   it('maps every face to one mask and one details SVG', () => {
@@ -36,6 +42,37 @@ describe('avatar face assets', () => {
     for (const brows of BROW_OPTIONS) {
       expect(browAssetUrl(brows)).toMatch(
         new RegExp(`assets/avatar-parts/brows/brow-${brows}\\.svg$`)
+      );
+    }
+  });
+
+  it('maps every calibrated vector eye to isolated left and right SVGs', () => {
+    expect(AVATAR_EYE_ASSETS).toHaveLength(VECTOR_EYE_OPTIONS.length * 2);
+    for (const eyes of VECTOR_EYE_OPTIONS) {
+      for (const side of ['left', 'right'] as const) {
+        expect(eyeAssetUrl(eyes, side)).toMatch(
+          new RegExp(`assets/avatar-parts/eyes/eye-${eyes}-${side}\\.svg$`)
+        );
+      }
+    }
+  });
+
+  it('maps every calibrated vector nose to a mask and details SVG', () => {
+    expect(AVATAR_NOSE_ASSETS).toHaveLength(NOSE_OPTIONS.length * 2);
+    for (const nose of NOSE_OPTIONS) {
+      for (const layer of ['mask', 'details'] as const) {
+        expect(noseAssetUrl(nose, layer)).toMatch(
+          new RegExp(`assets/avatar-parts/noses/nose-${nose}-${layer}\\.svg$`)
+        );
+      }
+    }
+  });
+
+  it('maps every calibrated vector mouth to one SVG', () => {
+    expect(AVATAR_MOUTH_ASSETS).toHaveLength(MOUTH_OPTIONS.length);
+    for (const mouth of MOUTH_OPTIONS) {
+      expect(mouthAssetUrl(mouth)).toMatch(
+        new RegExp(`assets/avatar-parts/mouths/mouth-${mouth}\\.svg$`)
       );
     }
   });

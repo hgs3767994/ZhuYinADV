@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BROW_OPTIONS,
-  CHEEK_OPTIONS,
   DEFAULT_AVATAR_RECIPE,
   EYE_OPTIONS,
   FACE_OPTIONS,
@@ -71,12 +70,11 @@ const CATEGORIES: Category[] = [
       '11': '髮型 11'
     }
   },
-  { key: 'hairColor', label: '髮色', options: HAIR_COLOR_OPTIONS, optionLabels: { black: '墨黑', brown: '深棕', chestnut: '栗子', golden: '金黃', blue: '海洋藍', pink: '莓果粉' } },
+  { key: 'hairColor', label: '髮色', options: HAIR_COLOR_OPTIONS, optionLabels: { black: '墨黑', brown: '深棕', chestnut: '栗子', golden: '金黃', blue: '海洋藍', pink: '莓果粉', green: '亮綠', wine: '酒紅', gray: '灰色' } },
   { key: 'brows', label: '眉毛', options: BROW_OPTIONS, optionLabels: { '01': '眉型 1', '02': '眉型 2', '03': '眉型 3', '04': '眉型 4', '05': '眉型 5', '06': '眉型 6', '07': '眉型 7', '08': '眉型 8', '09': '眉型 9' } },
-  { key: 'eyes', label: '眼睛', options: EYE_OPTIONS, optionLabels: { round: '圓眼', smile: '笑眼', sparkle: '星星眼', gentle: '溫柔眼', bright: '亮亮眼', wink: '眨眼' } },
-  { key: 'nose', label: '鼻子', options: NOSE_OPTIONS, optionLabels: { dot: '小圓鼻', soft: '柔和鼻', button: '鈕扣鼻' } },
-  { key: 'mouth', label: '嘴巴', options: MOUTH_OPTIONS, optionLabels: { smile: '微笑', 'open-smile': '開心笑', tiny: '小嘴', cat: '貓咪嘴', grin: '露齒笑' } },
-  { key: 'cheeks', label: '臉頰', options: CHEEK_OPTIONS, optionLabels: { none: '無', blush: '腮紅', freckles: '雀斑', swirl: '漩渦', 'shy-lines': '害羞', stars: '星星' } }
+  { key: 'eyes', label: '眼睛', options: EYE_OPTIONS, optionLabels: { '01': '眼型 1', '02': '眼型 2', '03': '眼型 3', '04': '眼型 4', '05': '眼型 5' } },
+  { key: 'nose', label: '鼻子', options: NOSE_OPTIONS, optionLabels: { '01': '鼻型 1', '02': '鼻型 2', '03': '鼻型 3', '04': '鼻型 4', '05': '鼻型 5', '06': '鼻型 6', '07': '鼻型 7', '08': '鼻型 8' } },
+  { key: 'mouth', label: '嘴巴', options: MOUTH_OPTIONS, optionLabels: { '01': '嘴型 1', '02': '嘴型 2', '04': '嘴型 4', '05': '嘴型 5', '06': '嘴型 6', '07': '嘴型 7', '08': '嘴型 8', '10': '嘴型 10', '14': '嘴型 14' } }
 ];
 
 export function AvatarEditor({
@@ -90,7 +88,12 @@ export function AvatarEditor({
   const [categoryKey, setCategoryKey] = useState<AvatarRecipeKey>('face');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const optionGridRef = useRef<HTMLDivElement>(null);
   const category = CATEGORIES.find((candidate) => candidate.key === categoryKey) ?? CATEGORIES[0];
+
+  useEffect(() => {
+    optionGridRef.current?.scrollTo({ top: 0 });
+  }, [categoryKey]);
 
   const selectOption = (key: AvatarRecipeKey, value: string) => {
     setRecipe((current) => ({ ...current, [key]: value } as AvatarRecipeV2));
@@ -142,7 +145,12 @@ export function AvatarEditor({
           ))}
         </nav>
 
-        <div className="avatar-option-grid" aria-label={`${category.label}選項`}>
+        <div
+          ref={optionGridRef}
+          className="avatar-option-grid"
+          aria-label={`${category.label}選項`}
+          tabIndex={0}
+        >
           {category.options.map((option) => {
             const selected = recipe[category.key] === option;
             const optionRecipe = { ...recipe, [category.key]: option } as AvatarRecipeV2;

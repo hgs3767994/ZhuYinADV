@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Mouth 04 - side smile with fang</title>
+  <defs>
+    <linearGradient id="cavity" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7f2225"/><stop offset="1" stop-color="#54191f"/>
+    </linearGradient>
+    <linearGradient id="tongue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff7185"/><stop offset="1" stop-color="#ff6076"/>
+    </linearGradient>
+    <linearGradient id="lip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff7e91"/><stop offset="1" stop-color="#d84662"/>
+    </linearGradient>
+  </defs>
+  <g id="mouth-04" fill="none" stroke="#292626" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M205 340 Q254 372 307 324" stroke-width="8"/>
+      <path d="M292 337 L307 362 L317 325 Q305 333 292 337Z" fill="#fff" stroke-width="5"/>
+    </g>
+</svg>

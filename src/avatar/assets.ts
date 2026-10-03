@@ -4,11 +4,17 @@ import {
   BROW_OPTIONS,
   FACE_OPTIONS,
   LEGACY_HAIR_OPTIONS,
+  MOUTH_OPTIONS,
+  NOSE_OPTIONS,
+  VECTOR_EYE_OPTIONS,
   type ApprovedHairOption,
   type BrowOption,
   type FaceOption,
   type HairOption,
-  type LegacyHairOption
+  type LegacyHairOption,
+  type MouthOption,
+  type NoseOption,
+  type VectorEyeOption
 } from './model';
 
 export type FaceAssetLayer = 'mask' | 'details';
@@ -27,6 +33,34 @@ export function browAssetUrl(brows: BrowOption): string {
 }
 
 export const AVATAR_BROW_ASSETS = BROW_OPTIONS.map(browAssetUrl);
+
+export type EyeAssetSide = 'left' | 'right';
+
+export function eyeAssetUrl(eyes: VectorEyeOption, side: EyeAssetSide): string {
+  return assetUrl(`assets/avatar-parts/eyes/eye-${eyes}-${side}.svg`);
+}
+
+export const AVATAR_EYE_ASSETS = VECTOR_EYE_OPTIONS.flatMap((eyes) => [
+  eyeAssetUrl(eyes, 'left'),
+  eyeAssetUrl(eyes, 'right')
+]);
+
+export type NoseAssetLayer = 'mask' | 'details';
+
+export function noseAssetUrl(nose: NoseOption, layer: NoseAssetLayer): string {
+  return assetUrl(`assets/avatar-parts/noses/nose-${nose}-${layer}.svg`);
+}
+
+export const AVATAR_NOSE_ASSETS = NOSE_OPTIONS.flatMap((nose) => [
+  noseAssetUrl(nose, 'mask'),
+  noseAssetUrl(nose, 'details')
+]);
+
+export function mouthAssetUrl(mouth: MouthOption): string {
+  return assetUrl(`assets/avatar-parts/mouths/mouth-${mouth}.svg`);
+}
+
+export const AVATAR_MOUTH_ASSETS = MOUTH_OPTIONS.map(mouthAssetUrl);
 
 export function isApprovedHair(hair: HairOption): hair is ApprovedHairOption {
   return APPROVED_HAIR_OPTIONS.includes(hair as ApprovedHairOption);

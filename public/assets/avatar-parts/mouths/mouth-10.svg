@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Mouth 10 - side grin with teeth and tongue</title>
+  <defs>
+    <linearGradient id="cavity" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7f2225"/><stop offset="1" stop-color="#54191f"/>
+    </linearGradient>
+    <linearGradient id="tongue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff7185"/><stop offset="1" stop-color="#ff6076"/>
+    </linearGradient>
+    <linearGradient id="lip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff7e91"/><stop offset="1" stop-color="#d84662"/>
+    </linearGradient>
+  </defs>
+  <g id="mouth-10" stroke="#292626" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M194 325 Q251 302 316 322 Q309 374 271 380 Q231 374 194 325Z" fill="url(#cavity)"/>
+      <path d="M205 326 Q251 309 304 324 Q298 348 279 347 Q254 343 224 344 Q208 340 205 326Z" fill="#fff"/>
+      <path d="M223 343 L225 322 M251 342 L252 315 M278 345 L281 318" fill="none" stroke-width="3"/>
+      <path d="M232 365 Q273 344 304 361 Q296 376 273 378 Q250 376 232 365Z" fill="url(#tongue)" stroke="none"/>
+      <ellipse cx="284" cy="360" rx="8" ry="4" fill="#ffabb5" stroke="none" transform="rotate(18 284 360)"/>
+      <path d="M194 325 l-7 -8 M316 322 l8 -8" fill="none"/>
+    </g>
+</svg>

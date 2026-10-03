@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Mouth 14 - tiny tall surprised mouth</title>
+  <defs>
+    <linearGradient id="cavity" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7f2225"/><stop offset="1" stop-color="#54191f"/>
+    </linearGradient>
+    <linearGradient id="tongue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff7185"/><stop offset="1" stop-color="#ff6076"/>
+    </linearGradient>
+    <linearGradient id="lip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff7e91"/><stop offset="1" stop-color="#d84662"/>
+    </linearGradient>
+  </defs>
+  <g id="mouth-14" stroke="#292626" stroke-width="6" stroke-linejoin="round">
+      <ellipse cx="256" cy="352" rx="30" ry="55" fill="url(#cavity)"/>
+      <ellipse cx="256" cy="312" rx="18" ry="9" fill="#fff"/>
+      <path d="M238 380 Q256 361 274 380 Q271 402 256 406 Q241 402 238 380Z" fill="url(#tongue)" stroke="none"/>
+      <path d="M246 393 q12 8 23-1" fill="none" stroke="#ffabb5" stroke-width="4"/>
+    </g>
+</svg>

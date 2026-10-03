@@ -70,12 +70,12 @@ describe('approved hair calibration', () => {
 
   it('uses the confirmed per-face calibration for hairstyle 11', () => {
     expect(HAIR_FACE_CALIBRATIONS['11']).toEqual({
-      round: { translateX: -3.058, translateY: -1.437, scaleX: 1.069, scaleY: 1.036 },
-      oval: { translateX: -1.522, translateY: 14.502, scaleX: 0.926, scaleY: 1.004 },
-      diamond: { translateX: -3, translateY: 6.006, scaleX: 0.991, scaleY: 1 },
-      square01: { translateX: -1, translateY: -6.671, scaleX: 1.056, scaleY: 1.153 },
-      square02: { translateX: -2.284, translateY: 0.097, scaleX: 1.017, scaleY: 1.14 },
-      long01: { translateX: -3.236, translateY: -8.836, scaleX: 0.991, scaleY: 1.044 }
+      round: { translateX: 0, translateY: -19, scaleX: 1.043, scaleY: 1.153 },
+      oval: { translateX: -3.308, translateY: -27.891, scaleX: 0.993, scaleY: 1.237 },
+      diamond: { translateX: -3, translateY: -27, scaleX: 1, scaleY: 1.172 },
+      square01: { translateX: -4, translateY: -32.671, scaleX: 1.056, scaleY: 1.353 },
+      square02: { translateX: -4.511, translateY: -28.613, scaleX: 1.017, scaleY: 1.308 },
+      long01: { translateX: -3.236, translateY: -27.836, scaleX: 0.991, scaleY: 1.211 }
     });
   });
 });

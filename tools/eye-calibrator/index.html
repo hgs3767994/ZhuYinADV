@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>眼型 × 臉型 1 手動縮放調校</title>
+  <style>
+    :root { color:#35271f; background:#eee7df; font-family:"Microsoft JhengHei",system-ui,sans-serif; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; padding:24px; }
+    button,input { font:inherit; }
+    .app { width:min(1120px,100%); margin:auto; display:grid; grid-template-columns:minmax(420px,1fr) 390px; gap:28px; }
+    .workspace,.panel { background:#fffdf6; border:2px solid #72b9dc; border-radius:28px; box-shadow:0 16px 40px #59402a22; }
+    .workspace { padding:24px; display:grid; place-items:center; }
+    .stage { width:min(72vh,100%); aspect-ratio:1; background:#dff4f0; border:2px solid #b3ded8; border-radius:24px; overflow:hidden; }
+    .stage svg { display:block; width:100%; height:100%; }
+    .fixed-note { margin:16px 0 0; max-width:540px; line-height:1.65; color:#6c5549; text-align:center; }
+    .panel { padding:24px; }
+    h1 { margin:0 0 4px; font-size:28px; color:#d9653b; }
+    .subtitle { margin:0 0 18px; color:#755e52; }
+    .status { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:#eef8fc; border-radius:18px; margin-bottom:20px; }
+    .badge { padding:6px 12px; border-radius:999px; background:#e8e1dc; color:#725f55; font-weight:700; }
+    .badge.confirmed { background:#d9f1df; color:#297243; }
+    .badge.dirty { background:#fff0bf; color:#8b6300; }
+    .control { margin:20px 0; }
+    .control-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; font-weight:700; }
+    .value-input { width:94px; padding:7px 9px; border:1px solid #9bcde4; border-radius:10px; text-align:right; background:#fff; }
+    input[type=range] { width:100%; accent-color:#e8794b; }
+    .lock-row { display:flex; align-items:center; gap:8px; margin:4px 0 20px; color:#665046; }
+    .button-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    button { min-height:48px; border:0; border-radius:14px; padding:10px 14px; background:#629dbc; color:#fff; font-weight:800; cursor:pointer; }
+    button.primary { background:#ef7647; }
+    button.secondary { background:#8e9aa0; }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    pre { max-height:180px; overflow:auto; padding:12px; border-radius:14px; background:#28221f; color:#f8efe8; font-size:12px; line-height:1.45; }
+    .toast { position:fixed; left:50%; bottom:30px; transform:translate(-50%,20px); opacity:0; background:#2e2926; color:#fff; padding:10px 18px; border-radius:999px; transition:.2s; pointer-events:none; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media (max-width:880px) { body{padding:12px}.app{grid-template-columns:1fr}.stage{width:min(92vw,560px)} }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="workspace">
+      <div>
+        <div class="stage" aria-label="眼型縮放調校畫布，位置固定不可移動">
+          <svg viewBox="0 0 512 512" aria-hidden="true">
+            <defs>
+              <mask id="face-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+                <image href="/assets/avatar-parts/face/face-round-mask.svg" x="0" y="0" width="512" height="512"/>
+              </mask>
+            </defs>
+            <circle cx="256" cy="256" r="256" fill="#dff4f0"/>
+            <g transform="matrix(.65 0 0 .78 89.6 80)">
+              <rect width="512" height="512" fill="#ffd7bd" mask="url(#face-mask)"/>
+              <image href="/assets/avatar-parts/face/face-round-details.svg" width="512" height="512"/>
+            </g>
+            <image href="/assets/avatar-parts/brows/brow-01.svg" width="512" height="512"/>
+            <circle cx="256" cy="319" r="5" fill="#9b604b"/>
+            <path d="M222 357q34 31 68 0" fill="none" stroke="#8b3546" stroke-width="8" stroke-linecap="round"/>
+            <image id="leftEyeImage" href="./split/eye-01-left.svg" width="512" height="512"/>
+            <image id="rightEyeImage" href="./split/eye-01-right.svg" width="512" height="512"/>
+          </svg>
+        </div>
+        <p class="fixed-note">眼型位置固定於程式既有五官座標，不提供拖曳、方向鍵或座標調整。此處設定的水平／垂直縮放會共同套用至所有臉型。</p>
+      </div>
+    </section>
+    <aside class="panel">
+      <h1>眼型手動縮放調校</h1>
+      <p class="subtitle">固定臉型 1（圓臉）｜5 款眼型｜512×512 座標</p>
+      <div class="status">
+        <div><strong id="eyeCounter"></strong><br><span id="eyeName"></span></div>
+        <span id="statusBadge" class="badge">尚未確認</span>
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="scaleX">水平縮放</label><input id="scaleXNumber" class="value-input" type="number" min="0.3" max="2.5" step="0.001"></div>
+        <input id="scaleX" type="range" min="0.3" max="2.5" step="0.001">
+      </div>
+      <div class="control">
+        <div class="control-head"><label for="scaleY">垂直縮放</label><input id="scaleYNumber" class="value-input" type="number" min="0.3" max="2.5" step="0.001"></div>
+        <input id="scaleY" type="range" min="0.3" max="2.5" step="0.001">
+      </div>
+      <label class="lock-row"><input id="lockScale" type="checkbox">鎖定水平／垂直比例</label>
+      <div class="control">
+        <div class="control-head"><label for="eyeDistance">眼距調整</label><input id="eyeDistanceNumber" class="value-input" type="number" min="-120" max="120" step="1"></div>
+        <input id="eyeDistance" type="range" min="-120" max="120" step="1">
+      </div>
+      <div class="button-grid">
+        <button id="previous" class="secondary">上一個眼型</button>
+        <button id="next" class="secondary">下一個眼型</button>
+        <button id="reset">重設目前眼型</button>
+        <button id="confirm" class="primary">確定並記錄</button>
+        <button id="importJson">載入 JSON</button>
+        <input id="importJsonFile" type="file" accept="application/json,.json" hidden>
+        <button id="copyJson">複製 JSON</button>
+        <button id="downloadJson">下載 JSON</button>
+      </div>
+      <pre id="dataPreview"></pre>
+    </aside>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script>
+    const eyes = [
+      { id:'01', name:'眼型 1（眨眼）' },
+      { id:'02', name:'眼型 2（簡潔圓眼）' },
+      { id:'03', name:'眼型 3（不悅斜眼）' },
+      { id:'04', name:'眼型 4（雙閉眼）' },
+      { id:'05', name:'眼型 5（睫毛大眼）' }
+    ];
+    const storageKey = id => `zhuyin-eye${id}-round-scale-calibration-v1`;
+    const defaults = () => ({ scaleX:1, scaleY:1, eyeDistance:0, confirmed:false, dirty:false, confirmedValue:null, updatedAt:null });
+    const load = id => { try { return { ...defaults(), ...JSON.parse(localStorage.getItem(storageKey(id)) || '{}') }; } catch { return defaults(); } };
+    const state = { eyeIndex:0, values:Object.fromEntries(eyes.map(eye => [eye.id,load(eye.id)])) };
+    const $ = id => document.getElementById(id);
+    const currentEye = () => eyes[state.eyeIndex];
+    const currentValue = () => state.values[currentEye().id];
+    const round = value => Number(Number(value).toFixed(3));
+    let toastTimer;
+    function persist() { const eye=currentEye(); localStorage.setItem(storageKey(eye.id),JSON.stringify(currentValue())); }
+    function exportData() {
+      return {
+        version:1,
+        calibrationFace:'round',
+        appliesToAllFaces:true,
+        positionFixed:true,
+        fixedPosition:{ translateX:0, translateY:18 },
+        transformOrigin:{ x:256, y:263 },
+        transformOrder:'left/right translate(±eyeDistance/2,18) translate(256,263) scale(scaleX,scaleY) translate(-256,-263)',
+        eyeDistanceMeaning:'total center-to-center distance change in pixels; positive widens, negative narrows',
+        eyes:Object.fromEntries(eyes.flatMap(eye => {
+          const value=state.values[eye.id];
+          if(!value.confirmed) return [];
+          const fixed=value.confirmedValue || value;
+          return [[eye.id,{ scaleX:round(fixed.scaleX),scaleY:round(fixed.scaleY),eyeDistance:round(fixed.eyeDistance ?? value.eyeDistance ?? 0),updatedAt:value.updatedAt }]];
+        }))
+      };
+    }
+    function render() {
+      const eye=currentEye(),value=currentValue();
+      const halfDistance=value.eyeDistance/2;
+      const baseTransform=`translate(256 263) scale(${value.scaleX} ${value.scaleY}) translate(-256 -263)`;
+      $('leftEyeImage').setAttribute('href',`./split/eye-${eye.id}-left.svg`);
+      $('rightEyeImage').setAttribute('href',`./split/eye-${eye.id}-right.svg`);
+      $('leftEyeImage').setAttribute('transform',`translate(${-halfDistance} 18) ${baseTransform}`);
+      $('rightEyeImage').setAttribute('transform',`translate(${halfDistance} 18) ${baseTransform}`);
+      $('eyeCounter').textContent=`眼型 ${state.eyeIndex+1} / ${eyes.length}`;
+      $('eyeName').textContent=eye.name;
+      const badge=$('statusBadge'); badge.className='badge'+(value.dirty?' dirty':value.confirmed?' confirmed':''); badge.textContent=value.dirty?'已修改，尚未更新':value.confirmed?'已確認':'尚未確認';
+      $('confirm').textContent=value.confirmed?'確定並更新':'確定並記錄';
+      $('previous').disabled=state.eyeIndex===0; $('next').disabled=state.eyeIndex===eyes.length-1;
+      for(const key of ['scaleX','scaleY']) for(const control of [$(`${key}`),$(`${key}Number`)]) control.value=value[key].toFixed(3);
+      for(const control of [$('eyeDistance'),$('eyeDistanceNumber')]) control.value=value.eyeDistance.toFixed(0);
+      $('dataPreview').textContent=JSON.stringify(exportData(),null,2);
+    }
+    function update(key,raw) {
+      const numeric=Number(raw); if(!Number.isFinite(numeric)) return;
+      const next=key==='eyeDistance'?Math.min(120,Math.max(-120,numeric)):Math.min(2.5,Math.max(.3,numeric));
+      const value=currentValue(); value[key]=next;
+      if($('lockScale').checked&&key.startsWith('scale')) value[key==='scaleX'?'scaleY':'scaleX']=next;
+      value.dirty=true; persist(); render();
+    }
+    for(const key of ['scaleX','scaleY']) for(const control of [$(`${key}`),$(`${key}Number`)]) control.addEventListener('input',event=>update(key,event.target.value));
+    for(const control of [$('eyeDistance'),$('eyeDistanceNumber')]) control.addEventListener('input',event=>update('eyeDistance',event.target.value));
+    function showToast(text) { const toast=$('toast');toast.textContent=text;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),1600); }
+    function move(delta) { state.eyeIndex=Math.min(eyes.length-1,Math.max(0,state.eyeIndex+delta));render(); }
+    $('previous').addEventListener('click',()=>move(-1)); $('next').addEventListener('click',()=>move(1));
+    $('reset').addEventListener('click',()=>{state.values[currentEye().id]=defaults();persist();render();showToast('目前眼型已重設');});
+    $('confirm').addEventListener('click',()=>{const value=currentValue();value.confirmed=true;value.dirty=false;value.confirmedValue={scaleX:value.scaleX,scaleY:value.scaleY,eyeDistance:value.eyeDistance};value.updatedAt=new Date().toISOString();persist();render();showToast(`${currentEye().name}資料已記錄`);});
+    $('importJson').addEventListener('click',()=>$('importJsonFile').click());
+    $('importJsonFile').addEventListener('change',async(event)=>{
+      const file=event.target.files?.[0];
+      if(!file) return;
+      try {
+        const imported=JSON.parse(await file.text());
+        if(imported.version!==1||imported.calibrationFace!=='round'||!imported.positionFixed||!imported.eyes) throw new Error('格式不符');
+        for(const eye of eyes) {
+          const source=imported.eyes[eye.id];
+          const scaleX=Number(source?.scaleX),scaleY=Number(source?.scaleY),eyeDistance=Number(source?.eyeDistance);
+          if(!Number.isFinite(scaleX)||scaleX<.3||scaleX>2.5||!Number.isFinite(scaleY)||scaleY<.3||scaleY>2.5||!Number.isFinite(eyeDistance)||eyeDistance<-120||eyeDistance>120) throw new Error(`眼型 ${eye.id} 資料不完整或超出範圍`);
+          const confirmedValue={scaleX:round(scaleX),scaleY:round(scaleY),eyeDistance:round(eyeDistance)};
+          state.values[eye.id]={...confirmedValue,confirmed:true,dirty:false,confirmedValue,updatedAt:source.updatedAt||new Date().toISOString()};
+          localStorage.setItem(storageKey(eye.id),JSON.stringify(state.values[eye.id]));
+        }
+        state.eyeIndex=0;
+        render();
+        showToast('JSON 已載入，可繼續調校');
+      } catch(error) {
+        showToast(error instanceof Error?error.message:'JSON 載入失敗');
+      } finally {
+        event.target.value='';
+      }
+    });
+    $('copyJson').addEventListener('click',async()=>{await navigator.clipboard.writeText(JSON.stringify(exportData(),null,2));showToast('JSON 已複製');});
+    $('downloadJson').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(exportData(),null,2)],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='eye-face-calibration.json';link.click();URL.revokeObjectURL(link.href);showToast('JSON 已下載');});
+    render();
+  </script>
+</body>
+</html>

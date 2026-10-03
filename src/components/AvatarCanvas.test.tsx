@@ -1,15 +1,67 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_AVATAR_RECIPE } from '../avatar/model';
-import { AvatarCanvas } from './AvatarCanvas';
+import { AvatarCanvas, HAIR_COLORS } from './AvatarCanvas';
 
 describe('AvatarCanvas hairstyles', () => {
+  it('provides the requested additional hair colors', () => {
+    expect(HAIR_COLORS.green).toBe('#00DB00');
+    expect(HAIR_COLORS.wine).toBe('#82074e');
+    expect(HAIR_COLORS.gray).toBe('#8E8E8E');
+  });
+
   it('renders the selected vector eyebrow asset', () => {
     const markup = renderToStaticMarkup(
       <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, brows: '06' }} />
     );
 
     expect(markup).toContain('assets/avatar-parts/brows/brow-06.svg');
+  });
+
+  it('renders a calibrated vector eye at the fixed feature position', () => {
+    const markup = renderToStaticMarkup(
+      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, eyes: '03' }} />
+    );
+
+    expect(markup).toContain('assets/avatar-parts/eyes/eye-03-left.svg');
+    expect(markup).toContain('assets/avatar-parts/eyes/eye-03-right.svg');
+    expect(markup).toContain(
+      'translate(-7.5 0) translate(256 263) scale(0.406 0.368) translate(-256 -263)'
+    );
+    expect(markup).toContain(
+      'translate(7.5 0) translate(256 263) scale(0.406 0.368) translate(-256 -263)'
+    );
+    expect(markup).toContain('data-avatar-layer="eyes"');
+    expect(markup).toContain('data-avatar-layer="features" transform="translate(0 18)"');
+  });
+
+  it('renders the calibrated nose mask and details with the selected skin tone', () => {
+    const markup = renderToStaticMarkup(
+      <AvatarCanvas
+        recipe={{ ...DEFAULT_AVATAR_RECIPE, nose: '06', skinTone: 'tan' }}
+      />
+    );
+
+    expect(markup).toContain('assets/avatar-parts/noses/nose-06-mask.svg');
+    expect(markup).toContain('assets/avatar-parts/noses/nose-06-details.svg');
+    expect(markup).toContain(
+      'translate(0 -21) translate(256 315) scale(0.391 0.521) translate(-256 -315)'
+    );
+    expect(markup).toContain('data-avatar-layer="nose"');
+    expect(markup).toMatch(/fill="#b97a56" mask="url\(#nose-mask-/);
+  });
+
+  it('renders the calibrated vector mouth at its shared face-relative position', () => {
+    const markup = renderToStaticMarkup(
+      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, mouth: '08' }} />
+    );
+
+    expect(markup).toContain('assets/avatar-parts/mouths/mouth-08.svg');
+    expect(markup).toContain(
+      'translate(0 0) translate(256 356) scale(0.619 0.432) translate(-256 -356)'
+    );
+    expect(markup).toContain('data-avatar-layer="mouth"');
+    expect(markup).not.toContain('d="M218 337q38 38 76 0');
   });
 
   it('uses the approved single-layer image and canonical face layout', () => {
@@ -85,5 +137,16 @@ describe('AvatarCanvas hairstyles', () => {
     expect(markup).not.toContain('fill="#dff4f0"');
     expect(markup).not.toContain('stroke="#7c3aed"');
     expect(markup).not.toContain('fill="#d4a95f"');
+  });
+
+  it('does not render the retired cheek decoration layer', () => {
+    const retired = {
+      ...DEFAULT_AVATAR_RECIPE,
+      cheeks: 'stars'
+    } as unknown as typeof DEFAULT_AVATAR_RECIPE;
+    const markup = renderToStaticMarkup(<AvatarCanvas recipe={retired} />);
+
+    expect(markup).not.toContain('data-avatar-layer="cheeks"');
+    expect(markup).not.toContain('fill="#f59e0b"');
   });
 });
