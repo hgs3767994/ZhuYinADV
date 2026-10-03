@@ -1,11 +1,11 @@
 import { assetUrl } from '../utils/assets';
 import {
   APPROVED_HAIR_OPTIONS,
-  BROW_OPTIONS,
   FACE_OPTIONS,
   LEGACY_HAIR_OPTIONS,
   MOUTH_OPTIONS,
   NOSE_OPTIONS,
+  VECTOR_BROW_OPTIONS,
   VECTOR_EYE_OPTIONS,
   type ApprovedHairOption,
   type BrowOption,
@@ -32,7 +32,7 @@ export function browAssetUrl(brows: BrowOption): string {
   return assetUrl(`assets/avatar-parts/brows/brow-${brows}.svg`);
 }
 
-export const AVATAR_BROW_ASSETS = BROW_OPTIONS.map(browAssetUrl);
+export const AVATAR_BROW_ASSETS = VECTOR_BROW_OPTIONS.map(browAssetUrl);
 
 export type EyeAssetSide = 'left' | 'right';
 

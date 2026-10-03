@@ -14,7 +14,7 @@ import {
   mouthAssetUrl,
   noseAssetUrl
 } from './assets';
-import { APPROVED_HAIR_OPTIONS, BROW_OPTIONS, FACE_OPTIONS, LEGACY_HAIR_OPTIONS, MOUTH_OPTIONS, NOSE_OPTIONS, VECTOR_EYE_OPTIONS } from './model';
+import { APPROVED_HAIR_OPTIONS, FACE_OPTIONS, LEGACY_HAIR_OPTIONS, MOUTH_OPTIONS, NOSE_OPTIONS, VECTOR_BROW_OPTIONS, VECTOR_EYE_OPTIONS } from './model';
 
 describe('avatar face assets', () => {
   it('maps every face to one mask and one details SVG', () => {
@@ -38,8 +38,8 @@ describe('avatar face assets', () => {
   });
 
   it('maps every eyebrow to one vector SVG', () => {
-    expect(AVATAR_BROW_ASSETS).toHaveLength(BROW_OPTIONS.length);
-    for (const brows of BROW_OPTIONS) {
+    expect(AVATAR_BROW_ASSETS).toHaveLength(VECTOR_BROW_OPTIONS.length);
+    for (const brows of VECTOR_BROW_OPTIONS) {
       expect(browAssetUrl(brows)).toMatch(
         new RegExp(`assets/avatar-parts/brows/brow-${brows}\\.svg$`)
       );

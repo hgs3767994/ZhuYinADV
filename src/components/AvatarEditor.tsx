@@ -30,6 +30,15 @@ type Category = {
   optionLabels: Record<string, string>;
 };
 
+function promoteSecondOption<T extends string>(options: readonly T[]): readonly T[] {
+  if (options.length < 2) return options;
+  return [options[1], options[0], ...options.slice(2)];
+}
+
+export const AVATAR_EDITOR_HAIR_OPTIONS = promoteSecondOption(HAIR_OPTIONS);
+export const AVATAR_EDITOR_EYE_OPTIONS = promoteSecondOption(EYE_OPTIONS);
+export const AVATAR_EDITOR_MOUTH_OPTIONS = promoteSecondOption(MOUTH_OPTIONS);
+
 const CATEGORIES: Category[] = [
   {
     key: 'face',
@@ -48,7 +57,7 @@ const CATEGORIES: Category[] = [
   {
     key: 'hair',
     label: '髮型',
-    options: HAIR_OPTIONS,
+    options: AVATAR_EDITOR_HAIR_OPTIONS,
     optionLabels: {
       a01: '瀏海短髮',
       a02: '刺蝟短髮',
@@ -72,9 +81,9 @@ const CATEGORIES: Category[] = [
   },
   { key: 'hairColor', label: '髮色', options: HAIR_COLOR_OPTIONS, optionLabels: { black: '墨黑', brown: '深棕', chestnut: '栗子', golden: '金黃', blue: '海洋藍', pink: '莓果粉', green: '亮綠', wine: '酒紅', gray: '灰色' } },
   { key: 'brows', label: '眉毛', options: BROW_OPTIONS, optionLabels: { '01': '眉型 1', '02': '眉型 2', '03': '眉型 3', '04': '眉型 4', '05': '眉型 5', '06': '眉型 6', '07': '眉型 7', '08': '眉型 8', '09': '眉型 9' } },
-  { key: 'eyes', label: '眼睛', options: EYE_OPTIONS, optionLabels: { '01': '眼型 1', '02': '眼型 2', '03': '眼型 3', '04': '眼型 4', '05': '眼型 5' } },
+  { key: 'eyes', label: '眼睛', options: AVATAR_EDITOR_EYE_OPTIONS, optionLabels: { '01': '眼型 1', '02': '眼型 2', '03': '眼型 3', '04': '眼型 4', '05': '眼型 5' } },
   { key: 'nose', label: '鼻子', options: NOSE_OPTIONS, optionLabels: { '01': '鼻型 1', '02': '鼻型 2', '03': '鼻型 3', '04': '鼻型 4', '05': '鼻型 5', '06': '鼻型 6', '07': '鼻型 7', '08': '鼻型 8' } },
-  { key: 'mouth', label: '嘴巴', options: MOUTH_OPTIONS, optionLabels: { '01': '嘴型 1', '02': '嘴型 2', '04': '嘴型 4', '05': '嘴型 5', '06': '嘴型 6', '07': '嘴型 7', '08': '嘴型 8', '10': '嘴型 10', '14': '嘴型 14' } }
+  { key: 'mouth', label: '嘴巴', options: AVATAR_EDITOR_MOUTH_OPTIONS, optionLabels: { '01': '嘴型 1', '02': '嘴型 2', '04': '嘴型 4', '05': '嘴型 5', '06': '嘴型 6', '07': '嘴型 7', '08': '嘴型 8', '10': '嘴型 10', '14': '嘴型 14' } }
 ];
 
 export function AvatarEditor({

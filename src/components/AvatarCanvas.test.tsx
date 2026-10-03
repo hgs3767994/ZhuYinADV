@@ -122,7 +122,7 @@ describe('AvatarCanvas hairstyles', () => {
     expect(markup).not.toContain('approved/hair-a06.png');
   });
 
-  it('can render a complete frameless avatar without retired decorations', () => {
+  it('can render a complete frameless avatar without deferred decorations', () => {
     const markup = renderToStaticMarkup(
       <AvatarCanvas
         recipe={{
@@ -139,7 +139,7 @@ describe('AvatarCanvas hairstyles', () => {
     expect(markup).not.toContain('fill="#d4a95f"');
   });
 
-  it('does not render the retired cheek decoration layer', () => {
+  it('does not render the deferred cheek decoration layer', () => {
     const retired = {
       ...DEFAULT_AVATAR_RECIPE,
       cheeks: 'stars'
@@ -149,4 +149,5 @@ describe('AvatarCanvas hairstyles', () => {
     expect(markup).not.toContain('data-avatar-layer="cheeks"');
     expect(markup).not.toContain('fill="#f59e0b"');
   });
+
 });

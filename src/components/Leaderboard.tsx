@@ -5,8 +5,8 @@ import { Modal } from './Modal';
 
 const PAGES: Array<{ id: LeaderboardPage; label: string }> = [
   { id: 'easy', label: '新手' },
-  { id: 'normal', label: '專家' },
-  { id: 'hard', label: '菁英' },
+  { id: 'normal', label: '冒險者' },
+  { id: 'hard', label: '先鋒' },
   { id: 'endless', label: '無限' }
 ];
 

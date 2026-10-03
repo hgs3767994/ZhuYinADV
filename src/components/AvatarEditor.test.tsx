@@ -1,9 +1,20 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_AVATAR_RECIPE } from '../avatar/model';
-import { AvatarEditor } from './AvatarEditor';
+import {
+  AVATAR_EDITOR_EYE_OPTIONS,
+  AVATAR_EDITOR_HAIR_OPTIONS,
+  AVATAR_EDITOR_MOUTH_OPTIONS,
+  AvatarEditor
+} from './AvatarEditor';
 
 describe('AvatarEditor', () => {
+  it('promotes the former second hair, eye and mouth choices to the first position', () => {
+    expect(AVATAR_EDITOR_HAIR_OPTIONS.slice(0, 2)).toEqual(['a02', 'a01']);
+    expect(AVATAR_EDITOR_EYE_OPTIONS.slice(0, 2)).toEqual(['02', '01']);
+    expect(AVATAR_EDITOR_MOUTH_OPTIONS.slice(0, 2)).toEqual(['02', '01']);
+  });
+
   it('hides option captions and removes glasses and accessory categories', () => {
     const markup = renderToStaticMarkup(
       <AvatarEditor

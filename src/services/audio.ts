@@ -19,6 +19,7 @@ const SFX_FILES = {
 const AUDIO_CACHE_NAME = 'zhuyin-audio-v3';
 const PREVIOUS_AUDIO_CACHE_NAMES = ['zhuyin-audio-v1', 'zhuyin-audio-v2'];
 const BGM_FILE = assetUrl('assets/audio/bgm.mp3');
+const BGM_VOLUME = 0.35 * 0.7;
 const OFFLINE_AUDIO_FILES = [
   BGM_FILE,
   ...Object.values(SFX_FILES),
@@ -53,7 +54,7 @@ class AudioService {
 
   constructor() {
     this.bgm.loop = true;
-    this.bgm.volume = 0.35;
+    this.bgm.volume = BGM_VOLUME;
     this.bgm.preload = 'none';
     this.bgm.src = BGM_FILE;
   }

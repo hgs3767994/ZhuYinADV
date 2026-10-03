@@ -17,7 +17,8 @@ export const HAIR_COLOR_OPTIONS = [
   'black', 'brown', 'chestnut', 'golden', 'blue', 'pink',
   'green', 'wine', 'gray'
 ] as const;
-export const BROW_OPTIONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09'] as const;
+export const VECTOR_BROW_OPTIONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09'] as const;
+export const BROW_OPTIONS = VECTOR_BROW_OPTIONS;
 export const VECTOR_EYE_OPTIONS = ['01', '02', '03', '04', '05'] as const;
 export const EYE_OPTIONS = VECTOR_EYE_OPTIONS;
 export const NOSE_OPTIONS = ['01', '02', '03', '04', '05', '06', '07', '08'] as const;
@@ -118,8 +119,8 @@ export function avatarRecipeFromSeed(seedValue: string): AvatarRecipeV2 {
     eyes: pickFromSeed(EYE_OPTIONS, seed, 5),
     nose: pickFromSeed(NOSE_OPTIONS, seed, 6),
     mouth: pickFromSeed(MOUTH_OPTIONS, seed, 7),
-    glasses: pickFromSeed(GLASSES_OPTIONS, seed, 9),
-    hairAccessory: pickFromSeed(HAIR_ACCESSORY_OPTIONS, seed, 10)
+    glasses: 'none',
+    hairAccessory: 'none'
   };
 }
 

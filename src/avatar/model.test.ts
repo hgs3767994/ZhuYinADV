@@ -23,6 +23,8 @@ describe('avatar recipes', () => {
     const second = avatarRecipeFromSeed('same-player');
     expect(first).toEqual(second);
     expect(first.version).toBe(2);
+    expect(first.glasses).toBe('none');
+    expect(first.hairAccessory).toBe('none');
   });
 
   it('keeps an existing v2 recipe unchanged', () => {
@@ -36,7 +38,7 @@ describe('avatar recipes', () => {
       skinTone: 'peach',
       hair: HAIR_OPTIONS[0],
       hairColor: 'black',
-      brows: BROW_OPTIONS[0],
+      brows: '01',
       eyes: EYE_OPTIONS[0],
       nose: NOSE_OPTIONS[0],
       mouth: MOUTH_OPTIONS[0],
@@ -168,7 +170,7 @@ describe('avatar recipes', () => {
     }
   });
 
-  it('removes retired glasses and hair accessories from stored avatars', () => {
+  it('keeps deferred glasses and hair accessories disabled in stored avatars', () => {
     const decorated = {
       ...DEFAULT_AVATAR_RECIPE,
       glasses: 'star',
@@ -177,7 +179,7 @@ describe('avatar recipes', () => {
     expect(normalizeAvatarRecipe(decorated)).toEqual(DEFAULT_AVATAR_RECIPE);
   });
 
-  it('removes the retired cheek decoration field from stored avatars', () => {
+  it('keeps the deferred cheek decoration field out of stored avatars', () => {
     const decorated = {
       ...DEFAULT_AVATAR_RECIPE,
       cheeks: 'freckles'
