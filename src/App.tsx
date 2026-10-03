@@ -113,10 +113,12 @@ type QuitConfirmationOrigin = 'back' | 'button';
 type GameHistoryPosition = 'base' | 'guard' | null;
 type ParentAction = 'create' | 'manage' | 'reset-password';
 
+const START_BUTTON_IMAGE = assetUrl('assets/images/start_adventure_button.webp');
+
 const WELCOME_IMAGES = [
   assetUrl('assets/images/start_banner.webp'),
   assetUrl('assets/images/title.webp'),
-  assetUrl('assets/images/start_button.webp')
+  START_BUTTON_IMAGE
 ];
 
 const MODE_IMAGES = [
@@ -149,7 +151,7 @@ const ADVENTURE_IMAGES = Array.from(new Set([
   ...AVATAR_NOSE_ASSETS,
   ...AVATAR_MOUTH_ASSETS
 ]));
-const IMAGE_ASSET_VERSION = '15';
+const IMAGE_ASSET_VERSION = '16';
 const AUDIO_ASSET_VERSION = '3';
 const IMAGE_ASSET_VERSION_KEY = 'zhuyin-image-asset-version';
 const AUDIO_ASSET_VERSION_KEY = 'zhuyin-audio-asset-version';
@@ -807,7 +809,7 @@ export function App() {
             onClick={() => press(() => void prepareAdventure())}
             aria-label="開始冒險"
           >
-            <img src={assetUrl('assets/images/start_button.webp')} alt="" draggable="false" />
+            <img src={START_BUTTON_IMAGE} alt="" draggable="false" />
           </button>
           <span className="version-tag">v {APP_VERSION}</span>
         </main>

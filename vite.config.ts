@@ -48,7 +48,7 @@ export default defineConfig({
           '**/*.{js,css,html,webmanifest}',
           'assets/images/start_banner.webp',
           'assets/images/title.webp',
-          'assets/images/start_button.webp'
+          'assets/images/start_adventure_button.webp'
         ],
         globIgnores: ['**/preview*.html'],
         cleanupOutdatedCaches: true,
