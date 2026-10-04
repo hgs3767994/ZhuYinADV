@@ -4,6 +4,8 @@
 
 目前入口：`tools/hair-calibrator/index.html`
 
+目前調校項目：新髮型候選素材 08（`hair-candidate-08.svg`）。新髮型 01、02、03、04、05、06、07 的獨立 localStorage 資料與素材仍保留。
+
 功能包括：
 
 - 以固定 512×512 座標調整圖層位置。

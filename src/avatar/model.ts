@@ -7,12 +7,8 @@ export const FACE_OPTIONS = [
   'long01'
 ] as const;
 export const SKIN_TONE_OPTIONS = ['peach', 'warm', 'golden', 'tan', 'deep'] as const;
-export const LEGACY_HAIR_OPTIONS = [
-  'a01', 'a02', 'a03', 'a06', 'a07', 'a08',
-  'b01', 'b05', 'b06', 'b07'
-] as const;
-export const APPROVED_HAIR_OPTIONS = ['01', '02', '03', '05', '07', '08', '09', '11'] as const;
-export const HAIR_OPTIONS = [...LEGACY_HAIR_OPTIONS, ...APPROVED_HAIR_OPTIONS] as const;
+export const APPROVED_HAIR_OPTIONS = ['01', '02', '03', '05', '07', '08', '09', '11', 'c01', 'c02', 'c03', 'c04', 'c05', 'c06', 'c07', 'c08'] as const;
+export const HAIR_OPTIONS = APPROVED_HAIR_OPTIONS;
 export const HAIR_COLOR_OPTIONS = [
   'black', 'brown', 'chestnut', 'golden', 'blue', 'pink',
   'green', 'wine', 'gray'
@@ -28,7 +24,6 @@ export const HAIR_ACCESSORY_OPTIONS = ['none', 'star-clip', 'bow', 'leaf', 'expl
 
 export type FaceOption = typeof FACE_OPTIONS[number];
 export type SkinToneOption = typeof SKIN_TONE_OPTIONS[number];
-export type LegacyHairOption = typeof LEGACY_HAIR_OPTIONS[number];
 export type ApprovedHairOption = typeof APPROVED_HAIR_OPTIONS[number];
 export type HairOption = typeof HAIR_OPTIONS[number];
 export type HairColorOption = typeof HAIR_COLOR_OPTIONS[number];
@@ -66,12 +61,12 @@ export const DEFAULT_AVATAR_RECIPE: AvatarRecipeV2 = {
   version: 2,
   face: 'round',
   skinTone: 'peach',
-  hair: 'a01',
+  hair: '02',
   hairColor: 'black',
   brows: '01',
-  eyes: '01',
+  eyes: '02',
   nose: '01',
-  mouth: '01',
+  mouth: '02',
   glasses: 'none',
   hairAccessory: 'none'
 };
@@ -137,17 +132,17 @@ export function normalizeAvatarRecipe(recipe: AvatarRecipe): AvatarRecipeV2 {
         : DEFAULT_AVATAR_RECIPE.face;
 
   const storedHair = recipe.hair as string;
-  const legacyHair: Record<string, HairOption> = {
-    short: 'a01',
+  const retiredHair: Record<string, HairOption> = {
+    short: '02',
     bob: '01',
-    curly: 'b07',
+    curly: '02',
     'twin-tails': '02',
-    'side-sweep': 'a06',
-    spiky: 'a08'
+    'side-sweep': '02',
+    spiky: '02'
   };
   const hair = HAIR_OPTIONS.includes(storedHair as HairOption)
     ? storedHair as HairOption
-    : legacyHair[storedHair] ?? DEFAULT_AVATAR_RECIPE.hair;
+    : retiredHair[storedHair] ?? DEFAULT_AVATAR_RECIPE.hair;
 
   const storedBrows = recipe.brows as string;
   const legacyBrows: Record<string, BrowOption> = {

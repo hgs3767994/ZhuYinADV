@@ -111,15 +111,13 @@ describe('AvatarCanvas hairstyles', () => {
     );
   });
 
-  it('renders a remaining layered SVG hairstyle without replacing its id', () => {
+  it('renders the newest calibrated vector hairstyle', () => {
     const markup = renderToStaticMarkup(
-      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, hair: 'a06' }} />
+      <AvatarCanvas recipe={{ ...DEFAULT_AVATAR_RECIPE, hair: 'c08' }} />
     );
 
-    expect(markup).toContain('hair-a06-mask.svg');
-    expect(markup).toContain('hair-a06-details.svg');
-    expect(markup).not.toContain('back-mask');
-    expect(markup).not.toContain('approved/hair-a06.png');
+    expect(markup).toContain('assets/avatar-parts/hair/approved/hair-c08.svg');
+    expect(markup).not.toContain('/hair/candidates/');
   });
 
   it('can render a complete frameless avatar without deferred decorations', () => {

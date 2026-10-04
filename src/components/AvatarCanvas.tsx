@@ -4,14 +4,11 @@ import {
   browAssetUrl,
   eyeAssetUrl,
   faceAssetUrl,
-  isApprovedHair,
-  legacyHairAssetUrl,
   mouthAssetUrl,
   noseAssetUrl
 } from '../avatar/assets';
 import { EYE_SCALE_CALIBRATIONS, eyeTransform } from '../avatar/eyeCalibration';
 import {
-  CANONICAL_FACE_TRANSFORM,
   HAIR_FACE_CALIBRATIONS,
   faceTransform,
   hairTransform
@@ -20,9 +17,7 @@ import { NOSE_SCALE_CALIBRATIONS, noseTransform } from '../avatar/noseCalibratio
 import { MOUTH_CALIBRATIONS, mouthTransform } from '../avatar/mouthCalibration';
 import type {
   AvatarRecipeV2,
-  FaceOption,
   HairColorOption,
-  LegacyHairOption,
   SkinToneOption
 } from '../avatar/model';
 
@@ -52,55 +47,6 @@ export const HAIR_COLORS: Record<HairColorOption, string> = {
   wine: '#82074e',
   gray: '#8E8E8E'
 };
-
-const LEGACY_HAIR_FACE_SCALE_X: Record<FaceOption, number> = {
-  round: 1,
-  oval: 0.94,
-  diamond: 0.94,
-  square01: 1,
-  square02: 1,
-  long01: 0.92
-};
-
-function legacyHairTransform(face: FaceOption): string {
-  const scaleX = LEGACY_HAIR_FACE_SCALE_X[face];
-  return `matrix(${scaleX} 0 0 1 ${256 * (1 - scaleX)} 0)`;
-}
-
-interface LegacyHairLayerProps {
-  hair: LegacyHairOption;
-  face: FaceOption;
-  hairColor: HairColorOption;
-  maskId: string;
-}
-
-function LegacyHairLayer({
-  hair,
-  face,
-  hairColor,
-  maskId
-}: LegacyHairLayerProps) {
-  return (
-    <g transform={CANONICAL_FACE_TRANSFORM}>
-      <rect
-        x="0"
-        y="0"
-        width="512"
-        height="512"
-        fill={HAIR_COLORS[hairColor]}
-        mask={`url(#${maskId})`}
-      />
-      <image
-        href={legacyHairAssetUrl(hair, 'details')}
-        x="0"
-        y="0"
-        width="512"
-        height="512"
-        transform={legacyHairTransform(face)}
-      />
-    </g>
-  );
-}
 
 function hairTintMatrix(color: string): string {
   const channels = color.match(/[a-f\d]{2}/gi)?.map((channel) => Number.parseInt(channel, 16));
@@ -202,14 +148,11 @@ export function AvatarCanvas({
   const instanceId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const faceMaskId = `face-mask-${instanceId}`;
   const hairTintId = `hair-tint-${instanceId}`;
-  const legacyHairMaskId = `legacy-hair-mask-${instanceId}`;
   const noseMaskId = `nose-mask-${instanceId}`;
   const maskSource = faceAssetUrl(recipe.face, 'mask');
   const detailsSource = faceAssetUrl(recipe.face, 'details');
-  const approvedHair = isApprovedHair(recipe.hair) ? recipe.hair : null;
-  const legacyHair = approvedHair ? null : recipe.hair as LegacyHairOption;
-  const calibration = approvedHair ? HAIR_FACE_CALIBRATIONS[approvedHair][recipe.face] : null;
-  const calibratedHairTransform = calibration ? hairTransform(calibration) : undefined;
+  const calibration = HAIR_FACE_CALIBRATIONS[recipe.hair][recipe.face];
+  const calibratedHairTransform = hairTransform(calibration);
   const canonicalFaceTransform = faceTransform();
   const tintHair = recipe.hairColor !== 'brown';
   return (
@@ -237,18 +180,6 @@ export function AvatarCanvas({
         <filter id={hairTintId} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
           <feColorMatrix type="matrix" values={hairTintMatrix(HAIR_COLORS[recipe.hairColor])} />
         </filter>
-        {legacyHair && (
-          <mask id={legacyHairMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
-            <image
-              href={legacyHairAssetUrl(legacyHair, 'mask')}
-              x="0"
-              y="0"
-              width="512"
-              height="512"
-              transform={legacyHairTransform(recipe.face)}
-            />
-          </mask>
-        )}
       </defs>
       {showBackground && <circle cx="256" cy="256" r="244" fill="#dff4f0" />}
       <g transform={canonicalFaceTransform}>
@@ -262,24 +193,15 @@ export function AvatarCanvas({
         <Mouth recipe={recipe} />
       </g>
       <g data-avatar-layer="hair">
-        {approvedHair ? (
-          <image
-            href={approvedHairAssetUrl(approvedHair)}
-            x="0"
-            y="0"
-            width="512"
-            height="512"
-            transform={calibratedHairTransform}
-            filter={tintHair ? `url(#${hairTintId})` : undefined}
-          />
-        ) : legacyHair ? (
-          <LegacyHairLayer
-            hair={legacyHair}
-            face={recipe.face}
-            hairColor={recipe.hairColor}
-            maskId={legacyHairMaskId}
-          />
-        ) : null}
+        <image
+          href={approvedHairAssetUrl(recipe.hair)}
+          x="0"
+          y="0"
+          width="512"
+          height="512"
+          transform={calibratedHairTransform}
+          filter={tintHair ? `url(#${hairTintId})` : undefined}
+        />
       </g>
     </svg>
   );

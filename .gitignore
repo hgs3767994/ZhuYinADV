@@ -7,3 +7,16 @@ Thumbs.db
 agent.md
 初步工程統整及未來建議.txt
 原始程式框架/
+
+# Local avatar-production scratch files and tool installations.
+/.codex-remote-attachments/
+/.tools/
+/artifacts/
+/face-outlines-svg/
+/generate_semantic_face_assets.py
+/generate_true_vector_svgs.py
+/process_face_outlines.py
+/rasterize_avatar_face_masks.cjs
+/tools/generate-brow-assets.mjs
+/tools/generate-mouth-candidates.mjs
+/tools/generate-nose-candidates.mjs

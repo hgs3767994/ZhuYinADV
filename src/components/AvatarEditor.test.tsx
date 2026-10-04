@@ -9,10 +9,13 @@ import {
 } from './AvatarEditor';
 
 describe('AvatarEditor', () => {
-  it('promotes the former second hair, eye and mouth choices to the first position', () => {
-    expect(AVATAR_EDITOR_HAIR_OPTIONS.slice(0, 2)).toEqual(['a02', 'a01']);
+  it('promotes the former second hair, eye and mouth choices and keeps defaults aligned', () => {
+    expect(AVATAR_EDITOR_HAIR_OPTIONS.slice(0, 2)).toEqual(['02', '01']);
     expect(AVATAR_EDITOR_EYE_OPTIONS.slice(0, 2)).toEqual(['02', '01']);
     expect(AVATAR_EDITOR_MOUTH_OPTIONS.slice(0, 2)).toEqual(['02', '01']);
+    expect(DEFAULT_AVATAR_RECIPE.hair).toBe(AVATAR_EDITOR_HAIR_OPTIONS[0]);
+    expect(DEFAULT_AVATAR_RECIPE.eyes).toBe(AVATAR_EDITOR_EYE_OPTIONS[0]);
+    expect(DEFAULT_AVATAR_RECIPE.mouth).toBe(AVATAR_EDITOR_MOUTH_OPTIONS[0]);
   });
 
   it('hides option captions and removes glasses and accessory categories', () => {

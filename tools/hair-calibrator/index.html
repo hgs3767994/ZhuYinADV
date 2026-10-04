@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>第 11 款髮型 × 臉型手動調校</title>
+  <title>新髮型 08 × 臉型手動調校</title>
   <style>
     :root { color: #33251f; background: #eee7e0; font-family: "Microsoft JhengHei", system-ui, sans-serif; }
     * { box-sizing: border-box; }
@@ -62,7 +62,7 @@
   <main class="app">
     <section class="workspace">
       <div class="stage-wrap">
-        <div id="stage" class="stage" tabindex="0" aria-label="第 11 款髮型調校畫布，可拖曳或使用方向鍵微調">
+        <div id="stage" class="stage" tabindex="0" aria-label="新髮型 08 調校畫布，可拖曳或使用方向鍵微調">
           <svg viewBox="0 0 512 512" aria-hidden="true">
             <defs>
               <mask id="face-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
@@ -75,15 +75,15 @@
                 <image id="faceDetailsImage" x="0" y="0" width="512" height="512" />
               </g>
             </g>
-            <image id="hairImage" href="./hair-11.png" x="0" y="0" width="512" height="512" />
+            <image id="hairImage" href="./hair-candidate-08.svg" x="0" y="0" width="512" height="512" />
           </svg>
         </div>
         <p class="hint">拖曳髮型移動；方向鍵每次 1px，Shift＋方向鍵每次 10px。臉型使用程式目前的固定比例。</p>
       </div>
     </section>
     <aside class="panel">
-      <h1>第 11 款髮型手動調校</h1>
-      <p class="subtitle">程式素材 11｜6 款現有臉型｜512×512 固定座標</p>
+      <h1>新髮型 08 手動調校</h1>
+      <p class="subtitle">候選素材 2026-10-04／08｜6 款現有臉型｜512×512 固定座標</p>
       <div class="face-status">
         <div><strong id="faceCounter"></strong><br><span id="faceName"></span></div>
         <span id="statusBadge" class="badge">尚未確認</span>
@@ -113,16 +113,9 @@
       { id: 'diamond', name: '菱形' }, { id: 'square01', name: '方形 1' },
       { id: 'square02', name: '方形 2' }, { id: 'long01', name: '長形' },
     ];
-    const storageKey = 'zhuyin-hair11-asset11-calibration-v1';
-    const presetVersion = 'hair-11-recalibration-2026-10-03-2';
-    const presetTransforms = {
-      round: { translateX:-3.058, translateY:-1.437, scaleX:1.069, scaleY:1.036, faceScale:1, updatedAt:'2026-10-02T17:30:33.104Z' },
-      oval: { translateX:-1.522, translateY:14.502, scaleX:.926, scaleY:1.004, faceScale:1, updatedAt:'2026-10-02T17:31:05.767Z' },
-      diamond: { translateX:-3, translateY:6.006, scaleX:.991, scaleY:1, faceScale:1, updatedAt:'2026-10-02T17:32:28.707Z' },
-      square01: { translateX:-1, translateY:-6.671, scaleX:1.056, scaleY:1.153, faceScale:1, updatedAt:'2026-10-02T17:33:10.565Z' },
-      square02: { translateX:-2.284, translateY:.097, scaleX:1.017, scaleY:1.14, faceScale:1, updatedAt:'2026-10-02T17:33:47.666Z' },
-      long01: { translateX:-3.236, translateY:-8.836, scaleX:.991, scaleY:1.044, faceScale:1, updatedAt:'2026-10-02T17:35:27.256Z' },
-    };
+    const storageKey = 'zhuyin-hair-candidate-20261004-08-calibration-v1';
+    const presetVersion = 'hair-candidate-20261004-08-initial';
+    const presetTransforms = {};
     const initialValue = () => ({ translateX: 0, translateY: 0, scaleX: 1, scaleY: 1 });
     const defaultTransform = () => ({ ...initialValue(), faceScale: 1, confirmed: false, dirty: false, confirmedValue: null, updatedAt: null });
     const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -147,7 +140,7 @@
     const persist = () => localStorage.setItem(storageKey, JSON.stringify({ presetVersion, faceIndex: state.faceIndex, transforms: state.transforms }));
     function confirmedValue(value) { return value.confirmedValue || { translateX:value.translateX, translateY:value.translateY, scaleX:value.scaleX, scaleY:value.scaleY, faceScale:value.faceScale }; }
     function exportData() {
-      return { version: 4, selectionIndex: 11, hairId: '11', coordinateSystem: { width:512, height:512, transformOrigin:{x:256,y:256} }, faceTransform: 'matrix(.65 0 0 .78 89.6 80)', faceScaleTransformOrder: 'translate(256,256) scale(faceScale) translate(-256,-256)', hairTransformOrder: 'translate(x,y) translate(256,256) scale(scaleX,scaleY) translate(-256,-256)', faces: Object.fromEntries(faces.flatMap(face => { const value=state.transforms[face.id]; if(!value.confirmed) return []; const fixed=confirmedValue(value); return [[face.id,{ translateX:round(fixed.translateX), translateY:round(fixed.translateY), scaleX:round(fixed.scaleX), scaleY:round(fixed.scaleY), faceScale:round(fixed.faceScale ?? 1), updatedAt:value.updatedAt }]]; })) };
+      return { version: 4, selectionIndex: 8, hairId: 'candidate-20261004-08', coordinateSystem: { width:512, height:512, transformOrigin:{x:256,y:256} }, faceTransform: 'matrix(.65 0 0 .78 89.6 80)', faceScaleTransformOrder: 'translate(256,256) scale(faceScale) translate(-256,-256)', hairTransformOrder: 'translate(x,y) translate(256,256) scale(scaleX,scaleY) translate(-256,-256)', faces: Object.fromEntries(faces.flatMap(face => { const value=state.transforms[face.id]; if(!value.confirmed) return []; const fixed=confirmedValue(value); return [[face.id,{ translateX:round(fixed.translateX), translateY:round(fixed.translateY), scaleX:round(fixed.scaleX), scaleY:round(fixed.scaleY), faceScale:round(fixed.faceScale ?? 1), updatedAt:value.updatedAt }]]; })) };
     }
     function markEdited() { const value=currentTransform(); value.dirty=true; persist(); }
     function render() {
@@ -178,7 +171,7 @@
     $('reset').addEventListener('click',()=>{state.transforms[currentFace().id]=defaultTransform();persist();render();showToast('目前臉型已重設');});
     $('center').addEventListener('click',()=>{const value=currentTransform();value.translateX=0;value.translateY=0;markEdited();render();});
     $('copyJson').addEventListener('click',async()=>{await navigator.clipboard.writeText(JSON.stringify(exportData(),null,2));showToast('JSON 已複製');});
-    $('downloadJson').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(exportData(),null,2)],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='hair-11-face-calibration.json';link.click();URL.revokeObjectURL(link.href);showToast('JSON 已下載');});
+    $('downloadJson').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(exportData(),null,2)],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='hair-candidate-08-face-calibration.json';link.click();URL.revokeObjectURL(link.href);showToast('JSON 已下載');});
     if(loadPreset) persist();
     render(); stage.focus();
   </script>

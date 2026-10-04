@@ -2,7 +2,6 @@ import { assetUrl } from '../utils/assets';
 import {
   APPROVED_HAIR_OPTIONS,
   FACE_OPTIONS,
-  LEGACY_HAIR_OPTIONS,
   MOUTH_OPTIONS,
   NOSE_OPTIONS,
   VECTOR_BROW_OPTIONS,
@@ -10,8 +9,6 @@ import {
   type ApprovedHairOption,
   type BrowOption,
   type FaceOption,
-  type HairOption,
-  type LegacyHairOption,
   type MouthOption,
   type NoseOption,
   type VectorEyeOption
@@ -62,24 +59,9 @@ export function mouthAssetUrl(mouth: MouthOption): string {
 
 export const AVATAR_MOUTH_ASSETS = MOUTH_OPTIONS.map(mouthAssetUrl);
 
-export function isApprovedHair(hair: HairOption): hair is ApprovedHairOption {
-  return APPROVED_HAIR_OPTIONS.includes(hair as ApprovedHairOption);
-}
-
 export function approvedHairAssetUrl(hair: ApprovedHairOption): string {
-  return assetUrl(`assets/avatar-parts/hair/approved/hair-${hair}.png`);
+  const extension = hair.startsWith('c') ? 'svg' : 'png';
+  return assetUrl(`assets/avatar-parts/hair/approved/hair-${hair}.${extension}`);
 }
 
-export type LegacyHairAssetLayer = 'mask' | 'details';
-
-export function legacyHairAssetUrl(hair: LegacyHairOption, layer: LegacyHairAssetLayer): string {
-  return assetUrl(`assets/avatar-parts/hair/candidates/hair-${hair}-${layer}.svg`);
-}
-
-export const AVATAR_HAIR_ASSETS = [
-  ...LEGACY_HAIR_OPTIONS.flatMap((hair) => [
-    legacyHairAssetUrl(hair, 'mask'),
-    legacyHairAssetUrl(hair, 'details')
-  ]),
-  ...APPROVED_HAIR_OPTIONS.map(approvedHairAssetUrl)
-];
+export const AVATAR_HAIR_ASSETS = APPROVED_HAIR_OPTIONS.map(approvedHairAssetUrl);

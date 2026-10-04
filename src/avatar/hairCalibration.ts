@@ -77,6 +77,70 @@ export const HAIR_FACE_CALIBRATIONS: HairCalibrationMap = {
     square01: { translateX: -4, translateY: -32.671, scaleX: 1.056, scaleY: 1.353 },
     square02: { translateX: -4.511, translateY: -28.613, scaleX: 1.017, scaleY: 1.308 },
     long01: { translateX: -3.236, translateY: -27.836, scaleX: 0.991, scaleY: 1.211 }
+  },
+  'c01': {
+    round: { translateX: 0, translateY: -91, scaleX: 0.794, scaleY: 0.732 },
+    oval: { translateX: 0, translateY: -91, scaleX: 0.674, scaleY: 0.732 },
+    diamond: { translateX: 0, translateY: -91, scaleX: 0.732, scaleY: 0.732 },
+    square01: { translateX: 0, translateY: -91, scaleX: 0.743, scaleY: 0.732 },
+    square02: { translateX: 0, translateY: -91, scaleX: 0.749, scaleY: 0.732 },
+    long01: { translateX: 0, translateY: -91, scaleX: 0.693, scaleY: 0.732 }
+  },
+  'c02': {
+    round: { translateX: 0, translateY: -57, scaleX: 0.726, scaleY: 0.7 },
+    oval: { translateX: 0, translateY: -57, scaleX: 0.642, scaleY: 0.7 },
+    diamond: { translateX: 0, translateY: -57, scaleX: 0.687, scaleY: 0.7 },
+    square01: { translateX: 0, translateY: -57, scaleX: 0.726, scaleY: 0.7 },
+    square02: { translateX: 0, translateY: -57, scaleX: 0.7, scaleY: 0.7 },
+    long01: { translateX: 0, translateY: -57, scaleX: 0.635, scaleY: 0.7 }
+  },
+  'c03': {
+    round: { translateX: 2, translateY: -46, scaleX: 0.739, scaleY: 0.71 },
+    oval: { translateX: 2, translateY: -46, scaleX: 0.66, scaleY: 0.71 },
+    diamond: { translateX: 2, translateY: -46, scaleX: 0.692, scaleY: 0.71 },
+    square01: { translateX: 3, translateY: -50, scaleX: 0.766, scaleY: 0.71 },
+    square02: { translateX: 2, translateY: -46, scaleX: 0.738, scaleY: 0.71 },
+    long01: { translateX: 2, translateY: -46, scaleX: 0.638, scaleY: 0.71 }
+  },
+  'c04': {
+    round: { translateX: -1, translateY: -38, scaleX: 0.762, scaleY: 0.762 },
+    oval: { translateX: -1, translateY: -38, scaleX: 0.681, scaleY: 0.762 },
+    diamond: { translateX: -1, translateY: -38, scaleX: 0.713, scaleY: 0.762 },
+    square01: { translateX: -1, translateY: -45, scaleX: 0.778, scaleY: 0.762 },
+    square02: { translateX: -1, translateY: -38, scaleX: 0.749, scaleY: 0.762 },
+    long01: { translateX: -1, translateY: -38, scaleX: 0.663, scaleY: 0.762 }
+  },
+  'c05': {
+    round: { translateX: 0, translateY: -59, scaleX: 0.814, scaleY: 0.814 },
+    oval: { translateX: 0, translateY: -59, scaleX: 0.706, scaleY: 0.814 },
+    diamond: { translateX: 0, translateY: -59, scaleX: 0.752, scaleY: 0.814 },
+    square01: { translateX: -1, translateY: -62, scaleX: 0.787, scaleY: 0.814 },
+    square02: { translateX: 0, translateY: -59, scaleX: 0.778, scaleY: 0.814 },
+    long01: { translateX: 0, translateY: -59, scaleX: 0.713, scaleY: 0.814 }
+  },
+  'c06': {
+    round: { translateX: 0, translateY: -59, scaleX: 0.719, scaleY: 0.719 },
+    oval: { translateX: 0, translateY: -59, scaleX: 0.646, scaleY: 0.719 },
+    diamond: { translateX: 0, translateY: -59, scaleX: 0.673, scaleY: 0.719 },
+    square01: { translateX: 0, translateY: -59, scaleX: 0.697, scaleY: 0.719 },
+    square02: { translateX: 0, translateY: -59, scaleX: 0.7, scaleY: 0.719 },
+    long01: { translateX: 0, translateY: -59, scaleX: 0.633, scaleY: 0.719 }
+  },
+  'c07': {
+    round: { translateX: -3, translateY: -50, scaleX: 0.823, scaleY: 0.823 },
+    oval: { translateX: -3, translateY: -50, scaleX: 0.722, scaleY: 0.823 },
+    diamond: { translateX: -3, translateY: -50, scaleX: 0.77, scaleY: 0.823 },
+    square01: { translateX: -3, translateY: -52, scaleX: 0.784, scaleY: 0.823 },
+    square02: { translateX: -3, translateY: -50, scaleX: 0.781, scaleY: 0.823 },
+    long01: { translateX: -3, translateY: -50, scaleX: 0.719, scaleY: 0.823 }
+  },
+  'c08': {
+    round: { translateX: 2, translateY: -9, scaleX: 0.71, scaleY: 0.71 },
+    oval: { translateX: 2, translateY: -9, scaleX: 0.64, scaleY: 0.71 },
+    diamond: { translateX: 2, translateY: -9, scaleX: 0.67, scaleY: 0.71 },
+    square01: { translateX: 3, translateY: -13, scaleX: 0.74, scaleY: 0.71 },
+    square02: { translateX: 4, translateY: -9, scaleX: 0.7, scaleY: 0.71 },
+    long01: { translateX: 2, translateY: -9, scaleX: 0.63, scaleY: 0.71 }
   }
 };
 

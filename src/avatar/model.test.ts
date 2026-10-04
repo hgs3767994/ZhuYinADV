@@ -6,7 +6,6 @@ import {
   FACE_OPTIONS,
   HAIR_COLOR_OPTIONS,
   HAIR_OPTIONS,
-  LEGACY_HAIR_OPTIONS,
   MOUTH_OPTIONS,
   NOSE_OPTIONS,
   VECTOR_EYE_OPTIONS,
@@ -31,17 +30,17 @@ describe('avatar recipes', () => {
     expect(normalizeAvatarRecipe(DEFAULT_AVATAR_RECIPE)).toEqual(DEFAULT_AVATAR_RECIPE);
   });
 
-  it('uses the first remaining option in every category as the default', () => {
+  it('uses the first visible editor option in every category as the default', () => {
     expect(DEFAULT_AVATAR_RECIPE).toEqual({
       version: 2,
       face: FACE_OPTIONS[0],
       skinTone: 'peach',
-      hair: HAIR_OPTIONS[0],
+      hair: '02',
       hairColor: 'black',
       brows: '01',
-      eyes: EYE_OPTIONS[0],
+      eyes: '02',
       nose: NOSE_OPTIONS[0],
-      mouth: MOUTH_OPTIONS[0],
+      mouth: '02',
       glasses: 'none',
       hairAccessory: 'none'
     });
@@ -131,26 +130,16 @@ describe('avatar recipes', () => {
     }
   });
 
-  it('keeps the ten remaining existing hairstyles and adds the calibrated hairstyles', () => {
-    expect(LEGACY_HAIR_OPTIONS).toEqual([
-      'a01', 'a02', 'a03', 'a06', 'a07', 'a08',
-      'b01', 'b05', 'b06', 'b07'
-    ]);
-    expect(APPROVED_HAIR_OPTIONS).toEqual(['01', '02', '03', '05', '07', '08', '09', '11']);
-    expect(HAIR_OPTIONS).toHaveLength(18);
+  it('offers only the retained calibrated hairstyles', () => {
+    expect(APPROVED_HAIR_OPTIONS).toEqual(['01', '02', '03', '05', '07', '08', '09', '11', 'c01', 'c02', 'c03', 'c04', 'c05', 'c06', 'c07', 'c08']);
+    expect(HAIR_OPTIONS).toEqual(APPROVED_HAIR_OPTIONS);
+    expect(HAIR_OPTIONS).toHaveLength(16);
   });
 
-  it('preserves every existing hairstyle id unchanged', () => {
-    for (const hair of LEGACY_HAIR_OPTIONS) {
-      const existing = { ...DEFAULT_AVATAR_RECIPE, hair };
-      expect(normalizeAvatarRecipe(existing).hair).toBe(hair);
-    }
-  });
-
-  it('migrates retired procedural hairstyles to the original selected hairstyles', () => {
+  it('migrates retired procedural hairstyles safely', () => {
     const mappings = {
-      short: 'a01', bob: '01', curly: 'b07', 'twin-tails': '02',
-      'side-sweep': 'a06', spiky: 'a08'
+      short: '02', bob: '01', curly: '02', 'twin-tails': '02',
+      'side-sweep': '02', spiky: '02'
     } as const;
     for (const [hair, expected] of Object.entries(mappings)) {
       const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, hair } as unknown as AvatarRecipeV2;
@@ -160,13 +149,20 @@ describe('avatar recipes', () => {
 
   it('falls back safely for an unknown hairstyle', () => {
     const legacyV2 = { ...DEFAULT_AVATAR_RECIPE, hair: 'unknown' } as unknown as AvatarRecipeV2;
-    expect(normalizeAvatarRecipe(legacyV2).hair).toBe('a01');
+    expect(normalizeAvatarRecipe(legacyV2).hair).toBe('02');
+  });
+
+  it('falls back to the new first hairstyle for all ten removed hairstyle ids', () => {
+    for (const hair of ['a01', 'a02', 'a03', 'a06', 'a07', 'a08', 'b01', 'b05', 'b06', 'b07']) {
+      const retired = { ...DEFAULT_AVATAR_RECIPE, hair } as unknown as AvatarRecipeV2;
+      expect(normalizeAvatarRecipe(retired).hair).toBe('02');
+    }
   });
 
   it('falls back to the first hairstyle for the three removed choices', () => {
     for (const hair of ['a04', 'a05', 'b02']) {
       const retired = { ...DEFAULT_AVATAR_RECIPE, hair } as unknown as AvatarRecipeV2;
-      expect(normalizeAvatarRecipe(retired).hair).toBe('a01');
+      expect(normalizeAvatarRecipe(retired).hair).toBe('02');
     }
   });
 

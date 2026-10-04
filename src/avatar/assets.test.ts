@@ -10,11 +10,10 @@ import {
   browAssetUrl,
   eyeAssetUrl,
   faceAssetUrl,
-  legacyHairAssetUrl,
   mouthAssetUrl,
   noseAssetUrl
 } from './assets';
-import { APPROVED_HAIR_OPTIONS, FACE_OPTIONS, LEGACY_HAIR_OPTIONS, MOUTH_OPTIONS, NOSE_OPTIONS, VECTOR_BROW_OPTIONS, VECTOR_EYE_OPTIONS } from './model';
+import { APPROVED_HAIR_OPTIONS, FACE_OPTIONS, MOUTH_OPTIONS, NOSE_OPTIONS, VECTOR_BROW_OPTIONS, VECTOR_EYE_OPTIONS } from './model';
 
 describe('avatar face assets', () => {
   it('maps every face to one mask and one details SVG', () => {
@@ -29,10 +28,10 @@ describe('avatar face assets', () => {
     }
   });
 
-  it('maps every calibrated hairstyle to one transparent PNG', () => {
+  it('maps every calibrated hairstyle to its transparent asset', () => {
     for (const hair of APPROVED_HAIR_OPTIONS) {
       expect(approvedHairAssetUrl(hair)).toMatch(
-        new RegExp(`assets/avatar-parts/hair/approved/hair-${hair}\\.png$`)
+        new RegExp(`assets/avatar-parts/hair/approved/hair-${hair}\\.${hair.startsWith('c') ? 'svg' : 'png'}$`)
       );
     }
   });
@@ -77,18 +76,8 @@ describe('avatar face assets', () => {
     }
   });
 
-  it('maps every existing hairstyle to its original SVG layers', () => {
-    const expectedLegacyAssets = LEGACY_HAIR_OPTIONS.length * 2;
-    expect(AVATAR_HAIR_ASSETS).toHaveLength(
-      expectedLegacyAssets + APPROVED_HAIR_OPTIONS.length
-    );
-    for (const hair of LEGACY_HAIR_OPTIONS) {
-      expect(legacyHairAssetUrl(hair, 'mask')).toMatch(
-        new RegExp(`assets/avatar-parts/hair/candidates/hair-${hair}-mask\\.svg$`)
-      );
-      expect(legacyHairAssetUrl(hair, 'details')).toMatch(
-        new RegExp(`assets/avatar-parts/hair/candidates/hair-${hair}-details\\.svg$`)
-      );
-    }
+  it('preloads only the retained calibrated hairstyles', () => {
+    expect(AVATAR_HAIR_ASSETS).toHaveLength(APPROVED_HAIR_OPTIONS.length);
+    expect(AVATAR_HAIR_ASSETS.every((asset) => asset.includes('/hair/approved/'))).toBe(true);
   });
 });
