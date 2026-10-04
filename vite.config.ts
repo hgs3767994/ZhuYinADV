@@ -48,7 +48,7 @@ export default defineConfig({
           '**/*.{js,css,html,webmanifest}',
           'assets/images/start_banner.webp',
           'assets/images/title.webp',
-          'assets/images/start_adventure_button.webp'
+          'assets/images/start_adventure_button_v2.webp'
         ],
         globIgnores: ['**/preview*.html'],
         cleanupOutdatedCaches: true,
@@ -59,7 +59,7 @@ export default defineConfig({
             urlPattern: ({ request }) => request.destination === 'image',
             handler: 'CacheFirst',
             options: {
-              cacheName: 'zhuyin-images-v9',
+              cacheName: 'zhuyin-images-v10',
               cacheableResponse: { statuses: [0, 200] }
             }
           },

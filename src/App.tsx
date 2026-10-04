@@ -113,7 +113,7 @@ type QuitConfirmationOrigin = 'back' | 'button';
 type GameHistoryPosition = 'base' | 'guard' | null;
 type ParentAction = 'create' | 'manage' | 'reset-password';
 
-const START_BUTTON_IMAGE = assetUrl('assets/images/start_adventure_button.webp');
+const START_BUTTON_IMAGE = assetUrl('assets/images/start_adventure_button_v2.webp');
 
 const WELCOME_IMAGES = [
   assetUrl('assets/images/start_banner.webp'),
@@ -151,7 +151,7 @@ const ADVENTURE_IMAGES = Array.from(new Set([
   ...AVATAR_NOSE_ASSETS,
   ...AVATAR_MOUTH_ASSETS
 ]));
-const IMAGE_ASSET_VERSION = '16';
+const IMAGE_ASSET_VERSION = '17';
 const AUDIO_ASSET_VERSION = '3';
 const IMAGE_ASSET_VERSION_KEY = 'zhuyin-image-asset-version';
 const AUDIO_ASSET_VERSION_KEY = 'zhuyin-audio-asset-version';
