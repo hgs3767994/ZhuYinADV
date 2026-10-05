@@ -1,8 +1,10 @@
 export const DATABASE_NAME = 'little-zhuyin-adventurer';
-export const DATABASE_VERSION = 3;
+export const DATABASE_VERSION = 4;
 export const RESULT_STORE = 'gameResults';
 export const PROFILE_STORE = 'playerProfiles';
 export const SETTINGS_STORE = 'appSettings';
+export const EXPERIENCE_STORE = 'profileProgress';
+export const XP_EVENT_STORE = 'xpEvents';
 
 export function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -20,6 +22,13 @@ export function openDatabase(): Promise<IDBDatabase> {
       }
       if (!database.objectStoreNames.contains(SETTINGS_STORE)) {
         database.createObjectStore(SETTINGS_STORE, { keyPath: 'id' });
+      }
+      if (!database.objectStoreNames.contains(EXPERIENCE_STORE)) {
+        database.createObjectStore(EXPERIENCE_STORE, { keyPath: 'profileId' });
+      }
+      if (!database.objectStoreNames.contains(XP_EVENT_STORE)) {
+        const eventStore = database.createObjectStore(XP_EVENT_STORE, { keyPath: 'eventId' });
+        eventStore.createIndex('profileId', 'profileId', { unique: false });
       }
     };
 

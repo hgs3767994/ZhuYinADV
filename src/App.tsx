@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { GameScreen } from './components/GameScreen';
 import { AvatarEditor } from './components/AvatarEditor';
@@ -16,9 +16,16 @@ import { ProfileLogin } from './components/ProfileLogin';
 import { ProfileSelection } from './components/ProfileSelection';
 import { ResetProfilePassword } from './components/ResetProfilePassword';
 import { ResultModal } from './components/ResultModal';
+import { RankGuide } from './components/RankGuide';
 import { DEFAULT_AVATAR_RECIPE, type AvatarRecipeV2 } from './avatar/model';
 import { AVATAR_BROW_ASSETS, AVATAR_EYE_ASSETS, AVATAR_FACE_ASSETS, AVATAR_HAIR_ASSETS, AVATAR_MOUTH_ASSETS, AVATAR_NOSE_ASSETS } from './avatar/assets';
 import { APP_VERSION, DIFFICULTY_CONFIG } from './game/config';
+import {
+  experienceProgress,
+  RANKS,
+  rankById,
+  type ExperienceProgress
+} from './game/experience';
 import type {
   Difficulty,
   GameMode,
@@ -69,6 +76,7 @@ type Screen =
   | 'change-parent-pin'
   | 'reset-password'
   | 'mode'
+  | 'rank-guide'
   | 'edit-avatar'
   | 'difficulty'
   | 'game';
@@ -114,6 +122,7 @@ type GameHistoryPosition = 'base' | 'guard' | null;
 type ParentAction = 'create' | 'manage' | 'reset-password';
 
 const START_BUTTON_IMAGE = assetUrl('assets/images/start_adventure_button_v2.webp');
+const RANK_IMAGES = RANKS.map((rank) => assetUrl(`assets/images/ranks/${rank.id}.png`));
 
 const WELCOME_IMAGES = [
   assetUrl('assets/images/start_banner.webp'),
@@ -126,7 +135,8 @@ const MODE_IMAGES = [
   assetUrl('assets/images/normal_mode_button.webp'),
   assetUrl('assets/images/infinity_mode_button.webp'),
   assetUrl('assets/images/record_button.webp'),
-  assetUrl('assets/images/Backward_button.webp')
+  assetUrl('assets/images/Backward_button.webp'),
+  ...RANK_IMAGES
 ];
 
 const DIFFICULTY_IMAGES = [
@@ -151,7 +161,7 @@ const ADVENTURE_IMAGES = Array.from(new Set([
   ...AVATAR_NOSE_ASSETS,
   ...AVATAR_MOUTH_ASSETS
 ]));
-const IMAGE_ASSET_VERSION = '17';
+const IMAGE_ASSET_VERSION = '18';
 const AUDIO_ASSET_VERSION = '3';
 const IMAGE_ASSET_VERSION_KEY = 'zhuyin-image-asset-version';
 const AUDIO_ASSET_VERSION_KEY = 'zhuyin-audio-asset-version';
@@ -179,7 +189,7 @@ function isAppHistoryState(value: unknown): value is AppHistoryState {
     [
       'welcome', 'profiles', 'create-profile', 'avatar-builder', 'login', 'parent-setup', 'parent-gate',
       'parent-recovery', 'parent-management', 'change-parent-pin', 'reset-password',
-      'mode', 'edit-avatar', 'difficulty', 'game'
+      'mode', 'rank-guide', 'edit-avatar', 'difficulty', 'game'
     ]
       .includes(state.screen ?? '');
 }
@@ -208,6 +218,8 @@ export function App() {
   const [runId, setRunId] = useState(0);
   const [result, setResult] = useState<GameResult | null>(null);
   const resultRef = useRef<GameResult | null>(null);
+  const [experience, setExperience] = useState<ExperienceProgress>(() => experienceProgress(0));
+  const [upgradedRankName, setUpgradedRankName] = useState<string | null>(null);
   const [leaderboardPage, setLeaderboardPage] = useState<LeaderboardPage | null>(null);
   const leaderboardPageRef = useRef<LeaderboardPage | null>(null);
   const leaderboardOriginRef = useRef<LeaderboardOrigin | null>(null);
@@ -373,6 +385,20 @@ export function App() {
   }, [loadProfiles, screen]);
 
   useEffect(() => {
+    if (!activeProfile) {
+      setExperience(experienceProgress(0));
+      return;
+    }
+    const profileId = activeProfile.id;
+    setExperience(experienceProgress(0));
+    void resultRepository.experience(profileId).then((progress) => {
+      if (activeProfileRef.current?.id === profileId) setExperience(progress);
+    }).catch((error: unknown) => {
+      console.warn('無法讀取冒險家經驗值', error);
+    });
+  }, [activeProfile]);
+
+  useEffect(() => {
     const pauseWhenHidden = () => {
       if (document.hidden) audioService.pauseBgm();
       else if (screenRef.current !== 'game') audioService.playBgm();
@@ -422,7 +448,7 @@ export function App() {
       }
       if (
         destination &&
-        ['mode', 'edit-avatar', 'difficulty', 'game'].includes(destination.screen) &&
+        ['mode', 'rank-guide', 'edit-avatar', 'difficulty', 'game'].includes(destination.screen) &&
         activeProfileRef.current === null
       ) {
         history.replaceState(
@@ -698,6 +724,7 @@ export function App() {
     press(() => {
       setGameSetup({ mode, difficulty });
       setResult(null);
+      setUpgradedRankName(null);
       setRunId((current) => current + 1);
       history.pushState(
         { zhuyinApp: true, screen: 'game' } satisfies AppHistoryState,
@@ -715,13 +742,21 @@ export function App() {
   };
 
   const finishGame = async (nextResult: GameResult) => {
+    let displayedResult = nextResult;
     try {
-      await resultRepository.save(nextResult);
+      const saved = await resultRepository.save(nextResult);
+      displayedResult = saved.result;
+      setExperience(saved.experience);
+      setUpgradedRankName(
+        !saved.duplicate && saved.previousRankId !== saved.experience.rankId
+          ? rankById(saved.experience.rankId).name
+          : null
+      );
     } catch (error) {
       console.warn('無法保存冒險紀錄', error);
     } finally {
-      resultRef.current = nextResult;
-      setResult(nextResult);
+      resultRef.current = displayedResult;
+      setResult(displayedResult);
     }
   };
 
@@ -763,6 +798,7 @@ export function App() {
     leaderboardOriginRef.current = null;
     quitConfirmationRef.current = false;
     setResult(null);
+    setUpgradedRankName(null);
     setLeaderboardPage(null);
     setQuitConfirmation(false);
     const distance = gameHistoryPositionRef.current === 'guard' ? -2 : -1;
@@ -793,11 +829,17 @@ export function App() {
   const replay = () => {
     resultRef.current = null;
     setResult(null);
+    setUpgradedRankName(null);
     setRunId((current) => current + 1);
   };
 
   return (
-    <div className="app-shell">
+    <div
+      className="app-shell"
+      style={{
+        '--account-background-image': `url(${assetUrl('assets/images/start_banner.webp')})`
+      } as CSSProperties}
+    >
       {bootReady && screen === 'welcome' && (
         <main
           className="screen welcome-screen"
@@ -946,23 +988,55 @@ export function App() {
           style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.webp')})` }}
         >
           <div className="dark-overlay" />
-          {activeProfile.isGuest ? (
-            <div className="active-profile-badge">
-              <ProfileAvatar profile={activeProfile} frameless />
-              <span>{activeProfile.name}</span>
+          <header className="mode-progress-header">
+            {activeProfile.isGuest ? (
+              <div className="active-profile-badge">
+                <ProfileAvatar profile={activeProfile} frameless />
+                <span>{activeProfile.name}</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="active-profile-badge editable"
+                aria-label={`編輯 ${activeProfile.name} 的頭像`}
+                onClick={() => press(() => navigate('edit-avatar'))}
+              >
+                <ProfileAvatar profile={activeProfile} frameless />
+                <span>{activeProfile.name}</span>
+              </button>
+            )}
+            <div className="mode-progress-row">
+              <div className="experience-panel">
+                <div
+                  className="experience-track"
+                  role="progressbar"
+                  aria-label={`${experience.rankName}等級進度`}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={experience.percent}
+                >
+                  <div className="experience-fill" style={{ width: `${experience.percent}%` }} />
+                  <strong>{experience.isMaxRank
+                    ? '最高等級'
+                    : `${experience.levelXp}/${experience.levelXpRequired} XP`}</strong>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="animal-rank"
+                data-rank-id={experience.rankId}
+                aria-label={`查看${experience.rankName}等級說明`}
+                onClick={() => press(() => navigate('rank-guide'))}
+              >
+                <img
+                  className="animal-rank-image"
+                  src={assetUrl(`assets/images/ranks/${experience.rankId}.png`)}
+                  alt={`${experience.rankName}等級`}
+                />
+              </button>
             </div>
-          ) : (
-            <button
-              type="button"
-              className="active-profile-badge editable"
-              aria-label={`編輯 ${activeProfile.name} 的頭像`}
-              onClick={() => press(() => navigate('edit-avatar'))}
-            >
-              <ProfileAvatar profile={activeProfile} frameless />
-              <span>{activeProfile.name}</span>
-            </button>
-          )}
-          <div className="menu-stack">
+          </header>
+          <div className="menu-stack mode-menu-stack">
             <ImageMenuButton
               image={assetUrl('assets/images/normal_mode_button.webp')}
               label="一般模式"
@@ -994,6 +1068,10 @@ export function App() {
         </main>
       )}
 
+      {screen === 'rank-guide' && activeProfile && (
+        <RankGuide onBack={() => press(() => history.back())} />
+      )}
+
       {screen === 'edit-avatar' && activeProfile && !activeProfile.isGuest && (
         <AvatarEditor
           initialRecipe={activeProfile.avatar}
@@ -1010,7 +1088,7 @@ export function App() {
           style={{ backgroundImage: `url(${assetUrl('assets/images/start_banner.webp')})` }}
         >
           <div className="dark-overlay" />
-          <div className="menu-stack">
+          <div className="menu-stack difficulty-menu-stack">
             {(Object.entries(DIFFICULTY_CONFIG) as Array<[
               Difficulty,
               (typeof DIFFICULTY_CONFIG)[Difficulty]
@@ -1050,6 +1128,7 @@ export function App() {
       {result && (
         <ResultModal
           result={result}
+          upgradedRankName={upgradedRankName}
           onReplay={replay}
           onLeaderboard={openLeaderboardFromResult}
           onMenu={returnToMode}

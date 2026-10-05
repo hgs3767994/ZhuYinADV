@@ -7,11 +7,13 @@ import {
   type AvatarRecipeV2
 } from '../avatar/model';
 import {
+  EXPERIENCE_STORE,
   openDatabase,
   PROFILE_STORE,
   requestResult,
   RESULT_STORE,
-  transactionDone
+  transactionDone,
+  XP_EVENT_STORE
 } from './database';
 
 const PASSWORD_MIN_LENGTH = 4;
@@ -96,11 +98,12 @@ export function createGuestProfile(): PlayerProfile {
 
 function deleteResultsByProfile(
   transaction: IDBTransaction,
-  profileId: string
+  profileId: string,
+  storeName: string
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const request = transaction
-      .objectStore(RESULT_STORE)
+      .objectStore(storeName)
       .index('profileId')
       .openCursor(IDBKeyRange.only(profileId));
     request.onerror = () => reject(request.error ?? new Error('無法刪除帳號紀錄'));
@@ -294,10 +297,17 @@ class IndexedDbProfileRepository implements ProfileRepository {
   private async purge(profileId: string): Promise<void> {
     const database = await openDatabase();
     try {
-      const transaction = database.transaction([PROFILE_STORE, RESULT_STORE], 'readwrite');
+      const transaction = database.transaction(
+        [PROFILE_STORE, RESULT_STORE, EXPERIENCE_STORE, XP_EVENT_STORE],
+        'readwrite'
+      );
       const done = transactionDone(transaction);
       transaction.objectStore(PROFILE_STORE).delete(profileId);
-      await deleteResultsByProfile(transaction, profileId);
+      transaction.objectStore(EXPERIENCE_STORE).delete(profileId);
+      await Promise.all([
+        deleteResultsByProfile(transaction, profileId, RESULT_STORE),
+        deleteResultsByProfile(transaction, profileId, XP_EVENT_STORE)
+      ]);
       await done;
     } finally {
       database.close();

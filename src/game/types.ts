@@ -5,6 +5,7 @@ export type LeaderboardPage = Difficulty | 'endless';
 
 export interface GameResult {
   id: string;
+  xpEventId: string;
   profileId: string;
   modeId: GameMode;
   difficultyId: Difficulty | null;

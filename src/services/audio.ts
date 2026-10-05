@@ -19,7 +19,7 @@ const SFX_FILES = {
 const AUDIO_CACHE_NAME = 'zhuyin-audio-v3';
 const PREVIOUS_AUDIO_CACHE_NAMES = ['zhuyin-audio-v1', 'zhuyin-audio-v2'];
 const BGM_FILE = assetUrl('assets/audio/bgm.mp3');
-const BGM_VOLUME = 0.35 * 0.7;
+const BGM_VOLUME = 0.35 * 0.7 * 0.9;
 const OFFLINE_AUDIO_FILES = [
   BGM_FILE,
   ...Object.values(SFX_FILES),

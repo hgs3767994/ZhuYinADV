@@ -13,6 +13,7 @@ import {
   isNormalComplete,
   normalScoreForQuestion
 } from '../game/engine';
+import { calculateGameExperience } from '../game/experience';
 import type { Difficulty, GameMode, GameResult, GameSession } from '../game/types';
 import { useCountdown } from '../hooks/useCountdown';
 import { audioService } from '../services/audio';
@@ -74,8 +75,9 @@ export function GameScreen({
     if (finishingRef.current) return;
     finishingRef.current = true;
     const current = sessionRef.current;
-    onFinish({
+    const result: GameResult = {
       id: crypto.randomUUID(),
+      xpEventId: crypto.randomUUID(),
       profileId,
       modeId: current.mode,
       difficultyId: current.difficulty,
@@ -89,7 +91,9 @@ export function GameScreen({
       xpAwarded: 0,
       playedAt: new Date().toISOString(),
       appVersion: APP_VERSION
-    });
+    };
+    result.xpAwarded = calculateGameExperience(result);
+    onFinish(result);
   }, [onFinish, profileId]);
 
   const prepareNextSession = useCallback(async (

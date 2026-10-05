@@ -20,10 +20,13 @@ describe('normal scoring', () => {
 
   it('uses the agreed five-star thresholds', () => {
     expect(getNormalStars(1000)).toEqual({ stars: 5, crowned: true });
-    expect(getNormalStars(900).stars).toBe(4);
-    expect(getNormalStars(800).stars).toBe(3);
-    expect(getNormalStars(700).stars).toBe(2);
-    expect(getNormalStars(699).stars).toBe(1);
+    expect(getNormalStars(999).stars).toBe(4);
+    expect(getNormalStars(950).stars).toBe(4);
+    expect(getNormalStars(949).stars).toBe(3);
+    expect(getNormalStars(900).stars).toBe(3);
+    expect(getNormalStars(899).stars).toBe(2);
+    expect(getNormalStars(850).stars).toBe(2);
+    expect(getNormalStars(849).stars).toBe(1);
   });
 });
 

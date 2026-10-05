@@ -5,12 +5,19 @@ import { Modal } from './Modal';
 
 interface ResultModalProps {
   result: GameResult;
+  upgradedRankName?: string | null;
   onReplay: () => void;
   onLeaderboard: (page: LeaderboardPage) => void;
   onMenu: () => void;
 }
 
-export function ResultModal({ result, onReplay, onLeaderboard, onMenu }: ResultModalProps) {
+export function ResultModal({
+  result,
+  upgradedRankName,
+  onReplay,
+  onLeaderboard,
+  onMenu
+}: ResultModalProps) {
   const normal = result.modeId === 'normal';
   const rating = getNormalStars(result.score);
   const starText = normal
@@ -33,6 +40,10 @@ export function ResultModal({ result, onReplay, onLeaderboard, onMenu }: ResultM
           ? `成功完成 ${NORMAL_QUESTION_COUNT} 題考驗！`
           : `總共答對 ${result.correctCount} 題！`}
       </p>
+      <p className="result-xp">本次獲得{result.xpAwarded}經驗值</p>
+      {upgradedRankName && (
+        <p className="rank-up-message">恭喜升級成{upgradedRankName}冒險家</p>
+      )}
       <div className="modal-actions">
         <button className="primary-button" onClick={onReplay}>再玩一次</button>
         <button className="secondary-button" onClick={() => onLeaderboard(page)}>查看冒險紀錄</button>

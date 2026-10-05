@@ -5,6 +5,7 @@ import {
   ZHUYIN_LIST
 } from './config';
 import type { Difficulty, GameMode, GameSession } from './types';
+import { getNormalStars as getNormalStarCount } from './experience';
 import {
   getBroadDistractorPool,
   getConfusableSymbols,
@@ -74,11 +75,8 @@ export function getEndlessTimeLimitMs(questionNumber: number): number | null {
 }
 
 export function getNormalStars(score: number): { stars: number; crowned: boolean } {
-  if (score >= 1_000) return { stars: 5, crowned: true };
-  if (score >= 900) return { stars: 4, crowned: false };
-  if (score >= 800) return { stars: 3, crowned: false };
-  if (score >= 700) return { stars: 2, crowned: false };
-  return { stars: 1, crowned: false };
+  const stars = getNormalStarCount(score);
+  return { stars, crowned: stars === 5 };
 }
 
 export function createOptions(
