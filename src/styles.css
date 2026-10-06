@@ -652,22 +652,6 @@ button:disabled {
   width: 70%;
 }
 
-.mode-menu-stack .normal-mode-button {
-  width: 67.5864%;
-}
-
-.mode-menu-stack .infinity-mode-button {
-  width: 66.3448%;
-}
-
-.mode-menu-stack .record-menu-button {
-  width: 67.448%;
-}
-
-.mode-menu-stack .back-image-button {
-  width: 34.7%;
-}
-
 .difficulty-menu-stack .difficulty-easy-button {
   width: 76.552%;
 }
@@ -678,10 +662,6 @@ button:disabled {
 
 .difficulty-menu-stack .difficulty-hard-button {
   width: 77.9312%;
-}
-
-.difficulty-menu-stack .back-image-button {
-  width: 34.7%;
 }
 
 .active-profile-badge.editable {
