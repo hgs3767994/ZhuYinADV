@@ -4,10 +4,13 @@ import { DEFAULT_AVATAR_RECIPE } from '../avatar/model';
 import { AvatarCanvas, HAIR_COLORS } from './AvatarCanvas';
 
 describe('AvatarCanvas hairstyles', () => {
-  it('provides the requested additional hair colors', () => {
-    expect(HAIR_COLORS.green).toBe('#00DB00');
+  it('provides the requested hair colors', () => {
+    expect(HAIR_COLORS.black).toBe('#181921');
+    expect(HAIR_COLORS.green).toBe('#6B8E23');
     expect(HAIR_COLORS.wine).toBe('#82074e');
     expect(HAIR_COLORS.gray).toBe('#8E8E8E');
+    expect(HAIR_COLORS.mauve).toBe('#B7ACB6');
+    expect(HAIR_COLORS.mustard).toBe('#DACC4A');
   });
 
   it('renders the selected vector eyebrow asset', () => {

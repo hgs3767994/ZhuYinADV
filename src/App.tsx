@@ -195,6 +195,10 @@ function isAppHistoryState(value: unknown): value is AppHistoryState {
 }
 
 export function App() {
+  const accountBackgroundImage = new URL(
+    assetUrl('assets/images/start_banner.webp'),
+    document.baseURI
+  ).href;
   const [bootReady, setBootReady] = useState(false);
   const [screen, setScreen] = useState<Screen>('welcome');
   const screenRef = useRef<Screen>('welcome');
@@ -837,7 +841,7 @@ export function App() {
     <div
       className="app-shell"
       style={{
-        '--account-background-image': `url(${assetUrl('assets/images/start_banner.webp')})`
+        '--account-background-image': `url("${accountBackgroundImage}")`
       } as CSSProperties}
     >
       {bootReady && screen === 'welcome' && (

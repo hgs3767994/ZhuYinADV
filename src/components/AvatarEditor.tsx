@@ -69,7 +69,7 @@ const CATEGORIES: Category[] = [
       '11': '髮型 11'
     }
   },
-  { key: 'hairColor', label: '髮色', options: HAIR_COLOR_OPTIONS, optionLabels: { black: '墨黑', brown: '深棕', chestnut: '栗子', golden: '金黃', blue: '海洋藍', pink: '莓果粉', green: '亮綠', wine: '酒紅', gray: '灰色' } },
+  { key: 'hairColor', label: '髮色', options: HAIR_COLOR_OPTIONS, optionLabels: { black: '墨黑', brown: '深棕', chestnut: '栗子', golden: '金黃', blue: '海洋藍', pink: '莓果粉', green: '橄欖綠', wine: '酒紅', gray: '灰色', mauve: '霧紫灰', mustard: '芥末黃' } },
   { key: 'brows', label: '眉毛', options: BROW_OPTIONS, optionLabels: { '01': '眉型 1', '02': '眉型 2', '03': '眉型 3', '04': '眉型 4', '05': '眉型 5', '06': '眉型 6', '07': '眉型 7', '08': '眉型 8', '09': '眉型 9' } },
   { key: 'eyes', label: '眼睛', options: AVATAR_EDITOR_EYE_OPTIONS, optionLabels: { '01': '眼型 1', '02': '眼型 2', '03': '眼型 3', '04': '眼型 4', '05': '眼型 5' } },
   { key: 'nose', label: '鼻子', options: NOSE_OPTIONS, optionLabels: { '01': '鼻型 1', '02': '鼻型 2', '03': '鼻型 3', '04': '鼻型 4', '05': '鼻型 5', '06': '鼻型 6', '07': '鼻型 7', '08': '鼻型 8' } },

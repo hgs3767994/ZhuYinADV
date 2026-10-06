@@ -652,6 +652,18 @@ button:disabled {
   width: 70%;
 }
 
+.mode-menu-stack .normal-mode-button {
+  width: 76.0347%;
+}
+
+.mode-menu-stack .infinity-mode-button {
+  width: 74.6379%;
+}
+
+.mode-menu-stack .record-menu-button {
+  width: 75.879%;
+}
+
 .difficulty-menu-stack .difficulty-easy-button {
   width: 76.552%;
 }

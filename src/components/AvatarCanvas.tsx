@@ -37,15 +37,17 @@ export const SKIN_COLORS: Record<SkinToneOption, string> = {
 };
 
 export const HAIR_COLORS: Record<HairColorOption, string> = {
-  black: '#263238',
+  black: '#181921',
   brown: '#5d4037',
   chestnut: '#8d4b32',
   golden: '#d9a62e',
   blue: '#315f8c',
   pink: '#b84f78',
-  green: '#00DB00',
+  green: '#6B8E23',
   wine: '#82074e',
-  gray: '#8E8E8E'
+  gray: '#8E8E8E',
+  mauve: '#B7ACB6',
+  mustard: '#DACC4A'
 };
 
 function hairTintMatrix(color: string): string {

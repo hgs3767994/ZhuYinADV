@@ -11,7 +11,7 @@ export const APPROVED_HAIR_OPTIONS = ['01', '02', '03', '05', '07', '08', '09', 
 export const HAIR_OPTIONS = APPROVED_HAIR_OPTIONS;
 export const HAIR_COLOR_OPTIONS = [
   'black', 'brown', 'chestnut', 'golden', 'blue', 'pink',
-  'green', 'wine', 'gray'
+  'green', 'wine', 'gray', 'mauve', 'mustard'
 ] as const;
 export const VECTOR_BROW_OPTIONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09'] as const;
 export const BROW_OPTIONS = VECTOR_BROW_OPTIONS;

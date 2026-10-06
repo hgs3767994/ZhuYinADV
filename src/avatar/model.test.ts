@@ -103,10 +103,10 @@ describe('avatar recipes', () => {
     }
   });
 
-  it('offers the three additional hair colors after the existing choices', () => {
+  it('offers all additional hair colors after the existing choices', () => {
     expect(HAIR_COLOR_OPTIONS).toEqual([
       'black', 'brown', 'chestnut', 'golden', 'blue', 'pink',
-      'green', 'wine', 'gray'
+      'green', 'wine', 'gray', 'mauve', 'mustard'
     ]);
   });
 
