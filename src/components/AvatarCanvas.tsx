@@ -37,7 +37,7 @@ export const SKIN_COLORS: Record<SkinToneOption, string> = {
 };
 
 export const HAIR_COLORS: Record<HairColorOption, string> = {
-  black: '#181921',
+  black: '#1e1f29',
   brown: '#5d4037',
   chestnut: '#8d4b32',
   golden: '#d9a62e',

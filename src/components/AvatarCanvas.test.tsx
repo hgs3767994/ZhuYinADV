@@ -5,7 +5,7 @@ import { AvatarCanvas, HAIR_COLORS } from './AvatarCanvas';
 
 describe('AvatarCanvas hairstyles', () => {
   it('provides the requested hair colors', () => {
-    expect(HAIR_COLORS.black).toBe('#181921');
+    expect(HAIR_COLORS.black).toBe('#1e1f29');
     expect(HAIR_COLORS.green).toBe('#6B8E23');
     expect(HAIR_COLORS.wine).toBe('#82074e');
     expect(HAIR_COLORS.gray).toBe('#8E8E8E');
