@@ -222,6 +222,8 @@ export function App() {
   const [runId, setRunId] = useState(0);
   const [result, setResult] = useState<GameResult | null>(null);
   const resultRef = useRef<GameResult | null>(null);
+  const [resultSaveError, setResultSaveError] = useState(false);
+  const [resultSaving, setResultSaving] = useState(false);
   const [experience, setExperience] = useState<ExperienceProgress>(() => experienceProgress(0));
   const [upgradedRankName, setUpgradedRankName] = useState<string | null>(null);
   const [leaderboardPage, setLeaderboardPage] = useState<LeaderboardPage | null>(null);
@@ -728,6 +730,8 @@ export function App() {
     press(() => {
       setGameSetup({ mode, difficulty });
       setResult(null);
+      setResultSaveError(false);
+      setResultSaving(false);
       setUpgradedRankName(null);
       setRunId((current) => current + 1);
       history.pushState(
@@ -745,23 +749,34 @@ export function App() {
     });
   };
 
-  const finishGame = async (nextResult: GameResult) => {
-    let displayedResult = nextResult;
+  const saveGameResult = async (nextResult: GameResult): Promise<boolean> => {
+    setResultSaving(true);
     try {
       const saved = await resultRepository.save(nextResult);
-      displayedResult = saved.result;
+      resultRef.current = saved.result;
+      setResult(saved.result);
       setExperience(saved.experience);
       setUpgradedRankName(
         !saved.duplicate && saved.previousRankId !== saved.experience.rankId
           ? rankById(saved.experience.rankId).name
           : null
       );
+      setResultSaveError(false);
+      return true;
     } catch (error) {
       console.warn('無法保存冒險紀錄', error);
+      setResultSaveError(true);
+      return false;
     } finally {
-      resultRef.current = displayedResult;
-      setResult(displayedResult);
+      setResultSaving(false);
     }
+  };
+
+  const finishGame = async (nextResult: GameResult) => {
+    setResultSaveError(false);
+    if (await saveGameResult(nextResult)) return;
+    resultRef.current = nextResult;
+    setResult(nextResult);
   };
 
   const openLeaderboardFromMenu = () => {
@@ -782,6 +797,7 @@ export function App() {
     leaderboardOriginRef.current = 'result';
     leaderboardPageRef.current = page;
     setResult(null);
+    setResultSaveError(false);
     setLeaderboardPage(page);
   };
 
@@ -802,6 +818,7 @@ export function App() {
     leaderboardOriginRef.current = null;
     quitConfirmationRef.current = false;
     setResult(null);
+    setResultSaveError(false);
     setUpgradedRankName(null);
     setLeaderboardPage(null);
     setQuitConfirmation(false);
@@ -833,6 +850,7 @@ export function App() {
   const replay = () => {
     resultRef.current = null;
     setResult(null);
+    setResultSaveError(false);
     setUpgradedRankName(null);
     setRunId((current) => current + 1);
   };
@@ -1133,6 +1151,9 @@ export function App() {
         <ResultModal
           result={result}
           upgradedRankName={upgradedRankName}
+          saveError={resultSaveError}
+          saving={resultSaving}
+          onRetrySave={() => void saveGameResult(result)}
           onReplay={replay}
           onLeaderboard={openLeaderboardFromResult}
           onMenu={returnToMode}

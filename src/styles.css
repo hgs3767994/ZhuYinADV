@@ -1184,6 +1184,21 @@ button:disabled {
   font-weight: 900;
 }
 
+.result-save-warning {
+  margin-top: 14px;
+  padding: 12px;
+  border: 2px solid #fca5a5;
+  border-radius: 14px;
+  background: rgb(127 29 29 / 45%);
+  color: #fee2e2;
+  font-weight: 800;
+}
+
+.result-save-warning p {
+  margin: 0 0 10px;
+  line-height: 1.55;
+}
+
 .modal-actions {
   display: flex;
   margin-top: 20px;
@@ -1217,6 +1232,13 @@ button:disabled {
 
 .danger-button {
   background: #b91c1c;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled,
+.danger-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .leaderboard-tabs {

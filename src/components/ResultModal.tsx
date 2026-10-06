@@ -6,6 +6,9 @@ import { Modal } from './Modal';
 interface ResultModalProps {
   result: GameResult;
   upgradedRankName?: string | null;
+  saveError?: boolean;
+  saving?: boolean;
+  onRetrySave?: () => void;
   onReplay: () => void;
   onLeaderboard: (page: LeaderboardPage) => void;
   onMenu: () => void;
@@ -14,6 +17,9 @@ interface ResultModalProps {
 export function ResultModal({
   result,
   upgradedRankName,
+  saveError = false,
+  saving = false,
+  onRetrySave,
   onReplay,
   onLeaderboard,
   onMenu
@@ -44,10 +50,29 @@ export function ResultModal({
       {upgradedRankName && (
         <p className="rank-up-message">恭喜升級成{upgradedRankName}冒險家</p>
       )}
+      {saveError && (
+        <div className="result-save-warning" role="alert">
+          <p>本次冒險紀錄尚未成功保存，請保持頁面開啟並重試。</p>
+          <button
+            type="button"
+            className="danger-button"
+            disabled={saving}
+            onClick={onRetrySave}
+          >
+            {saving ? '重新儲存中…' : '重新儲存'}
+          </button>
+        </div>
+      )}
       <div className="modal-actions">
-        <button className="primary-button" onClick={onReplay}>再玩一次</button>
-        <button className="secondary-button" onClick={() => onLeaderboard(page)}>查看冒險紀錄</button>
-        <button className="secondary-button" onClick={onMenu}>返回模式選擇</button>
+        <button className="primary-button" disabled={saving} onClick={onReplay}>再玩一次</button>
+        <button
+          className="secondary-button"
+          disabled={saving}
+          onClick={() => onLeaderboard(page)}
+        >
+          查看冒險紀錄
+        </button>
+        <button className="secondary-button" disabled={saving} onClick={onMenu}>返回模式選擇</button>
       </div>
     </Modal>
   );
