@@ -7,6 +7,7 @@ import { CampaignIntro } from './CampaignIntro';
 import { CampaignMap } from './CampaignMap';
 import { CampaignDefeatScreen, CampaignSuccessScreen } from './CampaignOutcomeScreen';
 import { CampaignAudioReplayButton } from './CampaignAudioReplayButton';
+import { CampaignGameplayFrame } from './CampaignGameplayFrame';
 import { CampaignStatusSlots } from './CampaignStatusSlots';
 
 describe('campaign entry shell', () => {
@@ -199,6 +200,43 @@ describe('campaign outcome shell', () => {
 });
 
 describe('campaign shared gameplay controls', () => {
+  const gameplayLevel = {
+    id: 'level-01',
+    gameplayId: 'sequence-lock' as const,
+    number: 1,
+    title: '封印的門扉',
+    difficultyLabel: '入門',
+    objective: '解開三道封印。'
+  };
+
+  const gameplayFrameProps = {
+    level: gameplayLevel,
+    progressLabel: '封印進度',
+    progress: <CampaignStatusSlots kind="seal" current={0} maximum={3} />,
+    tutorialSteps: ['依序放入符文。'],
+    onOpenPause: () => undefined,
+    onOpenHowTo: () => undefined,
+    onCloseHowTo: () => undefined,
+    onResume: () => undefined,
+    onRequestAbandon: () => undefined,
+    onCancelAbandon: () => undefined,
+    onAbandon: () => undefined,
+    children: <div>遊戲內容</div>
+  };
+
+  it('removes the direct gameplay how-to button while keeping how-to in the pause menu', () => {
+    const gameplayHtml = renderToStaticMarkup(
+      <CampaignGameplayFrame {...gameplayFrameProps} overlay={null} />
+    );
+    const pausedHtml = renderToStaticMarkup(
+      <CampaignGameplayFrame {...gameplayFrameProps} overlay="pause" />
+    );
+
+    expect(gameplayHtml).not.toContain('campaign-how-to-button');
+    expect(gameplayHtml).toContain('campaign-gameplay-header-spacer');
+    expect(pausedHtml).toContain('查看玩法');
+  });
+
   it('renders replay as an unlimited action without score or penalty copy', () => {
     const html = renderToStaticMarkup(
       <CampaignAudioReplayButton onReplay={() => undefined} />

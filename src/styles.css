@@ -12,6 +12,16 @@
   --friendly-text: #344a5e;
   --friendly-muted-text: #61778a;
   --friendly-shadow: rgb(69 116 145 / 24%);
+  --campaign-header-bg: #83cfa6;
+  --campaign-frame-bg: #f4b66a;
+  --campaign-panel-bg: #fff5d6;
+  --campaign-page-start: #dff4e7;
+  --campaign-page-end: #fff9e8;
+  --campaign-border: #bf783f;
+  --campaign-heading: #713f22;
+  --campaign-text: #493b32;
+  --campaign-muted-text: #705c4d;
+  --campaign-shadow: rgb(119 82 46 / 24%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -1377,9 +1387,9 @@ button:disabled {
   position: relative;
   z-index: 2;
   display: grid;
-  min-height: 76px;
+  min-height: 86px;
   padding: 8px;
-  grid-template-columns: 58px minmax(0, 1fr) 64px;
+  grid-template-columns: 58px minmax(0, 1fr) 58px;
   align-items: center;
   gap: 7px;
   border: 2px solid #6286b0;
@@ -1411,9 +1421,11 @@ button:disabled {
   opacity: 0.55;
 }
 
-.campaign-how-to-button span {
-  display: inline;
-  white-space: nowrap;
+.campaign-gameplay-header-spacer {
+  display: block;
+  width: 44px;
+  height: 44px;
+  justify-self: center;
 }
 
 .campaign-gameplay-heading {
@@ -1429,14 +1441,14 @@ button:disabled {
   overflow: hidden;
   max-width: 100%;
   color: #fff1a8;
-  font-size: 0.86rem;
+  font-size: 0.98rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .campaign-status-slots {
   display: flex;
-  gap: 4px;
+  gap: 5px;
   font-size: 1rem;
   line-height: 1;
 }
@@ -1444,14 +1456,14 @@ button:disabled {
 .campaign-status-slots .filled,
 .campaign-status-slots .empty {
   display: inline-grid;
-  min-width: 14px;
+  min-width: 18px;
   place-items: center;
 }
 
 .campaign-status-slots img {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 25px;
+  height: 25px;
   object-fit: contain;
 }
 
@@ -1497,7 +1509,7 @@ button:disabled {
   justify-content: center;
   gap: 3px 10px;
   color: #dbeafe;
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   font-weight: 900;
   white-space: nowrap;
 }
@@ -1514,8 +1526,8 @@ button:disabled {
   grid-template-columns: repeat(2, auto);
   align-items: center;
   justify-content: center;
-  gap: 3px 10px;
-  font-size: 0.68rem;
+  gap: 3px 4px;
+  font-size: 0.76rem;
   font-weight: 900;
   white-space: nowrap;
 }
@@ -1526,13 +1538,13 @@ button:disabled {
 }
 
 .battle-top-status .campaign-status-slots {
-  gap: 3px;
+  gap: 2px;
   font-size: 0.72rem;
 }
 
 .battle-top-status .campaign-status-slots img {
-  width: 17px;
-  height: 17px;
+  width: 20px;
+  height: 20px;
 }
 
 .campaign-audio-replay {
@@ -2841,6 +2853,244 @@ button:disabled {
   margin: 22px 0;
   color: #dbeafe;
   line-height: 1.7;
+}
+
+/* Campaign palette B: Forest Picnic */
+.campaign-notice-screen,
+.campaign-intro-screen,
+.campaign-map-screen,
+.campaign-level-story-screen,
+.campaign-mission-screen,
+.campaign-tutorial-screen,
+.campaign-gameplay-screen,
+.campaign-outcome-screen {
+  background: linear-gradient(180deg, var(--campaign-page-start), var(--campaign-page-end));
+  color: var(--campaign-text);
+}
+
+.campaign-map-screen.chapter-complete {
+  background: linear-gradient(180deg, #ccebd9, var(--campaign-panel-bg));
+}
+
+.campaign-intro-header,
+.campaign-level-flow-header,
+.campaign-map-header,
+.campaign-gameplay-header {
+  background: var(--campaign-header-bg);
+  box-shadow: 0 8px 18px var(--campaign-shadow);
+  color: var(--campaign-text);
+}
+
+.campaign-intro-header,
+.campaign-level-flow-header {
+  padding: 6px 8px;
+  border: 2px solid #5cae86;
+  border-radius: 16px;
+}
+
+.campaign-map-header {
+  border-bottom-color: var(--campaign-frame-bg);
+}
+
+.campaign-gameplay-header {
+  border-color: var(--campaign-frame-bg);
+}
+
+.campaign-intro-header strong,
+.campaign-map-title strong,
+.campaign-level-flow-header strong,
+.campaign-gameplay-heading strong {
+  color: var(--campaign-heading);
+}
+
+.campaign-map-title span,
+.campaign-map-rank,
+.pursuit-top-status,
+.battle-top-status > span {
+  color: var(--campaign-text);
+}
+
+.campaign-map-rank strong,
+.campaign-level-best strong {
+  color: var(--campaign-heading);
+}
+
+.campaign-notice-symbol {
+  border-color: var(--campaign-frame-bg);
+  color: var(--campaign-heading);
+}
+
+.campaign-notice-card,
+.campaign-story-card,
+.campaign-level-dialogue,
+.campaign-mission-card,
+.campaign-tutorial-card,
+.campaign-level-modal,
+.campaign-gameplay-placeholder,
+.campaign-level-title-card,
+.campaign-ready-card,
+.campaign-pause-modal,
+.campaign-how-to-modal,
+.campaign-abandon-modal,
+.campaign-return-modal,
+.campaign-outcome-card,
+.battle-tutorial-card {
+  border-color: var(--campaign-frame-bg);
+  background: var(--campaign-panel-bg);
+  box-shadow: 0 12px 28px var(--campaign-shadow);
+  color: var(--campaign-text);
+}
+
+.campaign-story-card small,
+.campaign-level-dialogue small,
+.campaign-mission-card h1,
+.campaign-tutorial-card h1,
+.campaign-level-title-card strong,
+.campaign-ready-card,
+.campaign-how-to-modal h3,
+.campaign-outcome-card h1,
+.campaign-outcome-performance strong,
+.campaign-outcome-xp,
+.campaign-level-modal h2,
+.battle-tutorial-card h2 {
+  color: var(--campaign-heading);
+}
+
+.campaign-notice-card h1,
+.campaign-notice-card p,
+.campaign-story-card p,
+.campaign-level-dialogue p,
+.campaign-level-dialogue .campaign-level-dialogue-lead,
+.campaign-mission-card p,
+.campaign-tutorial-card ol,
+.campaign-how-to-modal ul,
+.campaign-level-objective,
+.campaign-level-best,
+.campaign-outcome-performance,
+.campaign-defeat-message,
+.battle-tutorial-card ul {
+  color: var(--campaign-text);
+}
+
+.campaign-mission-card small,
+.campaign-level-title-card small,
+.campaign-outcome-card > small {
+  color: var(--campaign-muted-text);
+}
+
+.campaign-inline-error,
+.campaign-audio-error {
+  color: #a72d3f;
+}
+
+.campaign-outcome-notice {
+  color: #31785a;
+}
+
+.campaign-text-button,
+.campaign-map-back,
+.campaign-story-replay,
+.campaign-gameplay-edge-button,
+.campaign-audio-replay-button,
+.sound-maze-navigation button {
+  border-color: var(--campaign-border);
+  background: var(--campaign-panel-bg);
+  color: var(--campaign-text);
+}
+
+.campaign-story-dots span {
+  background: rgb(73 59 50 / 24%);
+}
+
+.campaign-story-dots span.active {
+  background: var(--campaign-frame-bg);
+}
+
+.campaign-level-status,
+.campaign-level-difficulty {
+  background: var(--campaign-frame-bg);
+  color: var(--campaign-heading);
+}
+
+.campaign-level-best,
+.campaign-outcome-performance {
+  border-color: var(--campaign-border);
+  background: rgb(255 255 255 / 38%);
+}
+
+.campaign-gameplay-cover {
+  background: var(--campaign-page-start);
+}
+
+.campaign-gameplay-placeholder {
+  border-color: var(--campaign-frame-bg);
+}
+
+.campaign-gameplay-placeholder > span,
+.campaign-gameplay-placeholder strong,
+.campaign-gameplay-placeholder p {
+  color: var(--campaign-text);
+}
+
+.sequence-lock-game,
+.sound-maze-game,
+.memory-explore-game,
+.pursuit-game,
+.battle-game {
+  color: var(--campaign-text);
+}
+
+.sequence-lock-instruction strong,
+.battle-select-prompt {
+  color: var(--campaign-heading);
+}
+
+.sequence-lock-instruction span,
+.sequence-lock-feedback,
+.sound-maze-feedback,
+.memory-explore-feedback,
+.pursuit-feedback,
+.battle-feedback {
+  color: var(--campaign-text);
+}
+
+.sequence-lock-slots {
+  border-color: var(--campaign-border);
+  background: var(--campaign-frame-bg);
+}
+
+.sequence-lock-waiting,
+.memory-explore-grid {
+  border-color: var(--campaign-frame-bg);
+  background: rgb(255 245 214 / 86%);
+  box-shadow: inset 0 0 20px rgb(191 120 63 / 14%);
+}
+
+.sequence-lock-slot-empty,
+.sequence-lock-waiting-empty {
+  border-color: rgb(113 63 34 / 40%);
+  background: rgb(255 255 255 / 28%);
+  box-shadow: none;
+}
+
+.campaign-notice-screen .primary-button,
+.campaign-intro-screen .primary-button,
+.campaign-level-story-screen .primary-button,
+.campaign-mission-screen .primary-button,
+.campaign-tutorial-screen .primary-button,
+.campaign-gameplay-screen .primary-button,
+.campaign-outcome-screen .primary-button {
+  background: linear-gradient(135deg, #65b98f, #3d916d);
+}
+
+.campaign-notice-screen .secondary-button,
+.campaign-intro-screen .secondary-button,
+.campaign-level-story-screen .secondary-button,
+.campaign-mission-screen .secondary-button,
+.campaign-tutorial-screen .secondary-button,
+.campaign-gameplay-screen .secondary-button,
+.campaign-outcome-screen .secondary-button {
+  background: #d58b4d;
 }
 
 @media (max-height: 670px) {

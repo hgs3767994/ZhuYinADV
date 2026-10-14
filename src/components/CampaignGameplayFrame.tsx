@@ -98,14 +98,7 @@ export function CampaignGameplayFrame({
           <strong>第 {level.number} 關・{level.title}</strong>
           <div aria-label={progressLabel}>{progress}</div>
         </div>
-        <button
-          type="button"
-          className="campaign-gameplay-edge-button campaign-how-to-button"
-          disabled={covered}
-          onClick={() => onOpenHowTo('gameplay')}
-        >
-          <span aria-hidden="true">？</span><span>玩法</span>
-        </button>
+        <span className="campaign-gameplay-header-spacer" aria-hidden="true" />
       </header>
 
       <section className="campaign-gameplay-stage" aria-hidden={covered || undefined}>
