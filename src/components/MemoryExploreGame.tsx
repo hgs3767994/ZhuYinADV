@@ -11,6 +11,7 @@ import {
   replaceAndReshuffleMemoryGroup,
   type MemoryExploreLayout
 } from '../game/memoryExplore';
+import { CAMPAIGN_IMAGES } from '../game/campaignAssets';
 import { audioService } from '../services/audio';
 import { CampaignAudioReplayButton } from './CampaignAudioReplayButton';
 
@@ -214,7 +215,12 @@ export function MemoryExploreGame({
         {variant === 'battle' && <div className="memory-battle-barrier" aria-label="巨大迷霧結界">巨大迷霧結界</div>}
         <div className="memory-explore-seals" aria-label={`尚餘 ${MEMORY_GROUP_COUNT - roundIndex} ${variant === 'battle' ? '層結界護盾' : '道迷霧封印'}`}>
           {Array.from({ length: MEMORY_GROUP_COUNT }, (_, index) => (
-            <span key={index} className={index < roundIndex ? 'broken' : ''} aria-hidden="true">◇</span>
+            <img
+              key={index}
+              src={index < roundIndex ? CAMPAIGN_IMAGES.sealUnlocked : CAMPAIGN_IMAGES.sealLocked}
+              alt=""
+              aria-hidden="true"
+            />
           ))}
         </div>
         <div className="memory-explore-npc" aria-label="聲音典籍魔法師">小亞</div>
@@ -230,7 +236,7 @@ export function MemoryExploreGame({
           label="重播目標讀音"
           onPlaybackChange={setAudioPlaying}
         />
-      ) : <p className="memory-explore-memory-cue">記住符文的位置</p>}
+      ) : null}
 
       <section className="memory-explore-grid" aria-label="注音符文卡片區">
         {layout.map((card, position) => (
@@ -247,11 +253,11 @@ export function MemoryExploreGame({
         ))}
       </section>
 
-      <p className="memory-explore-feedback" aria-live="polite">
+      <p className={`memory-explore-feedback ${phase === 'memorize' ? 'memory-instruction' : ''}`} aria-live="polite">
         {feedback === 'wrong' ? '配對不正確，卡片即將重新蓋上。' :
           feedback === 'attack' ? `結界釋放黑霧攻擊，剩餘 ${lives} 點生命。` :
           feedback === 'correct' ? variant === 'battle' ? '配對成功，結界的一層封印破裂！' : '配對成功，迷霧封印破裂！' :
-            phase === 'memorize' ? '仔細記住九張卡片的位置。' :
+            phase === 'memorize' ? '仔細記住九張符文的位置' :
               wrongPairCount > 0 ? '找出兩張與目標讀音相同的符文卡。' : ''}
       </p>
     </div>

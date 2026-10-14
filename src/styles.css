@@ -1364,7 +1364,8 @@ button:disabled {
 }
 
 .campaign-gameplay-screen {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: flex;
   padding: max(10px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
   flex-direction: column;
@@ -1547,12 +1548,12 @@ button:disabled {
   height: 64px;
   min-height: 64px;
   padding: 0;
-  border: 2px solid #7aa7d8;
+  border: 0;
   border-radius: 999px;
   align-items: center;
   justify-content: center;
-  background: #294f77;
-  color: #fff;
+  background: transparent;
+  color: #294f77;
   cursor: pointer;
   transition: opacity 160ms ease, transform 160ms ease;
 }
@@ -1569,8 +1570,9 @@ button:disabled {
 
 .campaign-speaker-icon {
   display: block;
-  width: 70%;
-  height: 70%;
+  width: 76%;
+  height: 76%;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 20%));
   transform: translateX(2px);
 }
 
@@ -1586,7 +1588,11 @@ button:disabled {
   display: grid;
   min-height: 0;
   flex: 1;
-  place-items: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  align-items: start;
+  justify-items: center;
+  padding-top: 8px;
 }
 
 .campaign-gameplay-placeholder {
@@ -1621,10 +1627,10 @@ button:disabled {
 .sequence-lock-game {
   display: flex;
   width: min(100%, 420px);
-  height: 100%;
+  height: auto;
   padding: 10px 8px 14px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-direction: column;
   gap: 12px;
   color: #fff;
@@ -1768,11 +1774,11 @@ button:disabled {
 .sound-maze-game {
   display: flex;
   width: min(100%, 430px);
-  height: 100%;
+  height: auto;
   min-height: 0;
   padding: 10px 6px 12px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-direction: column;
   gap: 11px;
   color: #fff;
@@ -2004,11 +2010,11 @@ button:disabled {
 .memory-explore-game {
   display: flex;
   width: min(100%, 420px);
-  height: 100%;
+  height: auto;
   min-height: 0;
   padding: 8px 6px 12px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-direction: column;
   gap: 9px;
   color: #fff;
@@ -2054,23 +2060,22 @@ button:disabled {
 }
 
 .memory-explore-seals {
+  z-index: 3;
   position: absolute;
   inset: 5px auto 5px 4px;
   display: grid;
-  width: 145px;
+  width: 155px;
   grid-template-columns: repeat(5, 1fr);
   place-items: center;
-  color: #b9e5ff;
-  font-size: 1.18rem;
-  text-shadow: 0 0 10px #38bdf8;
   pointer-events: none;
 }
 
-.memory-explore-seals .broken {
-  color: #667085;
-  opacity: 0.28;
-  text-decoration: line-through;
-  text-shadow: none;
+.memory-explore-seals img {
+  display: block;
+  width: 29px;
+  height: 29px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 34%));
 }
 
 .memory-explore-npc {
@@ -2157,6 +2162,13 @@ button:disabled {
   text-align: center;
 }
 
+.memory-explore-feedback.memory-instruction {
+  min-height: 28px;
+  color: #713f22;
+  font-size: 1.08rem;
+  font-weight: 950;
+}
+
 .memory-explore-game.feedback-wrong .memory-explore-grid {
   border-color: #fb7185;
   animation: sequence-lock-shake 280ms ease-in-out 2;
@@ -2168,11 +2180,11 @@ button:disabled {
 .pursuit-game {
   display: flex;
   width: min(100%, 420px);
-  height: 100%;
+  height: auto;
   min-height: 0;
   padding: 9px 6px 12px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-direction: column;
   gap: 10px;
   color: #fff;
@@ -2281,7 +2293,7 @@ button:disabled {
   margin-bottom: 8px;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: 0;
   color: #8fd4ff;
   font-size: 0.76rem;
   font-weight: 900;
@@ -2289,7 +2301,7 @@ button:disabled {
 
 .pursuit-countdown > div {
   overflow: hidden;
-  width: 130px;
+  width: min(72%, 210px);
   height: 10px;
   border: 1px solid #6286b0;
   border-radius: 999px;
@@ -2384,11 +2396,11 @@ button:disabled {
 .battle-game {
   display: flex;
   width: min(100%, 420px);
-  height: 100%;
+  height: auto;
   min-height: 0;
   padding: 8px 6px 12px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-direction: column;
   gap: 9px;
   color: #fff;
@@ -2585,6 +2597,17 @@ button:disabled {
   font-weight: 900;
 }
 
+.battle-turn-label {
+  min-height: 24px;
+  margin: 2px 0 -3px;
+  font-size: 1.08rem;
+  font-weight: 950;
+  text-align: center;
+}
+
+.battle-turn-label.player { color: #075ea8; }
+.battle-turn-label.enemy { color: #b42318; }
+
 .battle-runes {
   display: grid;
   width: min(100%, 310px);
@@ -2614,6 +2637,7 @@ button:disabled {
 }
 
 .battle-piercing-button {
+  margin-top: 12px;
   min-height: 43px;
   padding: 8px 16px;
   border: 2px solid #6b7280;
@@ -2642,9 +2666,9 @@ button:disabled {
 .battle-feedback {
   min-height: 20px;
   margin: 0;
-  color: #dbeafe;
-  font-size: 0.81rem;
-  font-weight: 850;
+  color: #006000;
+  font-size: 1.15rem;
+  font-weight: 950;
   text-align: center;
 }
 
@@ -2987,7 +3011,6 @@ button:disabled {
 .campaign-map-back,
 .campaign-story-replay,
 .campaign-gameplay-edge-button,
-.campaign-audio-replay-button,
 .sound-maze-navigation button {
   border-color: var(--campaign-border);
   background: var(--campaign-panel-bg);
@@ -3045,8 +3068,7 @@ button:disabled {
 .sequence-lock-feedback,
 .sound-maze-feedback,
 .memory-explore-feedback,
-.pursuit-feedback,
-.battle-feedback {
+.pursuit-feedback {
   color: var(--campaign-text);
 }
 

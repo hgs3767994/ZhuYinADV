@@ -73,7 +73,8 @@ describe('campaign level flow', () => {
     expect(content.preStory).toHaveLength(4);
     expect(content.mission).toContain('擊敗五波迷霧哨兵');
     expect(content.tutorialPages).toHaveLength(2);
-    expect(content.tutorialPages?.[0].steps).toHaveLength(4);
+    expect(content.tutorialPages?.[0].steps).toHaveLength(5);
+    expect(content.tutorialPages?.[0].steps.join('')).toContain('玩家進行 2 回合');
     expect(content.tutorialPages?.[1].steps.join('')).toContain('回音護盾');
     expect(content.tutorialPages?.[0].steps.join('')).not.toContain('選錯符文');
     expect(content.howToSteps?.join('')).toContain('符音穿透');
@@ -133,7 +134,8 @@ describe('campaign level flow', () => {
     expect(content.tutorialId).toBe('battle-castle-reminder');
     expect(content.preStory).toHaveLength(4);
     expect(content.mission).toContain('擊敗五波駐守城堡的迷霧士兵');
-    expect(content.tutorialSteps).toHaveLength(5);
+    expect(content.tutorialSteps).toHaveLength(6);
+    expect(content.tutorialSteps.join('')).toContain('玩家進行 2 回合');
     expect(content.tutorialSteps.join('')).toContain('生命與聲音能量會延續');
     expect(content.howToSteps?.join('')).toContain('護盾敵人');
     expect(content.howToSteps?.join('')).toContain('符音穿透');

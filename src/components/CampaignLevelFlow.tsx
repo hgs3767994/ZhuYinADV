@@ -321,8 +321,8 @@ export function CampaignLevelFlow({
           : battleMode
             ? `第 ${battleStatus.waveNumber}／5 波，生命 ${battleStatus.lives}／5，聲音能量 ${battleStatus.energy}／5`
           : memoryBattleMode
-            ? `生命 ${memoryBattleLives}／5，結界護盾 ${remainingSeals}／${MEMORY_GROUP_COUNT}`
-        : `封印 ${remainingSeals}／${memoryExploreMode ? MEMORY_GROUP_COUNT : 3}`}
+            ? `生命 ${memoryBattleLives}／5`
+        : memoryExploreMode ? undefined : `封印 ${remainingSeals}／3`}
       progress={sequenceLockMode ? null : mazeMode
         ? <CampaignStatusSlots kind="fragment" current={collectedFragments} maximum={3} />
         : pursuitMode
@@ -340,9 +340,8 @@ export function CampaignLevelFlow({
           : memoryBattleMode
             ? <div className="battle-top-status memory-battle-top-status">
               <CampaignStatusSlots kind="life" current={memoryBattleLives} maximum={5} />
-              <CampaignStatusSlots kind="shield" current={remainingSeals} maximum={MEMORY_GROUP_COUNT} label="結界護盾" />
             </div>
-        : <CampaignStatusSlots kind="seal" current={remainingSeals} maximum={memoryExploreMode ? MEMORY_GROUP_COUNT : 3} />}
+        : memoryExploreMode ? null : <CampaignStatusSlots kind="seal" current={remainingSeals} maximum={3} />}
       tutorialSteps={content.howToSteps ?? content.tutorialSteps}
       overlay={state.overlay} onOpenPause={() => dispatch({ type: 'open-pause' })}
       onOpenHowTo={(origin) => dispatch({ type: 'open-how-to', origin })} onCloseHowTo={() => dispatch({ type: 'close-how-to' })}

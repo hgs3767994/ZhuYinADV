@@ -43,6 +43,7 @@ interface BattleGameProps {
 
 type BattlePhase = 'select-enemy' | 'answering' | 'resolving';
 type BattleFeedback = 'none' | 'correct' | 'enemy-attack' | 'echo-shield' | 'piercing';
+type BattleTurn = 'player' | 'enemy';
 
 const TIP_CONTENT: Record<BattleTutorialTip, { title: string; lines: readonly string[] }> = {
   correct: {
@@ -51,7 +52,7 @@ const TIP_CONTENT: Record<BattleTutorialTip, { title: string; lines: readonly st
   },
   wrong: {
     title: '第一次錯誤作答',
-    lines: ['選錯符文時，目前選定的敵人會攻擊玩家，使玩家失去 1 點生命。', '目標讀音不會更換，玩家需繼續從剩餘符文中找出正確答案。']
+    lines: ['選錯符文時，敵人會反擊並使玩家失去 1 點生命。', '每次作答都會完成目前回合，接著播放下一題。']
   },
   energy: {
     title: '符音穿透可以使用了',
@@ -95,8 +96,9 @@ export function BattleGame({
   const [enemies, setEnemies] = useState<readonly BattleEnemy[]>(() => freshWave(plan.waves[0]));
   const [selectedEnemyId, setSelectedEnemyId] = useState<string | null>(() => plan.waves[0][0]?.id ?? null);
   const [questionIndex, setQuestionIndex] = useState(0);
-  const question = plan.questions[questionIndex];
-  const [disabledRuneIds, setDisabledRuneIds] = useState<ReadonlySet<string>>(() => new Set());
+  const question = plan.questions[questionIndex % plan.questions.length];
+  const [turn, setTurn] = useState<BattleTurn>('player');
+  const [playerTurnNumber, setPlayerTurnNumber] = useState<1 | 2>(1);
   const [player, setPlayer] = useState<BattlePlayerState>({ lives: BATTLE_MAX_LIVES, energy: 0 });
   const playerRef = useRef(player);
   const [phase, setPhase] = useState<BattlePhase>(selectedEnemyId ? 'answering' : 'select-enemy');
@@ -105,7 +107,6 @@ export function BattleGame({
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [tutorialQueue, setTutorialQueue] = useState<readonly BattleTutorialTip[]>([]);
   const continuationRef = useRef<(() => void) | null>(null);
-  const [echoShieldNotice, setEchoShieldNotice] = useState(false);
   const [bossIntroVisible, setBossIntroVisible] = useState(false);
   const busyRef = useRef(false);
   const pausedRef = useRef(paused);
@@ -177,32 +178,38 @@ export function BattleGame({
     continuation?.();
   };
 
-  const beginNextQuestion = useCallback((nextQuestionIndex: number, targetEnemyId: string) => {
+  const beginNextQuestion = useCallback((nextQuestionIndex: number, targetEnemyId: string | null) => {
     setQuestionIndex(nextQuestionIndex);
     setSelectedEnemyId(targetEnemyId);
-    setDisabledRuneIds(new Set());
     setFeedback('none');
     busyRef.current = false;
-    changePhase('answering');
+    changePhase(targetEnemyId ? 'answering' : 'select-enemy');
   }, [changePhase]);
 
-  const finishEnemyTurn = useCallback((updatedEnemies: readonly BattleEnemy[], nextQuestionIndex: number) => {
+  const continueBattle = useCallback((
+    updatedEnemies: readonly BattleEnemy[],
+    nextQuestionIndex: number,
+    advanceTurn: boolean
+  ) => {
     const survivors = updatedEnemies.filter((enemy) => enemy.life > 0);
     if (survivors.length > 0) {
       setEnemies(updatedEnemies);
+      if (advanceTurn) {
+        if (turn === 'enemy') {
+          setTurn('player');
+          setPlayerTurnNumber(1);
+        } else if (playerTurnNumber === 1) {
+          setPlayerTurnNumber(2);
+        } else {
+          setTurn('enemy');
+          setPlayerTurnNumber(1);
+        }
+      }
       const selectedSurvived = survivors.some((enemy) => enemy.id === selectedEnemyId);
       const nextTarget = selectedSurvived
         ? selectedEnemyId
         : survivors.length === 1 ? survivors[0].id : null;
-      if (nextTarget) beginNextQuestion(nextQuestionIndex, nextTarget);
-      else {
-        setQuestionIndex(nextQuestionIndex);
-        setSelectedEnemyId(null);
-        setDisabledRuneIds(new Set());
-        setFeedback('none');
-        busyRef.current = false;
-        changePhase('select-enemy');
-      }
+      beginNextQuestion(nextQuestionIndex, nextTarget);
       return;
     }
 
@@ -222,7 +229,8 @@ export function BattleGame({
     setEnemies(nextEnemies);
     setSelectedEnemyId(automaticTarget);
     setQuestionIndex(nextQuestionIndex);
-    setDisabledRuneIds(new Set());
+    setTurn('player');
+    setPlayerTurnNumber(1);
     setFeedback('none');
     onStatusChange({ waveNumber: nextWaveIndex + 1, ...playerRef.current });
     const continueNextWave = () => {
@@ -245,7 +253,7 @@ export function BattleGame({
       return;
     }
     continueNextWave();
-  }, [beginNextQuestion, changePhase, onSolved, onStatusChange, plan.waves, selectedEnemyId, showTutorialsThen, variant, waitWhileActive, waveIndex]);
+  }, [beginNextQuestion, changePhase, onSolved, onStatusChange, plan.waves, playerTurnNumber, selectedEnemyId, showTutorialsThen, turn, variant, waitWhileActive, waveIndex]);
 
   const selectEnemy = (enemyId: string) => {
     if (!inputEnabled || phase === 'resolving' || audioPlaying || busyRef.current) return;
@@ -255,13 +263,12 @@ export function BattleGame({
   };
 
   const answerRune = async (option: BattleRuneOption) => {
-    if (!inputEnabled || phase !== 'answering' || audioPlaying || busyRef.current || !selectedEnemyId || disabledRuneIds.has(option.id)) return;
+    if (!inputEnabled || phase !== 'answering' || audioPlaying || busyRef.current || !selectedEnemyId) return;
     busyRef.current = true;
     changePhase('resolving');
     audioService.stopSpeech();
 
     if (!option.correct) {
-      setDisabledRuneIds((current) => new Set(current).add(option.id));
       setFeedback('enemy-attack');
       audioService.playWrong();
       await waitWhileActive(430);
@@ -270,7 +277,6 @@ export function BattleGame({
       updatePlayer({ lives: attacked.lives, energy: attacked.energy });
       if (attacked.echoShieldTriggered) {
         setFeedback('echo-shield');
-        setEchoShieldNotice(true);
         await waitWhileActive(760);
       }
       if (!mountedRef.current) return;
@@ -278,20 +284,15 @@ export function BattleGame({
         onDefeat();
         return;
       }
-      const continueSameQuestion = () => {
-        setFeedback('none');
-        busyRef.current = false;
-        changePhase('answering');
-      };
-      showTutorialsThen(['wrong'], continueSameQuestion);
+      showTutorialsThen(['wrong'], () => continueBattle(enemies, questionIndex + 1, true));
       return;
     }
 
     setFeedback('correct');
     audioService.playCorrect();
-    const attackedEnemies = enemies.map((enemy) =>
-      enemy.id === selectedEnemyId ? normalBattleAttack(enemy) : enemy
-    );
+    const attackedEnemies = turn === 'player'
+      ? enemies.map((enemy) => enemy.id === selectedEnemyId ? normalBattleAttack(enemy) : enemy)
+      : enemies;
     const nextEnergy = Math.min(BATTLE_MAX_ENERGY, playerRef.current.energy + 1);
     updatePlayer({ lives: playerRef.current.lives, energy: nextEnergy });
     setEnemies(attackedEnemies);
@@ -300,11 +301,11 @@ export function BattleGame({
     const tips: BattleTutorialTip[] = [];
     if (!tutorialTipsSeen.correct) tips.push('correct');
     if (nextEnergy >= BATTLE_SKILL_COST && !tutorialTipsSeen.energy) tips.push('energy');
-    showTutorialsThen(tips, () => finishEnemyTurn(attackedEnemies, questionIndex + 1));
+    showTutorialsThen(tips, () => continueBattle(attackedEnemies, questionIndex + 1, true));
   };
 
   const usePiercing = async () => {
-    if (!inputEnabled || phase !== 'answering' || audioPlaying || busyRef.current || !selectedEnemyId || playerRef.current.energy < BATTLE_SKILL_COST) return;
+    if (!inputEnabled || turn !== 'player' || phase !== 'answering' || audioPlaying || busyRef.current || !selectedEnemyId || playerRef.current.energy < BATTLE_SKILL_COST) return;
     busyRef.current = true;
     changePhase('resolving');
     audioService.stopSpeech();
@@ -323,7 +324,7 @@ export function BattleGame({
       changePhase('answering');
       return;
     }
-    finishEnemyTurn(attackedEnemies, questionIndex + 1);
+    continueBattle(attackedEnemies, questionIndex + 1, false);
   };
 
   const replayTarget = useCallback(() => audioService.speakSequence([question.answer]), [question.answer]);
@@ -358,6 +359,10 @@ export function BattleGame({
         </div>}
       </div>
 
+      <p className={`battle-turn-label ${turn}`} aria-live="polite">
+        {turn === 'player' ? '玩家回合' : '敵人回合'}
+      </p>
+
       {targetReady ? <CampaignAudioReplayButton onReplay={replayTarget} onStop={stopTarget}
         paused={paused} disabled={phase === 'resolving' || tutorialQueue.length > 0}
         autoPlayKey={question.id} label="重播目標讀音" onPlaybackChange={setAudioPlaying} />
@@ -365,28 +370,23 @@ export function BattleGame({
 
       <section className="battle-runes" aria-label="注音符文選項">
         {targetReady && question.options.map((option) => {
-          const disabled = disabledRuneIds.has(option.id);
           return <button type="button" key={option.id}
-            className={disabled ? 'disabled-rune' : ''}
-            disabled={controlsDisabled || disabled}
-            onClick={() => void answerRune(option)} aria-label={disabled ? `${option.symbol}，本題已停用` : `選擇 ${option.symbol}`}>
+            disabled={controlsDisabled}
+            onClick={() => void answerRune(option)} aria-label={`選擇 ${option.symbol}`}>
             {option.symbol}
           </button>;
         })}
       </section>
 
-      <button type="button" className={`battle-piercing-button ${player.energy >= BATTLE_SKILL_COST ? 'ready' : ''}`}
-        disabled={controlsDisabled || !selectedEnemyId || player.energy < BATTLE_SKILL_COST}
+      <button type="button" className={`battle-piercing-button ${turn === 'player' && player.energy >= BATTLE_SKILL_COST ? 'ready' : ''}`}
+        disabled={controlsDisabled || turn !== 'player' || !selectedEnemyId || player.energy < BATTLE_SKILL_COST}
         onClick={() => void usePiercing()}>
         符音穿透 <span>消耗 ●●●</span>
       </button>
 
       <p className="battle-feedback" aria-live="polite">
-        {feedback === 'correct' ? '注音水晶化為光芒攻擊敵人！' :
-          feedback === 'enemy-attack' ? '迷霧哨兵發動攻擊！' :
-            feedback === 'echo-shield' ? '回音護盾擋下了致命攻擊！' :
-              feedback === 'piercing' ? '符音穿透直接擊中敵人！' :
-                echoShieldNotice ? '回音護盾會在符合條件時自動保護你。' : ''}
+        {feedback === 'echo-shield' ? '回音護盾' :
+          feedback === 'piercing' ? '符音穿透' : ''}
       </p>
 
       {currentTip && <div className="battle-tutorial-backdrop">

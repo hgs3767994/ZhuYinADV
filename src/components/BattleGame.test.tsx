@@ -24,6 +24,9 @@ describe('level-five battle shell', () => {
     expect((html.match(/battle-runes/g) ?? [])).toHaveLength(1);
     expect((html.match(/aria-label="選擇 [^\"]+"/g) ?? [])).toHaveLength(2);
     expect(html).toContain('符音穿透');
+    expect(html).toContain('玩家回合');
+    expect(html).not.toContain('注音水晶化為光芒攻擊敵人');
+    expect(html).not.toContain('迷霧哨兵發動攻擊');
     expect(html).not.toContain('目標符文');
     expect(html).not.toContain('倒數');
   });

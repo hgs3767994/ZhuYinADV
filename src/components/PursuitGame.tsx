@@ -215,7 +215,6 @@ export function PursuitGame({
 
       <section className="pursuit-choice-area" aria-label={`第 ${segmentIndex + 1} 個路段道路選項`}>
         <div className={`pursuit-countdown ${countdownSeconds <= 2 ? 'warning' : ''}`} aria-label={`剩餘 ${countdownSeconds} 秒`}>
-          <span>{phase === 'introducing' ? '聽完讀音後開始倒數' : `${countdownSeconds} 秒`}</span>
           <div><i style={{ width: `${Math.max(0, remainingMs / ANSWER_DURATION_MS) * 100}%` }} /></div>
         </div>
         <div className="pursuit-roads">

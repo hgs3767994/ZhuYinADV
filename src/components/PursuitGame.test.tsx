@@ -31,7 +31,7 @@ describe('escort gameplay shell', () => {
     expect(html).toContain('小亞');
     expect(html).toContain('後方逼近的黑霧');
     expect((html.match(/選擇 [^\s]+ 道路/g) ?? [])).toHaveLength(2);
-    expect(html).toContain('聽完讀音後開始倒數');
+    expect(html).not.toContain('>聽完讀音後開始倒數<');
     expect(html).toContain('重播目標讀音');
     expect(html).not.toContain('即時星級');
   });

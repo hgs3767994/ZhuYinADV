@@ -114,6 +114,7 @@ interface AppHistoryState {
   zhuyinApp: true;
   screen: Screen;
   gameGuard?: boolean;
+  campaignGuard?: boolean;
   overlay?: 'quit' | 'leaderboard';
 }
 
@@ -268,6 +269,7 @@ export function App() {
   const pendingPageLoadRef = useRef<PendingPageLoad | null>(null);
   const gameHistoryPositionRef = useRef<GameHistoryPosition>(null);
   const campaignGameplayBackHandlerRef = useRef<(() => void) | null>(null);
+  const campaignGameplayGuardRef = useRef(false);
   const campaignExitPendingRef = useRef(false);
   const historyRestorationPendingRef = useRef(false);
   const completedExitPendingRef = useRef(false);
@@ -533,10 +535,11 @@ export function App() {
       ) {
         campaignGameplayBackHandlerRef.current();
         history.pushState(
-          { zhuyinApp: true, screen: 'campaign-level' } satisfies AppHistoryState,
+          { zhuyinApp: true, screen: 'campaign-level', campaignGuard: true } satisfies AppHistoryState,
           '',
           location.href
         );
+        campaignGameplayGuardRef.current = true;
         applyScreen('campaign-level');
         return;
       }
@@ -872,6 +875,7 @@ export function App() {
       if (activeProfileRef.current?.id !== profile.id) return;
       setCampaignSnapshot(snapshot);
       setActiveCampaignLevel(level);
+      campaignGameplayGuardRef.current = false;
       navigate('campaign-level');
     } catch (error) {
       console.warn('無法進入闖關關卡', error);
@@ -1345,10 +1349,25 @@ export function App() {
           onComplete={completeCampaignLevel}
           onGameplayBackHandlerChange={(handler) => {
             campaignGameplayBackHandlerRef.current = handler;
+            if (handler && !campaignGameplayGuardRef.current) {
+              history.pushState(
+                { zhuyinApp: true, screen: 'campaign-level', campaignGuard: true } satisfies AppHistoryState,
+                '',
+                location.href
+              );
+              campaignGameplayGuardRef.current = true;
+            }
           }}
           onReturnToMap={() => {
             campaignExitPendingRef.current = true;
-            press(() => history.back());
+            press(() => {
+              if (campaignGameplayGuardRef.current) {
+                campaignGameplayGuardRef.current = false;
+                history.go(-2);
+              } else {
+                history.back();
+              }
+            });
           }}
         />
       )}
