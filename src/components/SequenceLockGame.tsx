@@ -10,6 +10,7 @@ import {
   sequenceLockStars,
   type SequenceLockSlots
 } from '../game/sequenceLock';
+import { CAMPAIGN_IMAGES } from '../game/campaignAssets';
 import { audioService } from '../services/audio';
 import { CampaignAudioReplayButton } from './CampaignAudioReplayButton';
 
@@ -171,7 +172,11 @@ export function SequenceLockGame({
       <div className="sequence-lock-scene" aria-hidden="true">
         <div className="sequence-lock-door">
           {puzzles.map((item, index) => (
-            <span key={item.id} className={index < lockIndex ? 'broken' : ''}>◇</span>
+            <img
+              key={item.id}
+              src={index < lockIndex ? CAMPAIGN_IMAGES.sealUnlocked : CAMPAIGN_IMAGES.sealLocked}
+              alt=""
+            />
           ))}
         </div>
       </div>

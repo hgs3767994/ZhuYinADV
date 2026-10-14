@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { CampaignLevelDefinition } from '../game/campaignConfig';
-import { campaignFlowContent, campaignFlowReducer, createCampaignFlowState, type CampaignStoryPage } from '../game/campaignFlow';
+import { campaignFlowContent, campaignFlowReducer, campaignSystemBackAction, createCampaignFlowState, type CampaignStoryPage } from '../game/campaignFlow';
 import { saveCampaignCompletionWithRetry } from '../game/campaignSave';
 import type { CampaignCompletionInput, CampaignPerformance, CampaignStars, SavedCampaignCompletion } from '../game/campaignTypes';
 import { MEMORY_GROUP_COUNT } from '../game/memoryExplore';
@@ -25,6 +25,7 @@ interface CampaignLevelFlowProps {
   onTutorialSeen: (tutorialId: string) => Promise<void>;
   onComplete: (input: CampaignCompletionInput) => Promise<SavedCampaignCompletion>;
   onReturnToMap: () => void;
+  onGameplayBackHandlerChange?: (handler: (() => void) | null) => void;
 }
 
 interface StorySequenceProps {
@@ -83,7 +84,7 @@ function StorySequence({ level, page, pageIndex, pageCount, finalLabel, onAdvanc
 
 export function CampaignLevelFlow({
   level, profileId, campaignId, appVersion, tutorialSeen, initialBestStars, initialCompleted,
-  onTutorialSeen, onComplete, onReturnToMap
+  onTutorialSeen, onComplete, onReturnToMap, onGameplayBackHandlerChange
 }: CampaignLevelFlowProps) {
   const content = useMemo(() => campaignFlowContent(level), [level]);
   const [state, dispatch] = useReducer(campaignFlowReducer, tutorialSeen, (seen) => createCampaignFlowState(!seen));
@@ -115,6 +116,17 @@ export function CampaignLevelFlow({
   const [saveError, setSaveError] = useState(false);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+
+  const handleGameplaySystemBack = useCallback(() => {
+    dispatch(campaignSystemBackAction(state.overlay));
+  }, [state.overlay]);
+
+  useEffect(() => {
+    onGameplayBackHandlerChange?.(
+      state.phase === 'gameplay' ? handleGameplaySystemBack : null
+    );
+    return () => onGameplayBackHandlerChange?.(null);
+  }, [handleGameplaySystemBack, onGameplayBackHandlerChange, state.phase]);
 
   const beginGameplay = useCallback(() => {
     setResultId(newResultId());
@@ -297,11 +309,12 @@ export function CampaignLevelFlow({
   const chaseMode = level.gameplayId === 'chase';
   const pursuitMode = escortMode || chaseMode;
   const battleMode = level.gameplayId === 'zhuyin-battle' || level.gameplayId === 'boss-battle';
+  const sequenceLockMode = level.gameplayId === 'sequence-lock';
   const castleBattle = level.id === 'level-09';
   const bossBattle = level.gameplayId === 'boss-battle';
   return (
     <CampaignGameplayFrame level={level}
-      progressLabel={mazeMode
+      progressLabel={sequenceLockMode ? undefined : mazeMode
         ? `聲音碎片 ${collectedFragments}／3`
         : pursuitMode
           ? `第 ${pursuitStatus.segmentNumber}／10 路段，連續成功 ${pursuitStatus.successStreak} 次，安全距離 ${pursuitStatus.safetyDistance}／5`
@@ -310,7 +323,7 @@ export function CampaignLevelFlow({
           : memoryBattleMode
             ? `生命 ${memoryBattleLives}／5，結界護盾 ${remainingSeals}／${MEMORY_GROUP_COUNT}`
         : `封印 ${remainingSeals}／${memoryExploreMode ? MEMORY_GROUP_COUNT : 3}`}
-      progress={mazeMode
+      progress={sequenceLockMode ? null : mazeMode
         ? <CampaignStatusSlots kind="fragment" current={collectedFragments} maximum={3} />
         : pursuitMode
           ? <div className="pursuit-top-status">

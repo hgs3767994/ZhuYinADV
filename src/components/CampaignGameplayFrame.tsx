@@ -10,8 +10,8 @@ export interface CampaignGameplayContext {
 
 interface CampaignGameplayFrameProps {
   level: CampaignLevelDefinition;
-  progressLabel: string;
-  progress: ReactNode;
+  progressLabel?: string;
+  progress?: ReactNode;
   tutorialSteps: readonly string[];
   overlay: CampaignFlowOverlay;
   onOpenPause: () => void;
@@ -96,7 +96,7 @@ export function CampaignGameplayFrame({
         </button>
         <div className="campaign-gameplay-heading">
           <strong>第 {level.number} 關・{level.title}</strong>
-          <div aria-label={progressLabel}>{progress}</div>
+          {progress != null && <div aria-label={progressLabel}>{progress}</div>}
         </div>
         <span className="campaign-gameplay-header-spacer" aria-hidden="true" />
       </header>

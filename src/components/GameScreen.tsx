@@ -20,6 +20,7 @@ import { audioService } from '../services/audio';
 import { assetUrl, preloadImage, resetImagePreloads } from '../utils/assets';
 import { delay, isResourceTimeoutError, trackLoadingTasks } from '../utils/loading';
 import { runCriticalResource } from '../utils/resourcePriority';
+import { SpeakerIcon } from './SpeakerIcon';
 
 interface GameScreenProps {
   mode: GameMode;
@@ -380,22 +381,7 @@ export function GameScreen({
 
         <div className="listen-area">
           <button className="listen-button" onClick={() => audioService.speak(session.currentAnswer)}>
-            <svg
-              className="speaker-icon"
-              viewBox="0 0 52 40"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <rect x="2" y="13" width="12" height="14" rx="3" fill="#475569" />
-              <path d="M14 13 28 3v34L14 27Z" fill="#e2e8f0" />
-              <path
-                d="M33 12c4 4 4 12 0 16M38 6c8 8 8 20 0 28"
-                fill="none"
-                stroke="#38bdf8"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-            </svg>
+            <SpeakerIcon />
             <span className="sr-only">重複播放注音</span>
           </button>
           <p>點擊重複聽發音</p>

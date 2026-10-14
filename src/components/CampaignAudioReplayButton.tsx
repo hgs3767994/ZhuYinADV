@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { SpeakerIcon } from './SpeakerIcon';
 
 interface CampaignAudioReplayButtonProps {
   onReplay: () => void | Promise<void>;
@@ -80,13 +81,13 @@ export function CampaignAudioReplayButton({
     <div className="campaign-audio-replay">
       <button
         type="button"
-        className="campaign-audio-replay-button"
+        className={`campaign-audio-replay-button ${playing ? 'is-playing' : ''}`}
         disabled={disabled || paused || playing}
         onClick={() => void replay()}
         aria-label={label}
+        aria-busy={playing}
       >
-        <span aria-hidden="true">🔊</span>
-        <span>{playing ? '播放中…' : label}</span>
+        <SpeakerIcon className="campaign-speaker-icon" />
       </button>
       {failed && <span className="campaign-audio-error" role="status">播放失敗，請再試一次。</span>}
     </div>

@@ -1,6 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { experienceProgress } from '../game/experience';
 import type { CampaignSnapshot } from '../game/campaignTypes';
 import { CampaignGuestNotice } from './CampaignGuestNotice';
 import { CampaignIntro } from './CampaignIntro';
@@ -61,7 +60,6 @@ describe('first chapter map shell', () => {
     const html = renderToStaticMarkup(
       <CampaignMap
         snapshot={snapshot}
-        experience={experienceProgress(0)}
         onBack={() => undefined}
         onReplayIntro={() => undefined}
       />
@@ -71,7 +69,7 @@ describe('first chapter map shell', () => {
     expect(html).toContain('第 1 關 封印的門扉，可挑戰');
     expect(html).toContain('第 2 關 迷霧之路，尚未解鎖');
     expect(html).toContain('決戰迷霧將軍');
-    expect(html).toContain('通關 0/11');
+    expect(html).not.toContain('通關 0/11');
     expect(html).toContain('/assets/images/campaign/chapter-01-map.webp');
     expect(html).toContain('/assets/images/campaign/star.png');
     expect(html).toContain('0/33');
@@ -109,18 +107,16 @@ describe('first chapter map shell', () => {
     const html = renderToStaticMarkup(
       <CampaignMap
         snapshot={snapshot}
-        experience={experienceProgress(550)}
         onBack={() => undefined}
         onReplayIntro={() => undefined}
       />
     );
 
     expect(html).toContain('第一章完成');
-    expect(html).toContain('通關 11/11');
+    expect(html).not.toContain('通關 11/11');
     expect(html).toContain('33/33');
     expect((html.match(/campaign-map-node-stars/g) ?? []).length).toBe(11);
-    expect(html).toContain('浣熊');
-    expect(html).toContain('550 XP');
+    expect(html).not.toContain('XP');
   });
 });
 
@@ -237,12 +233,28 @@ describe('campaign shared gameplay controls', () => {
     expect(pausedHtml).toContain('查看玩法');
   });
 
+  it('allows sequence-lock levels to keep seal progress only in the central game scene', () => {
+    const html = renderToStaticMarkup(
+      <CampaignGameplayFrame
+        {...gameplayFrameProps}
+        progress={null}
+        progressLabel={undefined}
+        overlay={null}
+      />
+    );
+
+    expect(html).not.toContain('封印進度');
+    expect(html).not.toContain('campaign-status-seal');
+  });
+
   it('renders replay as an unlimited action without score or penalty copy', () => {
     const html = renderToStaticMarkup(
       <CampaignAudioReplayButton onReplay={() => undefined} />
     );
 
     expect(html).toContain('重播讀音');
+    expect(html).toContain('campaign-speaker-icon');
+    expect(html).not.toContain('播放中…');
     expect(html).not.toContain('扣分');
     expect(html).not.toContain('次數');
   });

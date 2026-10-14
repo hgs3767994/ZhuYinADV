@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { CAMPAIGN_IMAGES } from '../game/campaignAssets';
 import { FIRST_CAMPAIGN, type CampaignLevelDefinition } from '../game/campaignConfig';
-import type { ExperienceProgress } from '../game/experience';
 import type { CampaignSnapshot } from '../game/campaignTypes';
 import { Modal } from './Modal';
 import { CampaignStarRating } from './CampaignStarRating';
@@ -22,7 +21,6 @@ const CAMPAIGN_LEVEL_POSITIONS = [
 
 interface CampaignMapProps {
   snapshot: CampaignSnapshot;
-  experience: ExperienceProgress;
   onBack: () => void;
   onReplayIntro: () => void;
   onStartLevel?: (level: CampaignLevelDefinition) => void;
@@ -34,7 +32,6 @@ interface CampaignMapProps {
 
 export function CampaignMap({
   snapshot,
-  experience,
   onBack,
   onReplayIntro,
   onStartLevel,
@@ -49,7 +46,6 @@ export function CampaignMap({
     () => new Map(snapshot.levels.map((progress) => [progress.levelId, progress])),
     [snapshot.levels]
   );
-  const completedCount = snapshot.levels.filter((progress) => progress.bestStars > 0).length;
   const totalStars = snapshot.levels.reduce((total, progress) => total + progress.bestStars, 0);
   const chapterComplete = Boolean(snapshot.chapter?.completedAt);
   const focusLevelId = (() => {
@@ -82,19 +78,13 @@ export function CampaignMap({
         <button type="button" className="campaign-map-back" onClick={onBack} aria-label="返回模式選擇">
           ←
         </button>
-        <div className="campaign-map-title">
-          <strong>第一章・被封印的王國之聲</strong>
-          <span className="campaign-map-summary">
-            通關 {completedCount}/11
-            <span className="campaign-map-star-total"><img src={CAMPAIGN_IMAGES.star} alt="" aria-hidden="true" />{totalStars}/33</span>
-          </span>
-        </div>
+        <strong className="campaign-map-title">第一章・被封印的王國之聲</strong>
         <button type="button" className="campaign-story-replay" onClick={onReplayIntro}>
           重看章節故事
         </button>
-        <div className="campaign-map-rank" aria-label={`${experience.rankName}，累積 ${experience.totalXp} XP`}>
-          <span>{experience.rankName}</span>
-          <strong>{experience.totalXp} XP</strong>
+        <div className="campaign-map-star-total" aria-label={`星星蒐集進度 ${totalStars}／33`}>
+          <img src={CAMPAIGN_IMAGES.star} alt="" aria-hidden="true" />
+          <strong>{totalStars}/33</strong>
         </div>
       </header>
 

@@ -3,6 +3,7 @@ import { campaignLevel } from './campaignConfig';
 import {
   campaignFlowContent,
   campaignFlowReducer,
+  campaignSystemBackAction,
   createCampaignFlowState,
   type CampaignFlowState
 } from './campaignFlow';
@@ -207,6 +208,13 @@ describe('campaign level flow', () => {
     expect(state.overlay).toBe('how-to-paused');
     state = campaignFlowReducer(state, { type: 'close-how-to' });
     expect(state).toMatchObject({ phase: 'gameplay', overlay: 'pause' });
+  });
+
+  it('maps system back to the expected gameplay overlay action', () => {
+    expect(campaignSystemBackAction(null)).toEqual({ type: 'open-pause' });
+    expect(campaignSystemBackAction('pause')).toEqual({ type: 'resume' });
+    expect(campaignSystemBackAction('how-to-paused')).toEqual({ type: 'close-how-to' });
+    expect(campaignSystemBackAction('abandon-confirm')).toEqual({ type: 'cancel-abandon' });
   });
 
   it('does not show post-story until a successful save has completed', () => {

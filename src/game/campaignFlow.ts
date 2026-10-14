@@ -66,6 +66,20 @@ export type CampaignFlowAction =
   | { type: 'defeat' }
   | { type: 'retry' };
 
+export function campaignSystemBackAction(overlay: CampaignFlowOverlay): CampaignFlowAction {
+  switch (overlay) {
+    case 'pause':
+      return { type: 'resume' };
+    case 'how-to-direct':
+    case 'how-to-paused':
+      return { type: 'close-how-to' };
+    case 'abandon-confirm':
+      return { type: 'cancel-abandon' };
+    default:
+      return { type: 'open-pause' };
+  }
+}
+
 const LEVEL_ONE_FLOW: CampaignLevelFlowContent = {
   levelId: 'level-01',
   tutorialId: 'sequence-lock-basic',

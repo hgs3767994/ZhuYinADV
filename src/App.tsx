@@ -267,6 +267,8 @@ export function App() {
   const pageLoadSequenceRef = useRef(0);
   const pendingPageLoadRef = useRef<PendingPageLoad | null>(null);
   const gameHistoryPositionRef = useRef<GameHistoryPosition>(null);
+  const campaignGameplayBackHandlerRef = useRef<(() => void) | null>(null);
+  const campaignExitPendingRef = useRef(false);
   const historyRestorationPendingRef = useRef(false);
   const completedExitPendingRef = useRef(false);
   const adventurePreparedRef = useRef(false);
@@ -523,6 +525,23 @@ export function App() {
         applyScreen('profiles');
         return;
       }
+
+      if (
+        screenRef.current === 'campaign-level' &&
+        !campaignExitPendingRef.current &&
+        campaignGameplayBackHandlerRef.current
+      ) {
+        campaignGameplayBackHandlerRef.current();
+        history.pushState(
+          { zhuyinApp: true, screen: 'campaign-level' } satisfies AppHistoryState,
+          '',
+          location.href
+        );
+        applyScreen('campaign-level');
+        return;
+      }
+
+      if (campaignExitPendingRef.current) campaignExitPendingRef.current = false;
       gameHistoryPositionRef.current = destination?.screen === 'game'
         ? destination.gameGuard ? 'guard' : 'base'
         : null;
@@ -1295,7 +1314,6 @@ export function App() {
       {screen === 'campaign-map' && activeProfile && campaignSnapshot && (
         <CampaignMap
           snapshot={campaignSnapshot}
-          experience={experience}
           onBack={() => press(() => history.back())}
           onReplayIntro={() => press(() => navigate('campaign-intro-replay'))}
           onStartLevel={(level) => void startCampaignLevel(level)}
@@ -1325,7 +1343,13 @@ export function App() {
           )?.firstCompletedAt)}
           onTutorialSeen={markCampaignTutorialSeen}
           onComplete={completeCampaignLevel}
-          onReturnToMap={() => press(() => history.back())}
+          onGameplayBackHandlerChange={(handler) => {
+            campaignGameplayBackHandlerRef.current = handler;
+          }}
+          onReturnToMap={() => {
+            campaignExitPendingRef.current = true;
+            press(() => history.back());
+          }}
         />
       )}
 
