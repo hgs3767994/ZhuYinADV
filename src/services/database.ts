@@ -1,10 +1,14 @@
 export const DATABASE_NAME = 'little-zhuyin-adventurer';
-export const DATABASE_VERSION = 4;
+export const DATABASE_VERSION = 5;
 export const RESULT_STORE = 'gameResults';
 export const PROFILE_STORE = 'playerProfiles';
 export const SETTINGS_STORE = 'appSettings';
 export const EXPERIENCE_STORE = 'profileProgress';
 export const XP_EVENT_STORE = 'xpEvents';
+export const CAMPAIGN_RESULT_STORE = 'campaignResults';
+export const CAMPAIGN_LEVEL_PROGRESS_STORE = 'campaignLevelProgress';
+export const CAMPAIGN_CHAPTER_PROGRESS_STORE = 'campaignChapterProgress';
+export const CAMPAIGN_CONTENT_FLAG_STORE = 'campaignContentFlags';
 
 export function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -29,6 +33,25 @@ export function openDatabase(): Promise<IDBDatabase> {
       if (!database.objectStoreNames.contains(XP_EVENT_STORE)) {
         const eventStore = database.createObjectStore(XP_EVENT_STORE, { keyPath: 'eventId' });
         eventStore.createIndex('profileId', 'profileId', { unique: false });
+      }
+      if (!database.objectStoreNames.contains(CAMPAIGN_RESULT_STORE)) {
+        const store = database.createObjectStore(CAMPAIGN_RESULT_STORE, { keyPath: 'id' });
+        store.createIndex('profileId', 'profileId', { unique: false });
+        store.createIndex('profileCampaign', ['profileId', 'campaignId'], { unique: false });
+      }
+      if (!database.objectStoreNames.contains(CAMPAIGN_LEVEL_PROGRESS_STORE)) {
+        const store = database.createObjectStore(CAMPAIGN_LEVEL_PROGRESS_STORE, { keyPath: 'id' });
+        store.createIndex('profileId', 'profileId', { unique: false });
+        store.createIndex('profileCampaign', ['profileId', 'campaignId'], { unique: false });
+      }
+      if (!database.objectStoreNames.contains(CAMPAIGN_CHAPTER_PROGRESS_STORE)) {
+        const store = database.createObjectStore(CAMPAIGN_CHAPTER_PROGRESS_STORE, { keyPath: 'id' });
+        store.createIndex('profileId', 'profileId', { unique: false });
+      }
+      if (!database.objectStoreNames.contains(CAMPAIGN_CONTENT_FLAG_STORE)) {
+        const store = database.createObjectStore(CAMPAIGN_CONTENT_FLAG_STORE, { keyPath: 'id' });
+        store.createIndex('profileId', 'profileId', { unique: false });
+        store.createIndex('profileType', ['profileId', 'flagType'], { unique: false });
       }
     };
 

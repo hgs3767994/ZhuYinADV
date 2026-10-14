@@ -2,6 +2,10 @@ import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { GameResult } from '../game/types';
 import {
+  CAMPAIGN_CHAPTER_PROGRESS_STORE,
+  CAMPAIGN_CONTENT_FLAG_STORE,
+  CAMPAIGN_LEVEL_PROGRESS_STORE,
+  CAMPAIGN_RESULT_STORE,
   DATABASE_NAME,
   EXPERIENCE_STORE,
   openDatabase,
@@ -222,7 +226,11 @@ describe('persistent result repository', () => {
         PROFILE_STORE,
         SETTINGS_STORE,
         EXPERIENCE_STORE,
-        XP_EVENT_STORE
+        XP_EVENT_STORE,
+        CAMPAIGN_RESULT_STORE,
+        CAMPAIGN_LEVEL_PROGRESS_STORE,
+        CAMPAIGN_CHAPTER_PROGRESS_STORE,
+        CAMPAIGN_CONTENT_FLAG_STORE
       ]));
       const transaction = database.transaction(
         [RESULT_STORE, PROFILE_STORE, SETTINGS_STORE, EXPERIENCE_STORE, XP_EVENT_STORE],

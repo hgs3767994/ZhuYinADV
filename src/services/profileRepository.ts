@@ -7,6 +7,10 @@ import {
   type AvatarRecipeV2
 } from '../avatar/model';
 import {
+  CAMPAIGN_CHAPTER_PROGRESS_STORE,
+  CAMPAIGN_CONTENT_FLAG_STORE,
+  CAMPAIGN_LEVEL_PROGRESS_STORE,
+  CAMPAIGN_RESULT_STORE,
   EXPERIENCE_STORE,
   openDatabase,
   PROFILE_STORE,
@@ -298,7 +302,16 @@ class IndexedDbProfileRepository implements ProfileRepository {
     const database = await openDatabase();
     try {
       const transaction = database.transaction(
-        [PROFILE_STORE, RESULT_STORE, EXPERIENCE_STORE, XP_EVENT_STORE],
+        [
+          PROFILE_STORE,
+          RESULT_STORE,
+          EXPERIENCE_STORE,
+          XP_EVENT_STORE,
+          CAMPAIGN_RESULT_STORE,
+          CAMPAIGN_LEVEL_PROGRESS_STORE,
+          CAMPAIGN_CHAPTER_PROGRESS_STORE,
+          CAMPAIGN_CONTENT_FLAG_STORE
+        ],
         'readwrite'
       );
       const done = transactionDone(transaction);
@@ -306,7 +319,11 @@ class IndexedDbProfileRepository implements ProfileRepository {
       transaction.objectStore(EXPERIENCE_STORE).delete(profileId);
       await Promise.all([
         deleteResultsByProfile(transaction, profileId, RESULT_STORE),
-        deleteResultsByProfile(transaction, profileId, XP_EVENT_STORE)
+        deleteResultsByProfile(transaction, profileId, XP_EVENT_STORE),
+        deleteResultsByProfile(transaction, profileId, CAMPAIGN_RESULT_STORE),
+        deleteResultsByProfile(transaction, profileId, CAMPAIGN_LEVEL_PROGRESS_STORE),
+        deleteResultsByProfile(transaction, profileId, CAMPAIGN_CHAPTER_PROGRESS_STORE),
+        deleteResultsByProfile(transaction, profileId, CAMPAIGN_CONTENT_FLAG_STORE)
       ]);
       await done;
     } finally {

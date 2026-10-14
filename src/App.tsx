@@ -17,6 +17,10 @@ import { ProfileSelection } from './components/ProfileSelection';
 import { ResetProfilePassword } from './components/ResetProfilePassword';
 import { ResultModal } from './components/ResultModal';
 import { RankGuide } from './components/RankGuide';
+import { CampaignGuestNotice } from './components/CampaignGuestNotice';
+import { CampaignIntro } from './components/CampaignIntro';
+import { CampaignMap } from './components/CampaignMap';
+import { CampaignLevelFlow } from './components/CampaignLevelFlow';
 import { DEFAULT_AVATAR_RECIPE, type AvatarRecipeV2 } from './avatar/model';
 import { AVATAR_BROW_ASSETS, AVATAR_EYE_ASSETS, AVATAR_FACE_ASSETS, AVATAR_HAIR_ASSETS, AVATAR_MOUTH_ASSETS, AVATAR_NOSE_ASSETS } from './avatar/assets';
 import { APP_VERSION, DIFFICULTY_CONFIG } from './game/config';
@@ -33,9 +37,17 @@ import type {
   LeaderboardPage
 } from './game/types';
 import {
+  FIRST_CAMPAIGN_ID,
+  type CampaignLevelDefinition
+} from './game/campaignConfig';
+import { CAMPAIGN_IMAGES, CAMPAIGN_IMAGE_PRELOADS } from './game/campaignAssets';
+import { campaignFlowContent, hasCampaignFlowContent } from './game/campaignFlow';
+import type { CampaignCompletionInput, CampaignSnapshot } from './game/campaignTypes';
+import {
   ADVENTURE_AUDIO_CACHE_STEPS,
   audioService
 } from './services/audio';
+import { shouldPlayBackgroundMusic } from './services/backgroundMusicPolicy';
 import { parentSecurity } from './services/parentSecurity';
 import {
   createGuestProfile,
@@ -43,6 +55,7 @@ import {
   type PlayerProfile
 } from './services/profileRepository';
 import { resultRepository } from './services/resultsRepository';
+import { campaignRepository } from './services/campaignRepository';
 import {
   assetUrl,
   cacheOfflineImage,
@@ -78,6 +91,11 @@ type Screen =
   | 'mode'
   | 'rank-guide'
   | 'edit-avatar'
+  | 'campaign-guest-warning'
+  | 'campaign-intro'
+  | 'campaign-intro-replay'
+  | 'campaign-map'
+  | 'campaign-level'
   | 'difficulty'
   | 'game';
 
@@ -132,6 +150,7 @@ const WELCOME_IMAGES = [
 
 const MODE_IMAGES = [
   assetUrl('assets/images/start_banner.webp'),
+  CAMPAIGN_IMAGES.modeButton,
   assetUrl('assets/images/normal_mode_button.webp'),
   assetUrl('assets/images/infinity_mode_button.webp'),
   assetUrl('assets/images/record_button.webp'),
@@ -154,6 +173,7 @@ const CORE_ADVENTURE_IMAGES = Array.from(new Set([
 
 const ADVENTURE_IMAGES = Array.from(new Set([
   ...CORE_ADVENTURE_IMAGES,
+  ...CAMPAIGN_IMAGE_PRELOADS,
   ...AVATAR_FACE_ASSETS,
   ...AVATAR_HAIR_ASSETS,
   ...AVATAR_BROW_ASSETS,
@@ -161,7 +181,7 @@ const ADVENTURE_IMAGES = Array.from(new Set([
   ...AVATAR_NOSE_ASSETS,
   ...AVATAR_MOUTH_ASSETS
 ]));
-const IMAGE_ASSET_VERSION = '18';
+const IMAGE_ASSET_VERSION = '20';
 const AUDIO_ASSET_VERSION = '3';
 const IMAGE_ASSET_VERSION_KEY = 'zhuyin-image-asset-version';
 const AUDIO_ASSET_VERSION_KEY = 'zhuyin-audio-asset-version';
@@ -189,7 +209,8 @@ function isAppHistoryState(value: unknown): value is AppHistoryState {
     [
       'welcome', 'profiles', 'create-profile', 'avatar-builder', 'login', 'parent-setup', 'parent-gate',
       'parent-recovery', 'parent-management', 'change-parent-pin', 'reset-password',
-      'mode', 'rank-guide', 'edit-avatar', 'difficulty', 'game'
+      'mode', 'rank-guide', 'edit-avatar', 'campaign-guest-warning', 'campaign-intro',
+      'campaign-intro-replay', 'campaign-map', 'campaign-level', 'difficulty', 'game'
     ]
       .includes(state.screen ?? '');
 }
@@ -225,6 +246,13 @@ export function App() {
   const [resultSaveError, setResultSaveError] = useState(false);
   const [resultSaving, setResultSaving] = useState(false);
   const [experience, setExperience] = useState<ExperienceProgress>(() => experienceProgress(0));
+  const [campaignSnapshot, setCampaignSnapshot] = useState<CampaignSnapshot | null>(null);
+  const [campaignLoading, setCampaignLoading] = useState(false);
+  const [campaignError, setCampaignError] = useState<string | null>(null);
+  const [guestCampaignNoticeSeen, setGuestCampaignNoticeSeen] = useState(false);
+  const [activeCampaignLevel, setActiveCampaignLevel] = useState<CampaignLevelDefinition | null>(null);
+  const [campaignLevelStarting, setCampaignLevelStarting] = useState(false);
+  const [campaignLevelError, setCampaignLevelError] = useState<string | null>(null);
   const [upgradedRankName, setUpgradedRankName] = useState<string | null>(null);
   const [leaderboardPage, setLeaderboardPage] = useState<LeaderboardPage | null>(null);
   const leaderboardPageRef = useRef<LeaderboardPage | null>(null);
@@ -375,10 +403,17 @@ export function App() {
 
   useEffect(() => {
     if (screenRef.current !== screen) return;
-    if (screen === 'game') audioService.pauseBgm();
-    else audioService.playBgm();
+    if (shouldPlayBackgroundMusic(screen)) audioService.playBgm();
+    else audioService.pauseBgm();
     if (screen === 'profiles') {
       if (activeProfile?.isGuest) resultRepository.clearGuestResults();
+      setCampaignSnapshot(null);
+      setCampaignLoading(false);
+      setCampaignError(null);
+      setActiveCampaignLevel(null);
+      setCampaignLevelStarting(false);
+      setCampaignLevelError(null);
+      setGuestCampaignNoticeSeen(false);
       activeProfileRef.current = null;
       setActiveProfile(null);
       selectedProfileRef.current = null;
@@ -405,9 +440,29 @@ export function App() {
   }, [activeProfile]);
 
   useEffect(() => {
+    if (!activeProfile) return;
+    const profileId = activeProfile.id;
+    let cancelled = false;
+    setCampaignSnapshot(null);
+    setCampaignError(null);
+    void campaignRepository.loadCampaign(profileId, FIRST_CAMPAIGN_ID).then((snapshot) => {
+      if (!cancelled && activeProfileRef.current?.id === profileId) setCampaignSnapshot(snapshot);
+    }).catch((error: unknown) => {
+      console.warn('無法讀取闖關進度', error);
+      if (!cancelled && activeProfileRef.current?.id === profileId) {
+        setCampaignError('無法讀取闖關進度，請再試一次。');
+      }
+    });
+    return () => { cancelled = true; };
+  }, [activeProfile]);
+
+  useEffect(() => {
     const pauseWhenHidden = () => {
-      if (document.hidden) audioService.pauseBgm();
-      else if (screenRef.current !== 'game') audioService.playBgm();
+      if (document.hidden || !shouldPlayBackgroundMusic(screenRef.current)) {
+        audioService.pauseBgm();
+      } else {
+        audioService.playBgm();
+      }
     };
     document.addEventListener('visibilitychange', pauseWhenHidden);
     return () => document.removeEventListener('visibilitychange', pauseWhenHidden);
@@ -454,7 +509,10 @@ export function App() {
       }
       if (
         destination &&
-        ['mode', 'rank-guide', 'edit-avatar', 'difficulty', 'game'].includes(destination.screen) &&
+        [
+          'mode', 'rank-guide', 'edit-avatar', 'campaign-guest-warning', 'campaign-intro',
+          'campaign-intro-replay', 'campaign-map', 'campaign-level', 'difficulty', 'game'
+        ].includes(destination.screen) &&
         activeProfileRef.current === null
       ) {
         history.replaceState(
@@ -724,6 +782,106 @@ export function App() {
     setPasswordResetNotice('密碼已更新，請使用新密碼登入。');
     parentAuthorizedRef.current = false;
     history.back();
+  };
+
+  const hasSeenCampaignIntro = (snapshot: CampaignSnapshot | null): boolean =>
+    Boolean(snapshot?.flags.some((flag) =>
+      flag.flagType === 'chapter-intro' && flag.contentId === FIRST_CAMPAIGN_ID
+    ));
+
+  const campaignEntryLabel = (() => {
+    if (!campaignSnapshot?.chapter) return '開始第一章';
+    if (campaignSnapshot.chapter.completedAt) return '第一章完成';
+    const completed = campaignSnapshot.levels.filter((level) => level.bestStars > 0).length;
+    return `第一章　已通關 ${completed}/11`;
+  })();
+
+  const openCampaignMode = async () => {
+    const profile = activeProfileRef.current;
+    if (!profile || campaignLoading) return;
+    audioService.pauseBgm();
+    setCampaignLoading(true);
+    setCampaignError(null);
+    try {
+      const snapshot = await campaignRepository.loadCampaign(profile.id, FIRST_CAMPAIGN_ID);
+      if (activeProfileRef.current?.id !== profile.id) return;
+      setCampaignSnapshot(snapshot);
+      const destination: Screen = profile.isGuest && !guestCampaignNoticeSeen
+        ? 'campaign-guest-warning'
+        : hasSeenCampaignIntro(snapshot) ? 'campaign-map' : 'campaign-intro';
+      loadPageImages(CAMPAIGN_IMAGE_PRELOADS, () => navigate(destination));
+    } catch (error) {
+      console.warn('無法進入闖關模式', error);
+      setCampaignError('無法讀取闖關進度，請再試一次。');
+      if (shouldPlayBackgroundMusic(screenRef.current)) audioService.playBgm();
+    } finally {
+      setCampaignLoading(false);
+    }
+  };
+
+  const continueGuestCampaign = () => {
+    setGuestCampaignNoticeSeen(true);
+    replaceScreen(hasSeenCampaignIntro(campaignSnapshot) ? 'campaign-map' : 'campaign-intro');
+  };
+
+  const completeCampaignIntro = async () => {
+    const profile = activeProfileRef.current;
+    if (!profile) throw new Error('找不到目前玩家');
+    const snapshot = await campaignRepository.startCampaign(
+      profile.id,
+      FIRST_CAMPAIGN_ID,
+      new Date().toISOString()
+    );
+    if (activeProfileRef.current?.id !== profile.id) return;
+    setCampaignSnapshot(snapshot);
+    replaceScreen('campaign-map');
+  };
+
+  const startCampaignLevel = async (level: CampaignLevelDefinition) => {
+    const profile = activeProfileRef.current;
+    if (!profile || campaignLevelStarting || !hasCampaignFlowContent(level.id)) return;
+    setCampaignLevelStarting(true);
+    setCampaignLevelError(null);
+    try {
+      await campaignRepository.enterLevel(
+        profile.id,
+        FIRST_CAMPAIGN_ID,
+        level.id,
+        new Date().toISOString()
+      );
+      const snapshot = await campaignRepository.loadCampaign(profile.id, FIRST_CAMPAIGN_ID);
+      if (activeProfileRef.current?.id !== profile.id) return;
+      setCampaignSnapshot(snapshot);
+      setActiveCampaignLevel(level);
+      navigate('campaign-level');
+    } catch (error) {
+      console.warn('無法進入闖關關卡', error);
+      setCampaignLevelError('無法準備這個關卡，請重新嘗試。');
+    } finally {
+      setCampaignLevelStarting(false);
+    }
+  };
+
+  const markCampaignTutorialSeen = async (tutorialId: string) => {
+    const profile = activeProfileRef.current;
+    if (!profile) throw new Error('找不到目前玩家');
+    await campaignRepository.markContentSeen(
+      profile.id,
+      'tutorial',
+      tutorialId,
+      new Date().toISOString()
+    );
+    const snapshot = await campaignRepository.loadCampaign(profile.id, FIRST_CAMPAIGN_ID);
+    if (activeProfileRef.current?.id === profile.id) setCampaignSnapshot(snapshot);
+  };
+
+  const completeCampaignLevel = async (input: CampaignCompletionInput) => {
+    const saved = await campaignRepository.completeLevel(input);
+    if (activeProfileRef.current?.id === input.profileId) {
+      setCampaignSnapshot(saved.snapshot);
+      setExperience(saved.experience);
+    }
+    return saved;
   };
 
   const startGame = (mode: GameMode, difficulty: Difficulty | null) => {
@@ -1059,6 +1217,15 @@ export function App() {
             </div>
           </header>
           <div className="menu-stack mode-menu-stack">
+            <button
+              type="button"
+              className="campaign-mode-button"
+              onClick={() => press(() => void openCampaignMode())}
+              disabled={campaignLoading}
+            >
+              <img src={CAMPAIGN_IMAGES.modeButton} alt="" draggable="false" />
+              <strong className="campaign-mode-progress">{campaignLoading ? '正在讀取進度…' : campaignEntryLabel}</strong>
+            </button>
             <ImageMenuButton
               image={assetUrl('assets/images/normal_mode_button.webp')}
               label="一般模式"
@@ -1087,7 +1254,79 @@ export function App() {
               onClick={() => press(() => history.back())}
             />
           </div>
+          {campaignError && (
+            <Modal title="無法開啟闖關模式" className="campaign-entry-error-modal">
+              <p className="modal-copy">{campaignError}</p>
+              <div className="modal-actions">
+                <button type="button" className="primary-button" onClick={() => void openCampaignMode()}>
+                  重新讀取
+                </button>
+                <button type="button" className="secondary-button" onClick={() => setCampaignError(null)}>
+                  返回模式選擇
+                </button>
+              </div>
+            </Modal>
+          )}
         </main>
+      )}
+
+      {screen === 'campaign-guest-warning' && activeProfile?.isGuest && (
+        <CampaignGuestNotice
+          onContinue={() => press(continueGuestCampaign)}
+          onBack={() => press(() => history.back())}
+        />
+      )}
+
+      {screen === 'campaign-intro' && activeProfile && (
+        <CampaignIntro
+          onComplete={completeCampaignIntro}
+          onBack={() => press(() => history.back())}
+        />
+      )}
+
+      {screen === 'campaign-intro-replay' && activeProfile && (
+        <CampaignIntro
+          replay
+          onComplete={() => history.back()}
+          onBack={() => press(() => history.back())}
+        />
+      )}
+
+      {screen === 'campaign-map' && activeProfile && campaignSnapshot && (
+        <CampaignMap
+          snapshot={campaignSnapshot}
+          experience={experience}
+          onBack={() => press(() => history.back())}
+          onReplayIntro={() => press(() => navigate('campaign-intro-replay'))}
+          onStartLevel={(level) => void startCampaignLevel(level)}
+          canStartLevel={(level) => hasCampaignFlowContent(level.id)}
+          levelStarting={campaignLevelStarting}
+          startError={campaignLevelError}
+          onDismissStartError={() => setCampaignLevelError(null)}
+        />
+      )}
+
+      {screen === 'campaign-level' && activeProfile && campaignSnapshot && activeCampaignLevel && (
+        <CampaignLevelFlow
+          key={`${activeProfile.id}:${activeCampaignLevel.id}`}
+          level={activeCampaignLevel}
+          profileId={activeProfile.id}
+          campaignId={FIRST_CAMPAIGN_ID}
+          appVersion={APP_VERSION}
+          tutorialSeen={campaignSnapshot.flags.some((flag) =>
+            flag.flagType === 'tutorial' &&
+            flag.contentId === campaignFlowContent(activeCampaignLevel).tutorialId
+          )}
+          initialBestStars={campaignSnapshot.levels.find((progress) =>
+            progress.levelId === activeCampaignLevel.id
+          )?.bestStars ?? 0}
+          initialCompleted={Boolean(campaignSnapshot.levels.find((progress) =>
+            progress.levelId === activeCampaignLevel.id
+          )?.firstCompletedAt)}
+          onTutorialSeen={markCampaignTutorialSeen}
+          onComplete={completeCampaignLevel}
+          onReturnToMap={() => press(() => history.back())}
+        />
       )}
 
       {screen === 'rank-guide' && activeProfile && (

@@ -14,6 +14,7 @@ import {
   XP_EVENT_STORE
 } from './database';
 import { GUEST_PROFILE_ID } from './profileRepository';
+import { guestSessionStore } from './guestSessionStore';
 
 interface StoredExperience {
   profileId: string;
@@ -53,18 +54,14 @@ export interface ResultRepository {
 }
 
 class IndexedDbResultRepository implements ResultRepository {
-  private guestResults: GameResult[] = [];
-  private guestEvents = new Map<string, GameResult>();
-  private guestTotalXp = 0;
-
   async save(result: GameResult): Promise<SavedGameResult> {
     const canonicalResult = {
       ...result,
       xpAwarded: calculateGameExperience(result)
     };
     if (result.profileId === GUEST_PROFILE_ID) {
-      const previous = experienceProgress(this.guestTotalXp);
-      const existing = this.guestEvents.get(result.xpEventId);
+      const previous = experienceProgress(guestSessionStore.totalXp);
+      const existing = guestSessionStore.gameEvents.get(result.xpEventId);
       if (existing) {
         this.assertMatchingResult(existing, canonicalResult);
         return {
@@ -74,12 +71,12 @@ class IndexedDbResultRepository implements ResultRepository {
           duplicate: true
         };
       }
-      this.guestEvents.set(result.xpEventId, canonicalResult);
-      this.guestResults.push(canonicalResult);
-      this.guestTotalXp += canonicalResult.xpAwarded;
+      guestSessionStore.gameEvents.set(result.xpEventId, canonicalResult);
+      guestSessionStore.gameResults.push(canonicalResult);
+      guestSessionStore.totalXp += canonicalResult.xpAwarded;
       return {
         result: canonicalResult,
-        experience: experienceProgress(this.guestTotalXp),
+        experience: experienceProgress(guestSessionStore.totalXp),
         previousRankId: previous.rankId,
         duplicate: false
       };
@@ -93,7 +90,7 @@ class IndexedDbResultRepository implements ResultRepository {
   }
 
   async experience(profileId: string): Promise<ExperienceProgress> {
-    if (profileId === GUEST_PROFILE_ID) return experienceProgress(this.guestTotalXp);
+    if (profileId === GUEST_PROFILE_ID) return experienceProgress(guestSessionStore.totalXp);
     const database = await openDatabase();
     try {
       const stored = await requestResult(
@@ -113,7 +110,7 @@ class IndexedDbResultRepository implements ResultRepository {
     limit = 5
   ): Promise<GameResult[]> {
     if (profileId === GUEST_PROFILE_ID) {
-      return this.filterLeaderboard(this.guestResults, page, limit);
+      return this.filterLeaderboard(guestSessionStore.gameResults, page, limit);
     }
     const database = await openDatabase();
     try {
@@ -127,9 +124,7 @@ class IndexedDbResultRepository implements ResultRepository {
   }
 
   clearGuestResults(): void {
-    this.guestResults = [];
-    this.guestEvents.clear();
-    this.guestTotalXp = 0;
+    guestSessionStore.clear();
   }
 
   private assertMatchingEvent(event: ExperienceEvent, result: GameResult): void {

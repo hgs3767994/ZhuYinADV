@@ -45,6 +45,9 @@ class AudioService {
   private readonly bufferPromises = new Map<string, Promise<AudioBuffer>>();
   private context: AudioContext | null = null;
   private activeVoice: AudioBufferSourceNode | null = null;
+  private activeVoiceFinish: (() => void) | null = null;
+  private activeFallbackVoice: HTMLAudioElement | null = null;
+  private activeFallbackVoiceFinish: (() => void) | null = null;
   private voiceRequestId = 0;
   private unlocked = false;
   private bgmStartTimer: number | null = null;
@@ -134,16 +137,30 @@ class AudioService {
   }
 
   speak(symbol: string): void {
-    const file = ZHUYIN_AUDIO_FILES[symbol];
-    if (!file) return;
+    if (!ZHUYIN_AUDIO_FILES[symbol]) return;
+    void this.speakSequence([symbol]);
+  }
+
+  async speakSequence(symbols: readonly string[], gapMs = 180): Promise<void> {
+    const sources = symbols.map((symbol) => {
+      const file = ZHUYIN_AUDIO_FILES[symbol];
+      if (!file) throw new Error(`找不到注音讀音：${symbol}`);
+      return assetUrl(`assets/audio/zhuyin/${file}.mp3`);
+    });
     const requestId = ++this.voiceRequestId;
     this.stopVoice();
-    void this.playBuffer(
-      assetUrl(`assets/audio/zhuyin/${file}.mp3`),
-      1,
-      'voice',
-      requestId
-    );
+    for (let index = 0; index < sources.length; index += 1) {
+      if (requestId !== this.voiceRequestId) return;
+      await this.playVoiceAndWait(sources[index], requestId);
+      if (index + 1 < sources.length && requestId === this.voiceRequestId) {
+        await new Promise<void>((resolve) => window.setTimeout(resolve, gapMs));
+      }
+    }
+  }
+
+  stopSpeech(): void {
+    this.voiceRequestId += 1;
+    this.stopVoice();
   }
 
   playDing(): void {
@@ -326,13 +343,84 @@ class AudioService {
   }
 
   private stopVoice(): void {
-    if (!this.activeVoice) return;
-    try {
-      this.activeVoice.stop();
-    } catch {
-      // The node may already have ended between frames.
+    if (this.activeVoice) {
+      const finish = this.activeVoiceFinish;
+      try {
+        this.activeVoice.stop();
+      } catch {
+        // The node may already have ended between frames.
+      }
+      finish?.();
+      this.activeVoice = null;
+      this.activeVoiceFinish = null;
     }
-    this.activeVoice = null;
+    if (this.activeFallbackVoice) {
+      const finish = this.activeFallbackVoiceFinish;
+      this.activeFallbackVoice.pause();
+      this.activeFallbackVoice.currentTime = 0;
+      finish?.();
+      this.activeFallbackVoice = null;
+      this.activeFallbackVoiceFinish = null;
+    }
+  }
+
+  private async playVoiceAndWait(source: string, requestId: number): Promise<void> {
+    const context = this.ensureContext();
+    if (!context) return this.playFallbackVoiceAndWait(source, requestId);
+    try {
+      if (context.state === 'suspended') await context.resume();
+      const buffer = await this.loadBuffer(source);
+      if (requestId !== this.voiceRequestId) return;
+      await new Promise<void>((resolve) => {
+        const node = context.createBufferSource();
+        const gain = context.createGain();
+        let finished = false;
+        const finish = () => {
+          if (finished) return;
+          finished = true;
+          node.disconnect();
+          gain.disconnect();
+          if (this.activeVoice === node) this.activeVoice = null;
+          if (this.activeVoiceFinish === finish) this.activeVoiceFinish = null;
+          resolve();
+        };
+        node.buffer = buffer;
+        gain.gain.value = 1;
+        node.connect(gain);
+        gain.connect(context.destination);
+        this.activeVoice = node;
+        this.activeVoiceFinish = finish;
+        node.onended = finish;
+        node.start();
+      });
+    } catch {
+      if (requestId !== this.voiceRequestId) return;
+      await this.playFallbackVoiceAndWait(source, requestId);
+    }
+  }
+
+  private playFallbackVoiceAndWait(source: string, requestId: number): Promise<void> {
+    return new Promise((resolve) => {
+      if (requestId !== this.voiceRequestId) {
+        resolve();
+        return;
+      }
+      const audio = new Audio(source);
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        if (this.activeFallbackVoice === audio) this.activeFallbackVoice = null;
+        if (this.activeFallbackVoiceFinish === finish) this.activeFallbackVoiceFinish = null;
+        resolve();
+      };
+      this.activeFallbackVoice = audio;
+      this.activeFallbackVoiceFinish = finish;
+      audio.volume = 1;
+      audio.onended = finish;
+      audio.onerror = finish;
+      audio.play().catch(finish);
+    });
   }
 
   private playFallback(source: string, volume: number): void {
