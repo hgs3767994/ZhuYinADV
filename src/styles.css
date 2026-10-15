@@ -1410,6 +1410,19 @@ button:disabled {
   opacity: 0.55;
 }
 
+.campaign-gameplay-edge-button.campaign-gameplay-pause-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.campaign-gameplay-pause-button img {
+  display: block;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
 .campaign-gameplay-header-spacer {
   display: block;
   width: 44px;
@@ -1484,6 +1497,16 @@ button:disabled {
 .campaign-status-fragment .filled {
   color: #d8b4fe;
   text-shadow: 0 0 9px #a855f7;
+}
+
+.campaign-status-fragment img {
+  width: 27px;
+  height: 27px;
+}
+
+.campaign-status-fragment .empty img {
+  filter: grayscale(1);
+  opacity: 0.25;
 }
 
 .campaign-status-distance .filled {
@@ -2107,8 +2130,8 @@ button:disabled {
 .memory-explore-grid {
   display: grid;
   padding: 12px;
-  grid-template-columns: repeat(3, clamp(72px, 21vw, 88px));
-  grid-template-rows: repeat(3, clamp(72px, 21vw, 88px));
+  grid-template-columns: repeat(3, clamp(70px, 20vw, 82px));
+  grid-auto-rows: auto;
   gap: clamp(12px, 3.5vw, 16px);
   border: 2px solid #6286b0;
   border-radius: 22px;
@@ -2117,38 +2140,52 @@ button:disabled {
 }
 
 .memory-explore-card {
-  display: grid;
+  position: relative;
+  display: block;
   width: 100%;
-  height: 100%;
-  border-radius: 13px;
-  place-items: center;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .memory-explore-card {
-  border: 2px solid #8fd4ff;
   cursor: pointer;
   font-family: inherit;
-  font-size: 2rem;
+  font-size: 2.15rem;
   font-weight: 950;
-  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+  transition: transform 180ms ease, filter 180ms ease;
 }
 
 .memory-explore-card.face-up {
-  background: linear-gradient(145deg, #e7f6ff, #9bd8ff);
-  box-shadow: 0 4px 0 #38638a;
-  color: #15365b;
+  color: #ff9bd0;
 }
 
-.memory-explore-card.face-up.memory-symbol-color-0 { color: #b81365; }
-.memory-explore-card.face-up.memory-symbol-color-1 { color: #bfab25; }
-.memory-explore-card.face-up.memory-symbol-color-2 { color: #026c7c; }
+.memory-explore-card.face-up.memory-symbol-color-0 { color: #ff9bd0; }
+.memory-explore-card.face-up.memory-symbol-color-1 { color: #ffe27a; }
+.memory-explore-card.face-up.memory-symbol-color-2 { color: #7deaf2; }
 
 .memory-explore-card.face-down {
-  border-color: #9c83c8;
-  background: linear-gradient(145deg, #65598b, #353052);
-  box-shadow: 0 4px 0 #211b38;
-  color: #d8b4fe;
-  text-shadow: 0 0 9px #a855f7;
+  color: transparent;
+}
+
+.memory-explore-card-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.memory-explore-card-symbol {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  text-shadow: 0 2px 0 #132f56, 0 0 5px #132f56;
+  pointer-events: none;
 }
 
 .memory-explore-card:disabled { cursor: default; }

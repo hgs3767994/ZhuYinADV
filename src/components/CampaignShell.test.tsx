@@ -230,6 +230,8 @@ describe('campaign shared gameplay controls', () => {
 
     expect(gameplayHtml).not.toContain('campaign-how-to-button');
     expect(gameplayHtml).toContain('campaign-gameplay-header-spacer');
+    expect(gameplayHtml).toContain('pause-button.png');
+    expect(gameplayHtml).not.toContain('&gt;Ⅱ&lt;');
     expect(pausedHtml).toContain('查看玩法');
   });
 
@@ -270,6 +272,17 @@ describe('campaign shared gameplay controls', () => {
     expect((html.match(/<img src="\/assets\/images\/campaign\/energy-full\.png"/g) ?? [])).toHaveLength(3);
     expect((html.match(/<img src="\/assets\/images\/campaign\/energy-empty\.png"/g) ?? [])).toHaveLength(2);
     expect(html).not.toContain('&gt;3/5&lt;');
+  });
+
+  it('renders collected and pending sound fragments from the shared fragment art', () => {
+    const html = renderToStaticMarkup(
+      <CampaignStatusSlots kind="fragment" current={1} maximum={3} />
+    );
+
+    expect(html).toContain('聲音碎片 1／3');
+    expect((html.match(/<img[^>]+sound-fragment-small\.png/g) ?? [])).toHaveLength(3);
+    expect((html.match(/class="filled"/g) ?? [])).toHaveLength(1);
+    expect((html.match(/class="empty"/g) ?? [])).toHaveLength(2);
   });
 
 });

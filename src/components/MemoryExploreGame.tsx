@@ -236,18 +236,28 @@ export function MemoryExploreGame({
       />
 
       <section className="memory-explore-grid" aria-label="注音符文卡片區">
-        {layout.map((card, position) => (
-          <button
-            type="button"
-            key={card.id}
-            className={`memory-explore-card memory-symbol-color-${symbolColorIndexes.get(card.symbol) ?? 0} ${(cardsFaceUp || selectedCardIds.includes(card.id)) ? 'face-up' : 'face-down'}`}
-            disabled={controlsDisabled}
-            onClick={() => selectCard(card.id)}
-            aria-label={cardsFaceUp || selectedCardIds.includes(card.id) ? `符文 ${card.symbol}` : `第 ${position + 1} 張蓋住的符文卡`}
-          >
-            <span aria-hidden="true">{cardsFaceUp || selectedCardIds.includes(card.id) ? card.symbol : '✦'}</span>
-          </button>
-        ))}
+        {layout.map((card, position) => {
+          const faceUp = cardsFaceUp || selectedCardIds.includes(card.id);
+          return (
+            <button
+              type="button"
+              key={card.id}
+              className={`memory-explore-card memory-symbol-color-${symbolColorIndexes.get(card.symbol) ?? 0} ${faceUp ? 'face-up' : 'face-down'}`}
+              disabled={controlsDisabled}
+              onClick={() => selectCard(card.id)}
+              aria-label={faceUp ? `符文 ${card.symbol}` : `第 ${position + 1} 張蓋住的符文卡`}
+            >
+              <img
+                className="memory-explore-card-art"
+                src={faceUp ? CAMPAIGN_IMAGES.runeCardFront : CAMPAIGN_IMAGES.runeCardBack}
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+              />
+              {faceUp && <span className="memory-explore-card-symbol" aria-hidden="true">{card.symbol}</span>}
+            </button>
+          );
+        })}
       </section>
 
       <p className="memory-explore-feedback memory-instruction" aria-live="polite">

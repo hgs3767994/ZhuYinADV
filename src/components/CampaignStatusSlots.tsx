@@ -20,7 +20,13 @@ const STATUS_COPY: Record<CampaignStatusKind, {
   energy: { label: '聲音能量', full: '●', empty: '○', fullImage: CAMPAIGN_IMAGES.energyFull, emptyImage: CAMPAIGN_IMAGES.energyEmpty },
   shield: { label: '護盾', full: '◆', empty: '◇', fullImage: CAMPAIGN_IMAGES.shieldFull, emptyImage: CAMPAIGN_IMAGES.shieldBroken },
   seal: { label: '封印', full: '✦', empty: '◇', fullImage: CAMPAIGN_IMAGES.sealLocked, emptyImage: CAMPAIGN_IMAGES.sealUnlocked },
-  fragment: { label: '聲音碎片', full: '◆', empty: '◇' },
+  fragment: {
+    label: '聲音碎片',
+    full: '◆',
+    empty: '◇',
+    fullImage: CAMPAIGN_IMAGES.soundFragmentSmall,
+    emptyImage: CAMPAIGN_IMAGES.soundFragmentSmall
+  },
   distance: { label: '安全距離', full: '●', empty: '○' }
 };
 

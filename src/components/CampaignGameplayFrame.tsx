@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { CampaignLevelDefinition } from '../game/campaignConfig';
 import type { CampaignFlowOverlay } from '../game/campaignFlow';
+import { CAMPAIGN_IMAGES } from '../game/campaignAssets';
 import { Modal } from './Modal';
 
 export interface CampaignGameplayContext {
@@ -87,12 +88,12 @@ export function CampaignGameplayFrame({
       <header className="campaign-gameplay-header">
         <button
           type="button"
-          className="campaign-gameplay-edge-button"
+          className="campaign-gameplay-edge-button campaign-gameplay-pause-button"
           disabled={covered}
           onClick={onOpenPause}
           aria-label="暫停遊戲"
         >
-          Ⅱ
+          <img src={CAMPAIGN_IMAGES.pauseButton} alt="" aria-hidden="true" draggable="false" />
         </button>
         <div className="campaign-gameplay-heading">
           <strong>第 {level.number} 關・{level.title}</strong>

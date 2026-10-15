@@ -13,7 +13,13 @@ export const CAMPAIGN_IMAGES = {
   sealUnlocked: campaignImage('seal-unlocked.png'),
   star: campaignImage('star.png'),
   shieldFull: campaignImage('shield-full.png'),
-  shieldBroken: campaignImage('shield-broken.png')
+  shieldBroken: campaignImage('shield-broken.png'),
+  soundFragmentSmall: campaignImage('sound-fragment-small.png'),
+  soundFragmentLarge: campaignImage('sound-fragment-large.png'),
+  runeCardFront: campaignImage('rune-card-front.png'),
+  runeCardBack: campaignImage('rune-card-back.png'),
+  pauseButton: campaignImage('pause-button.png')
 } as const;
 
-export const CAMPAIGN_IMAGE_PRELOADS = Object.values(CAMPAIGN_IMAGES);
+export const CAMPAIGN_IMAGE_PRELOADS = Object.values(CAMPAIGN_IMAGES)
+  .filter((image) => image !== CAMPAIGN_IMAGES.soundFragmentLarge);

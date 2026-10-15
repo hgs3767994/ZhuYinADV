@@ -35,6 +35,8 @@ describe('memory explore gameplay shell', () => {
     );
     expect(new Set(colorIndexes).size).toBe(3);
     expect(colorCounts.sort((left, right) => left - right)).toEqual([3, 3, 3]);
+    expect((html.match(/<img[^>]+rune-card-front\.png/g) ?? [])).toHaveLength(9);
+    expect(html).not.toContain('rune-card-back.png');
     expect((html.match(/<img[^>]+seal-locked\.png/g) ?? [])).toHaveLength(5);
     expect(html).toContain('仔細記住九張符文的位置');
     expect(html).not.toContain('記住符文的位置');
