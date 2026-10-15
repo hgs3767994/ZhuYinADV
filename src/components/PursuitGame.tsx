@@ -234,16 +234,11 @@ export function PursuitGame({
       </section>
 
       <p className="pursuit-feedback" aria-live="polite">
-        {feedback === 'wind' ? '連續答對三次！疾風加速拉開了安全距離。' :
-          feedback === 'correct' ? variant === 'chase'
-            ? '注音水晶照亮安全道路，與追兵拉開距離！'
-            : '注音水晶照亮了安全道路！' :
-            feedback === 'wrong' ? variant === 'chase'
-              ? '道路受阻，追兵趁機接近了。'
-              : '道路受阻，後方黑霧正在接近。' :
-              feedback === 'timeout' ? variant === 'chase'
-                ? '時間到了，追兵趁機接近了。'
-                : '時間到了，後方黑霧正在接近。' : ''}
+        {feedback === 'wind' ? <>連續答對3次，發動<strong>疾風速度</strong>拉開了距離</> :
+          feedback === 'correct' ? '成功拉開距離！' :
+            feedback === 'wrong' || feedback === 'timeout'
+              ? pursuitState.safetyDistance >= 3 ? '距離被縮短了！' : '快被追上了！'
+              : ''}
       </p>
     </div>
   );

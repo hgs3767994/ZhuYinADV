@@ -78,6 +78,7 @@ describe('campaign level flow', () => {
     expect(content.tutorialPages?.[1].steps.join('')).toContain('回音護盾');
     expect(content.tutorialPages?.[0].steps.join('')).not.toContain('選錯符文');
     expect(content.howToSteps?.join('')).toContain('符音穿透');
+    expect(content.howToSteps?.join('')).toContain('消耗一次玩家回合行動');
     expect(content.postStory).toHaveLength(4);
     expect(content.postStory[3].text).toContain('更多敵人正在趕來');
   });
@@ -139,6 +140,7 @@ describe('campaign level flow', () => {
     expect(content.tutorialSteps.join('')).toContain('生命與聲音能量會延續');
     expect(content.howToSteps?.join('')).toContain('護盾敵人');
     expect(content.howToSteps?.join('')).toContain('符音穿透');
+    expect(content.howToSteps?.join('')).toContain('消耗一次玩家回合行動');
     expect(content.postStory).toHaveLength(4);
     expect(content.postStory[2].text).toContain('五組迷霧封印');
     expect(content.postStory[3].text).toContain('迷霧將軍就在結界後面');
@@ -169,6 +171,7 @@ describe('campaign level flow', () => {
     expect(content.preStory.map((page) => `${page.speaker ?? ''}${page.text}`).join('')).not.toContain('小亞');
     expect(content.mission).toContain('打倒迷霧將軍');
     expect(content.tutorialSteps).toHaveLength(6);
+    expect(content.tutorialSteps.join('')).toContain('消耗一次玩家回合行動');
     expect(content.tutorialSteps.join('')).toContain('從第一波重新挑戰');
     expect(content.postStory).toHaveLength(7);
     expect(content.postStory.map((page) => `${page.speaker ?? ''}${page.text}`).join('')).not.toContain('小亞');

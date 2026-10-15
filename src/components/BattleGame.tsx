@@ -56,7 +56,7 @@ const TIP_CONTENT: Record<BattleTutorialTip, { title: string; lines: readonly st
   },
   energy: {
     title: '符音穿透可以使用了',
-    lines: ['消耗 3 點聲音能量，直接對選定敵人造成 2 點傷害！']
+    lines: ['消耗 3 點聲音能量，直接對選定敵人造成 2 點傷害，並消耗一次玩家回合行動！']
   },
   shield: {
     title: '護盾敵人',
@@ -317,14 +317,7 @@ export function BattleGame({
     setEnemies(attackedEnemies);
     await waitWhileActive(850);
     if (!mountedRef.current) return;
-    const targetSurvived = attackedEnemies.some((enemy) => enemy.id === selectedEnemyId && enemy.life > 0);
-    if (targetSurvived) {
-      setFeedback('none');
-      busyRef.current = false;
-      changePhase('answering');
-      return;
-    }
-    continueBattle(attackedEnemies, questionIndex + 1, false);
+    continueBattle(attackedEnemies, questionIndex + 1, true);
   };
 
   const replayTarget = useCallback(() => audioService.speakSequence([question.answer]), [question.answer]);

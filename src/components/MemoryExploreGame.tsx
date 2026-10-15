@@ -261,9 +261,8 @@ export function MemoryExploreGame({
       </section>
 
       <p className="memory-explore-feedback memory-instruction" aria-live="polite">
-        {feedback === 'wrong' ? '配對不正確，卡片即將重新蓋上。' :
-          feedback === 'attack' ? `結界釋放黑霧攻擊，剩餘 ${lives} 點生命。` :
-          feedback === 'correct' ? variant === 'battle' ? '配對成功，結界的一層封印破裂！' : '配對成功，迷霧封印破裂！' :
+        {feedback === 'attack' ? `結界釋放黑霧攻擊，剩餘 ${lives} 點生命。` :
+          feedback === 'wrong' || feedback === 'correct' ? '' :
             phase === 'memorize' ? '仔細記住九張符文的位置' :
               wrongPairCount > 0 ? '找出兩張與目標讀音相同的符文卡。' : ''}
       </p>

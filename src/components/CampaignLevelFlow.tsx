@@ -342,7 +342,7 @@ export function CampaignLevelFlow({
       progressLabel={sequenceLockMode ? undefined : mazeMode
         ? `聲音碎片 ${collectedFragments}／3`
         : pursuitMode
-          ? `第 ${pursuitStatus.segmentNumber}／10 路段，連續成功 ${pursuitStatus.successStreak} 次，安全距離 ${pursuitStatus.safetyDistance}／5`
+          ? `第 ${pursuitStatus.segmentNumber}／10 路段`
           : battleMode
             ? `第 ${battleStatus.waveNumber}／5 波，生命 ${battleStatus.lives}／5，聲音能量 ${battleStatus.energy}／5`
           : memoryBattleMode
@@ -353,8 +353,6 @@ export function CampaignLevelFlow({
         : pursuitMode
           ? <div className="pursuit-top-status">
             <span>第 {pursuitStatus.segmentNumber}／10 路段</span>
-            <span>連續 {pursuitStatus.successStreak}</span>
-            <CampaignStatusSlots kind="distance" current={pursuitStatus.safetyDistance} maximum={5} />
           </div>
           : battleMode
             ? <div className="battle-top-status">
