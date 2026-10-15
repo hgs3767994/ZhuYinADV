@@ -37,6 +37,7 @@ import type {
   LeaderboardPage
 } from './game/types';
 import {
+  FIRST_CAMPAIGN,
   FIRST_CAMPAIGN_ID,
   type CampaignLevelDefinition
 } from './game/campaignConfig';
@@ -182,7 +183,7 @@ const ADVENTURE_IMAGES = Array.from(new Set([
   ...AVATAR_NOSE_ASSETS,
   ...AVATAR_MOUTH_ASSETS
 ]));
-const IMAGE_ASSET_VERSION = '20';
+const IMAGE_ASSET_VERSION = '21';
 const AUDIO_ASSET_VERSION = '3';
 const IMAGE_ASSET_VERSION_KEY = 'zhuyin-image-asset-version';
 const AUDIO_ASSET_VERSION_KEY = 'zhuyin-audio-asset-version';
@@ -269,7 +270,7 @@ export function App() {
   const pendingPageLoadRef = useRef<PendingPageLoad | null>(null);
   const gameHistoryPositionRef = useRef<GameHistoryPosition>(null);
   const campaignGameplayBackHandlerRef = useRef<(() => void) | null>(null);
-  const campaignPreStoryBackHandlerRef = useRef<(() => void) | null>(null);
+  const campaignStoryBackHandlerRef = useRef<(() => void) | null>(null);
   const campaignMapBackHandlerRef = useRef<(() => void) | null>(null);
   const campaignHistoryPositionRef = useRef<GameHistoryPosition>(null);
   const campaignHistoryRestorationPendingRef = useRef(false);
@@ -599,9 +600,9 @@ export function App() {
       if (
         screenRef.current === 'campaign-level' &&
         !campaignExitPendingRef.current &&
-        campaignPreStoryBackHandlerRef.current
+        campaignStoryBackHandlerRef.current
       ) {
-        campaignPreStoryBackHandlerRef.current();
+        campaignStoryBackHandlerRef.current();
         campaignPageRestorationPendingRef.current = true;
         history.forward();
         applyScreen('campaign-level');
@@ -899,9 +900,11 @@ export function App() {
 
   const campaignEntryLabel = (() => {
     if (!campaignSnapshot?.chapter) return '開始第一章';
-    if (campaignSnapshot.chapter.completedAt) return '第一章完成';
-    const completed = campaignSnapshot.levels.filter((level) => level.bestStars > 0).length;
-    return `第一章　已通關 ${completed}/11`;
+    const completedLevelNumbers = campaignSnapshot.levels
+      .filter((progress) => progress.bestStars > 0)
+      .map((progress) => FIRST_CAMPAIGN.levels.find((level) => level.id === progress.levelId)?.number ?? 0);
+    const latestCompletedLevel = Math.max(0, ...completedLevelNumbers);
+    return latestCompletedLevel > 0 ? `已完成 1-${latestCompletedLevel}` : '開始第一章';
   })();
 
   const openCampaignMode = async () => {
@@ -1442,8 +1445,8 @@ export function App() {
           onGameplayBackHandlerChange={(handler) => {
             campaignGameplayBackHandlerRef.current = handler;
           }}
-          onPreStoryBackHandlerChange={(handler) => {
-            campaignPreStoryBackHandlerRef.current = handler;
+          onStoryBackHandlerChange={(handler) => {
+            campaignStoryBackHandlerRef.current = handler;
           }}
           onReturnToMap={() => {
             campaignExitPendingRef.current = true;

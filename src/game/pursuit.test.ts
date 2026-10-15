@@ -70,10 +70,11 @@ describe('pursuit and escort gameplay', () => {
 
   it('applies distance, streak and wind boost rules without exceeding five spaces', () => {
     let state = initialPursuitState();
+    expect(state.safetyDistance).toBe(2);
     state = resolvePursuitSegment(state, true);
-    expect(state).toMatchObject({ safetyDistance: 4, successStreak: 1, maxSuccessStreak: 1, windBoost: false });
+    expect(state).toMatchObject({ safetyDistance: 3, successStreak: 1, maxSuccessStreak: 1, windBoost: false });
     state = resolvePursuitSegment(state, true);
-    expect(state).toMatchObject({ safetyDistance: 5, successStreak: 2, windBoost: false });
+    expect(state).toMatchObject({ safetyDistance: 4, successStreak: 2, windBoost: false });
     state = resolvePursuitSegment(state, true);
     expect(state).toMatchObject({ safetyDistance: 5, successStreak: 3, maxSuccessStreak: 3, windBoost: true });
     state = resolvePursuitSegment(state, false);
@@ -82,7 +83,6 @@ describe('pursuit and escort gameplay', () => {
 
   it('reaches immediate defeat at zero and uses the confirmed star thresholds', () => {
     let state = initialPursuitState();
-    state = resolvePursuitSegment(state, false);
     state = resolvePursuitSegment(state, false);
     state = resolvePursuitSegment(state, false);
     expect(state.safetyDistance).toBe(0);

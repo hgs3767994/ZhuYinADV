@@ -4,7 +4,7 @@ import type { RandomSource } from './sequenceLock';
 export const LEVEL_FOUR_SYMBOLS = ['ㄧ', 'ㄨ', 'ㄩ', 'ㄚ', 'ㄛ', 'ㄞ', 'ㄟ', 'ㄠ', 'ㄢ', 'ㄣ'] as const;
 export const LEVEL_SIX_SYMBOLS = [...LEVEL_FOUR_SYMBOLS, 'ㄦ'] as const;
 export const PURSUIT_SEGMENT_COUNT = 10;
-export const PURSUIT_INITIAL_SAFETY = 3;
+export const PURSUIT_INITIAL_SAFETY = 2;
 export const PURSUIT_MAX_SAFETY = 5;
 
 export interface PursuitRoad {

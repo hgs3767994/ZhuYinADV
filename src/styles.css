@@ -1012,7 +1012,7 @@ button:disabled {
 .campaign-map-artboard {
   position: relative;
   width: min(100%, 450px);
-  aspect-ratio: 990 / 2421;
+  aspect-ratio: 900 / 2379;
   margin: 0 auto;
   overflow: hidden;
   background: #212a37;
@@ -1152,6 +1152,7 @@ button:disabled {
   margin: 0;
   color: #dbeafe;
   line-height: 1.65;
+  text-align: left;
 }
 
 .campaign-level-best {

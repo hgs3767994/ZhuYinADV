@@ -236,6 +236,8 @@ describe('campaign level flow', () => {
 
   it('moves backward within post-story without leaving the saved story phase', () => {
     let state: CampaignFlowState = { ...createCampaignFlowState(false), phase: 'post-story' };
+    state = campaignFlowReducer(state, { type: 'previous-post-story' });
+    expect(state).toMatchObject({ phase: 'post-story', storyPage: 0 });
     state = campaignFlowReducer(state, { type: 'advance-post-story', pageCount: 3 });
     state = campaignFlowReducer(state, { type: 'previous-post-story' });
     expect(state).toMatchObject({ phase: 'post-story', storyPage: 0 });

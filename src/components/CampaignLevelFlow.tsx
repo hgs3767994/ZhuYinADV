@@ -4,6 +4,7 @@ import { campaignFlowContent, campaignFlowReducer, campaignSystemBackAction, cre
 import { saveCampaignCompletionWithRetry } from '../game/campaignSave';
 import type { CampaignCompletionInput, CampaignPerformance, CampaignStars, SavedCampaignCompletion } from '../game/campaignTypes';
 import { MEMORY_GROUP_COUNT } from '../game/memoryExplore';
+import { PURSUIT_INITIAL_SAFETY } from '../game/pursuit';
 import { BattleGame, type BattleGameStatus, type BattleTutorialTip } from './BattleGame';
 import { CampaignGameplayFrame } from './CampaignGameplayFrame';
 import { CampaignDefeatScreen, CampaignSuccessScreen } from './CampaignOutcomeScreen';
@@ -28,7 +29,7 @@ interface CampaignLevelFlowProps {
   onGameplayHistoryArm?: () => void;
   onGameplayHistoryDisarm?: () => void;
   onGameplayBackHandlerChange?: (handler: (() => void) | null) => void;
-  onPreStoryBackHandlerChange?: (handler: (() => void) | null) => void;
+  onStoryBackHandlerChange?: (handler: (() => void) | null) => void;
 }
 
 interface StorySequenceProps {
@@ -88,7 +89,7 @@ function StorySequence({ level, page, pageIndex, pageCount, finalLabel, onAdvanc
 export function CampaignLevelFlow({
   level, profileId, campaignId, appVersion, tutorialSeen, initialBestStars, initialCompleted,
   onTutorialSeen, onComplete, onReturnToMap, onGameplayHistoryArm, onGameplayHistoryDisarm,
-  onGameplayBackHandlerChange, onPreStoryBackHandlerChange
+  onGameplayBackHandlerChange, onStoryBackHandlerChange
 }: CampaignLevelFlowProps) {
   const content = useMemo(() => campaignFlowContent(level), [level]);
   const [state, dispatch] = useReducer(campaignFlowReducer, tutorialSeen, (seen) => createCampaignFlowState(!seen));
@@ -101,7 +102,7 @@ export function CampaignLevelFlow({
   const [collectedFragments, setCollectedFragments] = useState(0);
   const [pursuitStatus, setPursuitStatus] = useState<PursuitGameStatus>({
     segmentNumber: 1,
-    safetyDistance: 3,
+    safetyDistance: PURSUIT_INITIAL_SAFETY,
     successStreak: 0,
     maxSuccessStreak: 0
   });
@@ -132,22 +133,26 @@ export function CampaignLevelFlow({
     return () => onGameplayBackHandlerChange?.(null);
   }, [handleGameplaySystemBack, onGameplayBackHandlerChange, state.phase]);
 
-  const handlePreStorySystemBack = useCallback(() => {
-    setConfirmReturn((current) => !current);
-  }, []);
+  const handleStorySystemBack = useCallback(() => {
+    if (state.phase === 'pre-story') {
+      setConfirmReturn((current) => !current);
+      return;
+    }
+    if (state.phase === 'post-story') dispatch({ type: 'previous-post-story' });
+  }, [state.phase]);
 
   useEffect(() => {
-    onPreStoryBackHandlerChange?.(
-      state.phase === 'pre-story' ? handlePreStorySystemBack : null
+    onStoryBackHandlerChange?.(
+      state.phase === 'pre-story' || state.phase === 'post-story' ? handleStorySystemBack : null
     );
-    return () => onPreStoryBackHandlerChange?.(null);
-  }, [handlePreStorySystemBack, onPreStoryBackHandlerChange, state.phase]);
+    return () => onStoryBackHandlerChange?.(null);
+  }, [handleStorySystemBack, onStoryBackHandlerChange, state.phase]);
 
   const beginGameplay = useCallback(() => {
     setResultId(newResultId());
     setRemainingSeals(level.gameplayId === 'memory-explore' || level.gameplayId === 'memory-battle' ? MEMORY_GROUP_COUNT : 3);
     setCollectedFragments(0);
-    setPursuitStatus({ segmentNumber: 1, safetyDistance: 3, successStreak: 0, maxSuccessStreak: 0 });
+    setPursuitStatus({ segmentNumber: 1, safetyDistance: PURSUIT_INITIAL_SAFETY, successStreak: 0, maxSuccessStreak: 0 });
     setBattleStatus({ waveNumber: 1, lives: 5, energy: 0 });
     setMemoryBattleLives(5);
     setGameInputLocked(false);
