@@ -8,10 +8,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
+      manifestFilename: 'manifest-v2.webmanifest',
       manifest: {
         id: 'tw.app.zhuyin.adventure',
         name: '小小注音冒險家',
-        short_name: '注音冒險家',
+        short_name: '小小注音冒險家',
         description: '適合幼兒練習與熟悉注音符號的冒險遊戲',
         lang: 'zh-TW',
         start_url: '.',
@@ -37,15 +38,6 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
-          }
-        ],
-        screenshots: [
-          {
-            src: 'assets/images/screenshot.webp',
-            sizes: '540x1033',
-            type: 'image/webp',
-            form_factor: 'narrow',
-            label: '小小注音冒險家主畫面'
           }
         ]
       },
