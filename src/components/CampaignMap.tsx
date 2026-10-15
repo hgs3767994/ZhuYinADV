@@ -28,6 +28,7 @@ interface CampaignMapProps {
   levelStarting?: boolean;
   startError?: string | null;
   onDismissStartError?: () => void;
+  onSystemBackHandlerChange?: (handler: (() => void) | null) => void;
 }
 
 export function CampaignMap({
@@ -38,7 +39,8 @@ export function CampaignMap({
   canStartLevel,
   levelStarting = false,
   startError,
-  onDismissStartError
+  onDismissStartError,
+  onSystemBackHandlerChange
 }: CampaignMapProps) {
   const [selected, setSelected] = useState<CampaignLevelDefinition | null>(null);
   const nodeRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -64,6 +66,19 @@ export function CampaignMap({
       node.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
   }, [focusLevelId]);
+
+  useEffect(() => {
+    if (!selected) {
+      onSystemBackHandlerChange?.(null);
+      return;
+    }
+    const closeSelectedLevel = () => {
+      onDismissStartError?.();
+      setSelected(null);
+    };
+    onSystemBackHandlerChange?.(closeSelectedLevel);
+    return () => onSystemBackHandlerChange?.(null);
+  }, [onDismissStartError, onSystemBackHandlerChange, selected]);
 
   const selectedProgress = selected ? progressByLevel.get(selected.id) : undefined;
   const selectedUnlocked = Boolean(selectedProgress);

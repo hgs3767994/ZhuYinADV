@@ -206,7 +206,6 @@ export function MemoryExploreGame({
   };
 
   const cardsFaceUp = phase === 'memorize';
-  const targetAudible = phase !== 'memorize';
   const controlsDisabled = !inputEnabled || phase !== 'prompt' || audioPlaying;
 
   return (
@@ -226,17 +225,15 @@ export function MemoryExploreGame({
         <div className="memory-explore-npc" aria-label="聲音典籍魔法師">小亞</div>
       </div>
 
-      {targetAudible ? (
-        <CampaignAudioReplayButton
-          onReplay={replayTarget}
-          onStop={stopTarget}
-          paused={paused}
-          disabled={phase === 'judging'}
-          autoPlayKey={`${plan.id}:round-${roundIndex + 1}`}
-          label="重播目標讀音"
-          onPlaybackChange={setAudioPlaying}
-        />
-      ) : null}
+      <CampaignAudioReplayButton
+        onReplay={replayTarget}
+        onStop={stopTarget}
+        paused={paused}
+        disabled={phase !== 'prompt'}
+        autoPlayKey={phase === 'prompt' ? `${plan.id}:round-${roundIndex + 1}` : undefined}
+        label="重播目標讀音"
+        onPlaybackChange={setAudioPlaying}
+      />
 
       <section className="memory-explore-grid" aria-label="注音符文卡片區">
         {layout.map((card, position) => (
@@ -253,7 +250,7 @@ export function MemoryExploreGame({
         ))}
       </section>
 
-      <p className={`memory-explore-feedback ${phase === 'memorize' ? 'memory-instruction' : ''}`} aria-live="polite">
+      <p className="memory-explore-feedback memory-instruction" aria-live="polite">
         {feedback === 'wrong' ? '配對不正確，卡片即將重新蓋上。' :
           feedback === 'attack' ? `結界釋放黑霧攻擊，剩餘 ${lives} 點生命。` :
           feedback === 'correct' ? variant === 'battle' ? '配對成功，結界的一層封印破裂！' : '配對成功，迷霧封印破裂！' :

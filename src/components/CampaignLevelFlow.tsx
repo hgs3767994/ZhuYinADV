@@ -25,7 +25,10 @@ interface CampaignLevelFlowProps {
   onTutorialSeen: (tutorialId: string) => Promise<void>;
   onComplete: (input: CampaignCompletionInput) => Promise<SavedCampaignCompletion>;
   onReturnToMap: () => void;
+  onGameplayHistoryArm?: () => void;
+  onGameplayHistoryDisarm?: () => void;
   onGameplayBackHandlerChange?: (handler: (() => void) | null) => void;
+  onPreStoryBackHandlerChange?: (handler: (() => void) | null) => void;
 }
 
 interface StorySequenceProps {
@@ -84,7 +87,8 @@ function StorySequence({ level, page, pageIndex, pageCount, finalLabel, onAdvanc
 
 export function CampaignLevelFlow({
   level, profileId, campaignId, appVersion, tutorialSeen, initialBestStars, initialCompleted,
-  onTutorialSeen, onComplete, onReturnToMap, onGameplayBackHandlerChange
+  onTutorialSeen, onComplete, onReturnToMap, onGameplayHistoryArm, onGameplayHistoryDisarm,
+  onGameplayBackHandlerChange, onPreStoryBackHandlerChange
 }: CampaignLevelFlowProps) {
   const content = useMemo(() => campaignFlowContent(level), [level]);
   const [state, dispatch] = useReducer(campaignFlowReducer, tutorialSeen, (seen) => createCampaignFlowState(!seen));
@@ -128,6 +132,17 @@ export function CampaignLevelFlow({
     return () => onGameplayBackHandlerChange?.(null);
   }, [handleGameplaySystemBack, onGameplayBackHandlerChange, state.phase]);
 
+  const handlePreStorySystemBack = useCallback(() => {
+    setConfirmReturn((current) => !current);
+  }, []);
+
+  useEffect(() => {
+    onPreStoryBackHandlerChange?.(
+      state.phase === 'pre-story' ? handlePreStorySystemBack : null
+    );
+    return () => onPreStoryBackHandlerChange?.(null);
+  }, [handlePreStorySystemBack, onPreStoryBackHandlerChange, state.phase]);
+
   const beginGameplay = useCallback(() => {
     setResultId(newResultId());
     setRemainingSeals(level.gameplayId === 'memory-explore' || level.gameplayId === 'memory-battle' ? MEMORY_GROUP_COUNT : 3);
@@ -144,6 +159,7 @@ export function CampaignLevelFlow({
 
   const completeTutorial = async () => {
     if (tutorialSaving) return;
+    onGameplayHistoryArm?.();
     setTutorialSaving(true);
     setTutorialError(false);
     try {
@@ -152,6 +168,7 @@ export function CampaignLevelFlow({
       dispatch({ type: 'complete-tutorial' });
     } catch (error) {
       console.warn('無法保存闖關教學狀態', error);
+      onGameplayHistoryDisarm?.();
       setTutorialError(true);
     } finally {
       setTutorialSaving(false);
@@ -246,7 +263,10 @@ export function CampaignLevelFlow({
       <header className="campaign-level-flow-header"><button type="button" className="campaign-text-button" onClick={onReturnToMap}>返回地圖</button><strong>第 {level.number} 關・{level.title}</strong><span aria-hidden="true" /></header>
       <section className="campaign-mission-card"><h1>{level.title}</h1><small>任務提示</small><p>{content.mission}</p></section>
       <footer className="campaign-level-flow-footer"><button type="button" className="primary-button" onClick={() => {
-        if (!state.tutorialRequired) beginGameplay();
+        if (!state.tutorialRequired) {
+          onGameplayHistoryArm?.();
+          beginGameplay();
+        }
         dispatch({ type: 'continue-mission' });
       }}>{state.tutorialRequired ? '查看玩法' : '開始挑戰'}</button></footer>
     </main>
@@ -344,7 +364,8 @@ export function CampaignLevelFlow({
         : memoryExploreMode ? null : <CampaignStatusSlots kind="seal" current={remainingSeals} maximum={3} />}
       tutorialSteps={content.howToSteps ?? content.tutorialSteps}
       overlay={state.overlay} onOpenPause={() => dispatch({ type: 'open-pause' })}
-      onOpenHowTo={(origin) => dispatch({ type: 'open-how-to', origin })} onCloseHowTo={() => dispatch({ type: 'close-how-to' })}
+      onOpenHowTo={(origin) => dispatch({ type: 'open-how-to', origin })}
+      onCloseHowTo={() => dispatch({ type: 'close-how-to' })}
       onResume={() => dispatch({ type: 'resume' })} onRequestAbandon={() => dispatch({ type: 'request-abandon' })}
       onCancelAbandon={() => dispatch({ type: 'cancel-abandon' })} onAbandon={onReturnToMap} inputLocked={gameInputLocked}>
       {({ paused, inputEnabled }) => resultId && (mazeMode ? (

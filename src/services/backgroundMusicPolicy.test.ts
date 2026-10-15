@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { shouldPlayBackgroundMusic } from './backgroundMusicPolicy';
 
 describe('background music policy', () => {
-  it('keeps background music off throughout campaign mode', () => {
-    expect(shouldPlayBackgroundMusic('campaign-guest-warning')).toBe(false);
-    expect(shouldPlayBackgroundMusic('campaign-intro')).toBe(false);
-    expect(shouldPlayBackgroundMusic('campaign-intro-replay')).toBe(false);
-    expect(shouldPlayBackgroundMusic('campaign-map')).toBe(false);
+  it('keeps background music playing until a campaign level starts', () => {
+    expect(shouldPlayBackgroundMusic('campaign-guest-warning')).toBe(true);
+    expect(shouldPlayBackgroundMusic('campaign-intro')).toBe(true);
+    expect(shouldPlayBackgroundMusic('campaign-intro-replay')).toBe(true);
+    expect(shouldPlayBackgroundMusic('campaign-map')).toBe(true);
     expect(shouldPlayBackgroundMusic('campaign-level')).toBe(false);
   });
 

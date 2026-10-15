@@ -1,3 +1,3 @@
 export function shouldPlayBackgroundMusic(screen: string): boolean {
-  return screen !== 'game' && !screen.startsWith('campaign-');
+  return screen !== 'game' && screen !== 'campaign-level';
 }

@@ -2062,9 +2062,9 @@ button:disabled {
 .memory-explore-seals {
   z-index: 3;
   position: absolute;
-  inset: 5px auto 5px 4px;
+  inset: 5px auto 5px 0;
   display: grid;
-  width: 155px;
+  width: 190px;
   grid-template-columns: repeat(5, 1fr);
   place-items: center;
   pointer-events: none;
@@ -2072,8 +2072,8 @@ button:disabled {
 
 .memory-explore-seals img {
   display: block;
-  width: 29px;
-  height: 29px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 34%));
 }
@@ -3064,12 +3064,18 @@ button:disabled {
   color: var(--campaign-heading);
 }
 
-.sequence-lock-instruction span,
-.sequence-lock-feedback,
-.sound-maze-feedback,
-.memory-explore-feedback,
-.pursuit-feedback {
+.sequence-lock-instruction span {
   color: var(--campaign-text);
+}
+
+.sequence-lock-game .sequence-lock-feedback,
+.sound-maze-game .sound-maze-feedback,
+.memory-explore-game .memory-explore-feedback,
+.pursuit-game .pursuit-feedback {
+  min-height: 28px;
+  color: #713f22;
+  font-size: 1.08rem;
+  font-weight: 950;
 }
 
 .sequence-lock-slots {

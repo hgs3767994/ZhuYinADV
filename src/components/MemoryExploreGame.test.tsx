@@ -39,7 +39,7 @@ describe('memory explore gameplay shell', () => {
     expect(html).toContain('仔細記住九張符文的位置');
     expect(html).not.toContain('記住符文的位置');
     expect(html).not.toContain('目標符文');
-    expect(html).not.toContain('重播目標讀音');
+    expect(html).toContain('重播目標讀音');
     expect(html).not.toContain('倒數');
   });
 

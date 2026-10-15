@@ -269,7 +269,12 @@ export function App() {
   const pendingPageLoadRef = useRef<PendingPageLoad | null>(null);
   const gameHistoryPositionRef = useRef<GameHistoryPosition>(null);
   const campaignGameplayBackHandlerRef = useRef<(() => void) | null>(null);
-  const campaignGameplayGuardRef = useRef(false);
+  const campaignPreStoryBackHandlerRef = useRef<(() => void) | null>(null);
+  const campaignMapBackHandlerRef = useRef<(() => void) | null>(null);
+  const campaignHistoryPositionRef = useRef<GameHistoryPosition>(null);
+  const campaignHistoryRestorationPendingRef = useRef(false);
+  const campaignPageRestorationPendingRef = useRef(false);
+  const campaignHistoryDisarmPendingRef = useRef(false);
   const campaignExitPendingRef = useRef(false);
   const historyRestorationPendingRef = useRef(false);
   const completedExitPendingRef = useRef(false);
@@ -312,6 +317,36 @@ export function App() {
     gameHistoryPositionRef.current = null;
     applyScreen(next);
   }, [applyScreen]);
+
+  const armCampaignGameplayHistory = useCallback(() => {
+    if (campaignHistoryPositionRef.current === 'guard') return;
+    if (campaignHistoryPositionRef.current === 'base') {
+      campaignHistoryRestorationPendingRef.current = true;
+      history.forward();
+      return;
+    }
+    history.pushState(
+      { zhuyinApp: true, screen: 'campaign-level' } satisfies AppHistoryState,
+      '',
+      location.href
+    );
+    history.pushState(
+      { zhuyinApp: true, screen: 'campaign-level', campaignGuard: true } satisfies AppHistoryState,
+      '',
+      location.href
+    );
+    campaignHistoryPositionRef.current = 'guard';
+  }, []);
+
+  const disarmCampaignGameplayHistory = useCallback(() => {
+    const position = campaignHistoryPositionRef.current;
+    if (position === null) {
+      campaignHistoryPositionRef.current = null;
+      return;
+    }
+    campaignHistoryDisarmPendingRef.current = true;
+    history.go(position === 'guard' ? -2 : -1);
+  }, []);
 
   const loadProfiles = useCallback(async () => {
     setProfilesLoading(true);
@@ -528,20 +563,71 @@ export function App() {
         return;
       }
 
+      if (campaignHistoryDisarmPendingRef.current) {
+        campaignHistoryDisarmPendingRef.current = false;
+        campaignHistoryPositionRef.current = null;
+        if (destination) applyScreen(destination.screen);
+        return;
+      }
+
+      if (campaignPageRestorationPendingRef.current) {
+        campaignPageRestorationPendingRef.current = false;
+        if (destination) applyScreen(destination.screen);
+        return;
+      }
+
+      if (campaignHistoryRestorationPendingRef.current) {
+        campaignHistoryRestorationPendingRef.current = false;
+        campaignHistoryPositionRef.current = destination?.screen === 'campaign-level'
+          ? destination.campaignGuard ? 'guard' : 'base'
+          : null;
+        if (destination) applyScreen(destination.screen);
+        return;
+      }
+
+      if (
+        screenRef.current === 'campaign-map' &&
+        campaignMapBackHandlerRef.current
+      ) {
+        campaignMapBackHandlerRef.current();
+        campaignPageRestorationPendingRef.current = true;
+        history.forward();
+        applyScreen('campaign-map');
+        return;
+      }
+
+      if (
+        screenRef.current === 'campaign-level' &&
+        !campaignExitPendingRef.current &&
+        campaignPreStoryBackHandlerRef.current
+      ) {
+        campaignPreStoryBackHandlerRef.current();
+        campaignPageRestorationPendingRef.current = true;
+        history.forward();
+        applyScreen('campaign-level');
+        return;
+      }
+
       if (
         screenRef.current === 'campaign-level' &&
         !campaignExitPendingRef.current &&
         campaignGameplayBackHandlerRef.current
       ) {
+        const restoreDistance = destination?.screen === 'campaign-level' && !destination.campaignGuard ? 1 : 2;
         campaignGameplayBackHandlerRef.current();
-        history.pushState(
-          { zhuyinApp: true, screen: 'campaign-level', campaignGuard: true } satisfies AppHistoryState,
-          '',
-          location.href
-        );
-        campaignGameplayGuardRef.current = true;
+        campaignHistoryPositionRef.current = destination?.screen === 'campaign-level'
+          ? destination.campaignGuard ? 'guard' : 'base'
+          : null;
+        campaignHistoryRestorationPendingRef.current = true;
+        history.go(restoreDistance);
         applyScreen('campaign-level');
         return;
+      }
+
+      if (screenRef.current === 'campaign-level' && campaignHistoryPositionRef.current !== null) {
+        campaignHistoryPositionRef.current = destination?.screen === 'campaign-level'
+          ? destination.campaignGuard ? 'guard' : 'base'
+          : null;
       }
 
       if (campaignExitPendingRef.current) campaignExitPendingRef.current = false;
@@ -821,7 +907,6 @@ export function App() {
   const openCampaignMode = async () => {
     const profile = activeProfileRef.current;
     if (!profile || campaignLoading) return;
-    audioService.pauseBgm();
     setCampaignLoading(true);
     setCampaignError(null);
     try {
@@ -862,6 +947,7 @@ export function App() {
   const startCampaignLevel = async (level: CampaignLevelDefinition) => {
     const profile = activeProfileRef.current;
     if (!profile || campaignLevelStarting || !hasCampaignFlowContent(level.id)) return;
+    audioService.pauseBgm();
     setCampaignLevelStarting(true);
     setCampaignLevelError(null);
     try {
@@ -875,11 +961,12 @@ export function App() {
       if (activeProfileRef.current?.id !== profile.id) return;
       setCampaignSnapshot(snapshot);
       setActiveCampaignLevel(level);
-      campaignGameplayGuardRef.current = false;
+      campaignHistoryPositionRef.current = null;
       navigate('campaign-level');
     } catch (error) {
       console.warn('無法進入闖關關卡', error);
       setCampaignLevelError('無法準備這個關卡，請重新嘗試。');
+      audioService.playBgm();
     } finally {
       setCampaignLevelStarting(false);
     }
@@ -1325,6 +1412,9 @@ export function App() {
           levelStarting={campaignLevelStarting}
           startError={campaignLevelError}
           onDismissStartError={() => setCampaignLevelError(null)}
+          onSystemBackHandlerChange={(handler) => {
+            campaignMapBackHandlerRef.current = handler;
+          }}
         />
       )}
 
@@ -1347,26 +1437,22 @@ export function App() {
           )?.firstCompletedAt)}
           onTutorialSeen={markCampaignTutorialSeen}
           onComplete={completeCampaignLevel}
+          onGameplayHistoryArm={armCampaignGameplayHistory}
+          onGameplayHistoryDisarm={disarmCampaignGameplayHistory}
           onGameplayBackHandlerChange={(handler) => {
             campaignGameplayBackHandlerRef.current = handler;
-            if (handler && !campaignGameplayGuardRef.current) {
-              history.pushState(
-                { zhuyinApp: true, screen: 'campaign-level', campaignGuard: true } satisfies AppHistoryState,
-                '',
-                location.href
-              );
-              campaignGameplayGuardRef.current = true;
-            }
+          }}
+          onPreStoryBackHandlerChange={(handler) => {
+            campaignPreStoryBackHandlerRef.current = handler;
           }}
           onReturnToMap={() => {
             campaignExitPendingRef.current = true;
             press(() => {
-              if (campaignGameplayGuardRef.current) {
-                campaignGameplayGuardRef.current = false;
-                history.go(-2);
-              } else {
-                history.back();
-              }
+              const distance = campaignHistoryPositionRef.current === 'guard'
+                ? -3
+                : campaignHistoryPositionRef.current === 'base' ? -2 : -1;
+              campaignHistoryPositionRef.current = null;
+              history.go(distance);
             });
           }}
         />
