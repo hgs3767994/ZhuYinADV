@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Eye style 04 - closed</title>
+  <defs><clipPath id="isolated-eye-half" clipPathUnits="userSpaceOnUse"><rect x="256" y="0" width="256" height="512"/></clipPath></defs>
+  <defs><linearGradient id="lid" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#1a1a1a"/><stop offset="1" stop-color="#080808"/></linearGradient></defs>
+  <g id="eyes" clip-path="url(#isolated-eye-half)" transform="translate(256 263) scale(1.63587 2.4375) translate(-255.5 -260.5)">
+    <path d="M164 277Q198 224 232 276Q200 246 164 277Z" fill="url(#lid)"/>
+    <path d="M280 276Q314 224 348 277Q312 246 280 276Z" fill="url(#lid)"/>
+  </g>
+</svg>

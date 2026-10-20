@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Nose 03 details</title>
+  <path id="skin-shadow" d="M227 304c4 24 19 34 30 34 13 0 27-11 30-35" fill="none" stroke="#7b3027" stroke-width="12" stroke-linecap="round" opacity=".22"/>
+  <path id="outline" d="M226 292c0 28 15 40 31 40 17 0 30-13 30-40" fill="none" stroke="#3b1d16" stroke-width="7" stroke-linecap="round"/>
+</svg>
