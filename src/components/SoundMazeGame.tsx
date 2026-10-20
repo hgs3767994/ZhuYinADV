@@ -1,13 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createLevelSevenSoundMaze, createLevelTwoSoundMaze, soundMazeStars, type SoundMazeRoute } from '../game/soundMaze';
+import {
+  createLevelSevenSoundMaze,
+  createLevelTwoSoundMaze,
+  levelTwoConnectorPoints,
+  levelTwoForkRoutePoints,
+  levelTwoWrongRouteTravelPoints,
+  LEVEL_TWO_MAZE_GEOMETRY,
+  soundMazeStars,
+  type SoundMazePoint,
+  type SoundMazeRoute
+} from '../game/soundMaze';
+import { CAMPAIGN_IMAGES } from '../game/campaignAssets';
 import { audioService } from '../services/audio';
 import { CampaignAudioReplayButton } from './CampaignAudioReplayButton';
+import { SoundMazeMapViewport } from './SoundMazeMapViewport';
 
 interface SoundMazeGameProps {
   variant: 'fork' | 'rune-gate';
   resultId: string;
   paused: boolean;
   inputEnabled: boolean;
+  suppressAudio?: boolean;
   onFragmentCountChange: (collected: number) => void;
   onInteractionLockChange: (locked: boolean) => void;
   onSolved: (result: {
@@ -19,11 +32,28 @@ interface SoundMazeGameProps {
 
 type MazeFeedback = 'none' | 'moving' | 'dead-end' | 'fragment' | 'exit';
 
+function fragmentAnimationDuration(): number {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 120 : 1650;
+}
+
+function splitPathAtNearestPoint(
+  points: readonly SoundMazePoint[],
+  target: SoundMazePoint
+): readonly [readonly SoundMazePoint[], readonly SoundMazePoint[]] {
+  const splitIndex = points.reduce((nearest, point, index) => {
+    const distance = Math.hypot(point.x - target.x, point.y - target.y);
+    const nearestPoint = points[nearest];
+    return distance < Math.hypot(nearestPoint.x - target.x, nearestPoint.y - target.y) ? index : nearest;
+  }, 0);
+  return [points.slice(0, splitIndex + 1), points.slice(splitIndex)];
+}
+
 export function SoundMazeGame({
   variant,
   resultId,
   paused,
   inputEnabled,
+  suppressAudio = false,
   onFragmentCountChange,
   onInteractionLockChange,
   onSolved
@@ -43,6 +73,12 @@ export function SoundMazeGame({
   const busyRef = useRef(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioCycle, setAudioCycle] = useState(0);
+  const [cameraPoint, setCameraPoint] = useState<SoundMazePoint>(LEVEL_TWO_MAZE_GEOMETRY[0].fork);
+  const [revealedWallRouteId, setRevealedWallRouteId] = useState<string | null>(null);
+  const [focusedRouteSide, setFocusedRouteSide] = useState<'left' | 'right' | null>(null);
+  const [previewNodeIndex, setPreviewNodeIndex] = useState<number | null>(null);
+  const [chosenCorrectRoutes, setChosenCorrectRoutes] = useState<ReadonlyMap<number, 'left' | 'right'>>(() => new Map());
+  const [collectedFragmentNodes, setCollectedFragmentNodes] = useState<ReadonlySet<number>>(() => new Set());
   const startedAtRef = useRef(performance.now());
   const pausedRef = useRef(paused);
   const mountedRef = useRef(true);
@@ -76,14 +112,83 @@ export function SoundMazeGame({
     window.setTimeout(tick, 40);
   }), []);
 
+  const moveCameraAlong = useCallback((
+    points: readonly SoundMazePoint[],
+    speed = 165,
+    onProgress?: (progress: number) => void
+  ) => new Promise<void>((resolve) => {
+    if (points.length === 0) {
+      resolve();
+      return;
+    }
+    if (points.length === 1 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setCameraPoint(points[points.length - 1]);
+      onProgress?.(1);
+      resolve();
+      return;
+    }
+    const lengths = points.slice(1).map((point, index) => Math.hypot(
+      point.x - points[index].x,
+      point.y - points[index].y
+    ));
+    const totalLength = lengths.reduce((total, length) => total + length, 0);
+    let segmentIndex = 0;
+    let segmentOffset = 0;
+    let travelled = 0;
+    let previousTime: number | null = null;
+
+    const tick = (time: number) => {
+      if (!mountedRef.current) {
+        resolve();
+        return;
+      }
+      if (previousTime === null) previousTime = time;
+      if (pausedRef.current) {
+        previousTime = time;
+        window.requestAnimationFrame(tick);
+        return;
+      }
+      let movement = speed * Math.min(48, time - previousTime) / 1000;
+      previousTime = time;
+      while (movement > 0 && segmentIndex < lengths.length) {
+        const remaining = lengths[segmentIndex] - segmentOffset;
+        const consumed = Math.min(movement, remaining);
+        segmentOffset += consumed;
+        travelled += consumed;
+        movement -= consumed;
+        if (segmentOffset >= lengths[segmentIndex] - 0.001) {
+          segmentIndex += 1;
+          segmentOffset = 0;
+        }
+      }
+      if (segmentIndex >= lengths.length) {
+        setCameraPoint(points[points.length - 1]);
+        onProgress?.(1);
+        resolve();
+        return;
+      }
+      const start = points[segmentIndex];
+      const end = points[segmentIndex + 1];
+      const amount = lengths[segmentIndex] === 0 ? 1 : segmentOffset / lengths[segmentIndex];
+      setCameraPoint({
+        x: start.x + (end.x - start.x) * amount,
+        y: start.y + (end.y - start.y) * amount
+      });
+      onProgress?.(totalLength === 0 ? 1 : travelled / totalLength);
+      window.requestAnimationFrame(tick);
+    };
+    window.requestAnimationFrame(tick);
+  }), []);
+
   const currentNode = viewIndex < nodes.length ? nodes[viewIndex] : null;
   const atUnsolvedFork = currentNode !== null && viewIndex === frontierIndex;
   const controlsDisabled = !inputEnabled || busy || audioPlaying;
 
   const replayTarget = useCallback(() => {
     if (!currentNode || !atUnsolvedFork) return Promise.resolve();
+    if (suppressAudio) return Promise.resolve();
     return audioService.speakSequence([currentNode.targetSymbol]);
-  }, [atUnsolvedFork, currentNode]);
+  }, [atUnsolvedFork, currentNode, suppressAudio]);
   const stopTarget = useCallback(() => audioService.stopSpeech(), []);
   const handlePlaybackChange = useCallback((playing: boolean) => setAudioPlaying(playing), []);
 
@@ -95,11 +200,28 @@ export function SoundMazeGame({
       const nextWrongCount = wrongCountRef.current + 1;
       wrongCountRef.current = nextWrongCount;
       setWrongRouteCount(nextWrongCount);
-      setExploredWrongRoutes((current) => new Set(current).add(route.id));
-      setFeedback('dead-end');
-      audioService.playWrong();
-      await waitWhileActive(900);
+      if (variant === 'fork' && route.side !== 'center') {
+        const wrongPath = levelTwoWrongRouteTravelPoints(viewIndex, route.side);
+        setFocusedRouteSide(route.side);
+        setRevealedWallRouteId(route.id);
+        setFeedback('moving');
+        await moveCameraAlong(wrongPath, 165);
+        if (!mountedRef.current) return;
+        setFeedback('dead-end');
+        if (!suppressAudio) audioService.playWrong();
+        await waitWhileActive(720);
+        if (!mountedRef.current) return;
+        setFeedback('moving');
+        await moveCameraAlong([...wrongPath].reverse(), 165);
+      } else {
+        setFeedback('dead-end');
+        if (!suppressAudio) audioService.playWrong();
+        await waitWhileActive(900);
+      }
       if (!mountedRef.current) return;
+      setExploredWrongRoutes((current) => new Set(current).add(route.id));
+      setRevealedWallRouteId(null);
+      setFocusedRouteSide(null);
       setFeedback('none');
       busyRef.current = false;
       setBusy(false);
@@ -107,38 +229,56 @@ export function SoundMazeGame({
       return;
     }
 
-    audioService.playCorrect();
+    if (!suppressAudio) audioService.playCorrect();
     const collectedFragment = currentNode.fragment;
-    setFeedback(collectedFragment ? 'fragment' : 'moving');
-    await waitWhileActive(collectedFragment ? 900 : 650);
-    if (!mountedRef.current) return;
-    let nextFragmentCount = fragmentCount;
-    if (collectedFragment) {
-      nextFragmentCount += 1;
-      setFragmentCount(nextFragmentCount);
-      onFragmentCountChange(nextFragmentCount);
+    if (variant === 'fork' && route.side !== 'center') {
+      const chosenSide = route.side;
+      setFocusedRouteSide(chosenSide);
+      setFeedback('moving');
+      await moveCameraAlong(levelTwoForkRoutePoints(viewIndex, chosenSide), 165);
+      if (!mountedRef.current) return;
+      setChosenCorrectRoutes((current) => new Map(current).set(viewIndex, chosenSide));
+      setPreviewNodeIndex(viewIndex + 1 < nodes.length ? viewIndex + 1 : null);
+      const connector = levelTwoConnectorPoints(viewIndex);
+      if (collectedFragment && LEVEL_TWO_MAZE_GEOMETRY[viewIndex].fragment) {
+        const [beforeFragment, afterFragment] = splitPathAtNearestPoint(
+          connector,
+          LEVEL_TWO_MAZE_GEOMETRY[viewIndex].fragment!
+        );
+        await moveCameraAlong(beforeFragment, 165);
+        if (!mountedRef.current) return;
+        setCollectedFragmentNodes((current) => new Set(current).add(viewIndex));
+        setFeedback('fragment');
+        await waitWhileActive(fragmentAnimationDuration());
+        if (!mountedRef.current) return;
+        const nextFragmentCount = fragmentCount + 1;
+        setFragmentCount(nextFragmentCount);
+        onFragmentCountChange(nextFragmentCount);
+        setFeedback('moving');
+        await moveCameraAlong(afterFragment, 165);
+      } else {
+        await moveCameraAlong(connector, 165);
+      }
+      if (!mountedRef.current) return;
+    } else {
+      setFeedback(collectedFragment ? 'fragment' : 'moving');
+      await waitWhileActive(collectedFragment ? fragmentAnimationDuration() : 650);
+      if (!mountedRef.current) return;
+      if (collectedFragment) {
+        const nextFragmentCount = fragmentCount + 1;
+        setFragmentCount(nextFragmentCount);
+        onFragmentCountChange(nextFragmentCount);
+      }
     }
     const nextFrontier = frontierIndex + 1;
     setFrontierIndex(nextFrontier);
     setViewIndex(nextFrontier);
+    setPreviewNodeIndex(null);
+    setFocusedRouteSide(null);
     setFeedback(nextFrontier === nodes.length ? 'exit' : 'none');
     busyRef.current = false;
     setBusy(false);
     setAudioCycle(0);
-  };
-
-  const moveToExploredNode = async (nextIndex: number) => {
-    if (controlsDisabled || busyRef.current || nextIndex < 0 || nextIndex > frontierIndex) return;
-    audioService.stopSpeech();
-    busyRef.current = true;
-    setBusy(true);
-    setFeedback('moving');
-    await waitWhileActive(420);
-    if (!mountedRef.current) return;
-    setViewIndex(nextIndex);
-    setFeedback(nextIndex === nodes.length ? 'exit' : 'none');
-    busyRef.current = false;
-    setBusy(false);
   };
 
   const leaveMaze = async () => {
@@ -146,7 +286,7 @@ export function SoundMazeGame({
     busyRef.current = true;
     setBusy(true);
     setFeedback('moving');
-    audioService.playCorrect();
+    if (!suppressAudio) audioService.playCorrect();
     await waitWhileActive(800);
     if (!mountedRef.current) return;
     onSolved({
@@ -157,8 +297,28 @@ export function SoundMazeGame({
   };
 
   return (
-    <div className={`sound-maze-game feedback-${feedback}`}>
-      <div className="sound-maze-viewport">
+    <div className={`sound-maze-game feedback-${feedback} ${paused ? 'is-paused' : ''}`}>
+      {variant === 'fork' ? (
+        <SoundMazeMapViewport
+          nodes={nodes}
+          viewIndex={viewIndex}
+          frontierIndex={frontierIndex}
+          cameraPoint={cameraPoint}
+          exploredWrongRoutes={exploredWrongRoutes}
+          revealedWallRouteId={revealedWallRouteId}
+          focusedRouteSide={focusedRouteSide}
+          previewNodeIndex={previewNodeIndex}
+          chosenCorrectRoutes={chosenCorrectRoutes}
+          collectedFragmentNodes={collectedFragmentNodes}
+          fragmentCount={fragmentCount}
+          fragmentAnimating={feedback === 'fragment'}
+          controlsDisabled={controlsDisabled}
+          onChooseRoute={(route) => void chooseRoute(route)}
+          onLeaveMaze={() => void leaveMaze()}
+          traveling={busy && feedback !== 'dead-end'}
+        />
+      ) : (
+      <div className="sound-maze-viewport sound-maze-rune-gate-viewport">
         <div className="sound-maze-fog fog-left" aria-hidden="true" />
         <div className="sound-maze-fog fog-right" aria-hidden="true" />
         <div className="sound-maze-path-history" aria-hidden="true">
@@ -207,7 +367,14 @@ export function SoundMazeGame({
             <strong>沿著光芒前往{variant === 'rune-gate' ? '秘道出口' : '迷霧出口'}</strong>
           </button>
         )}
+        {feedback === 'fragment' && (
+          <div className="sound-maze-fragment-collection" aria-hidden="true">
+            <span className="sound-maze-fragment-light light-one" />
+            <img className="sound-maze-fragment-reveal" src={CAMPAIGN_IMAGES.soundFragmentLarge} alt="" />
+          </div>
+        )}
       </div>
+      )}
 
       {currentNode && atUnsolvedFork && (
         <CampaignAudioReplayButton
@@ -221,27 +388,21 @@ export function SoundMazeGame({
         />
       )}
 
-      <div className="sound-maze-navigation">
-        <button type="button" disabled={controlsDisabled || viewIndex === 0} onClick={() => void moveToExploredNode(viewIndex - 1)}>
-          返回上一{variant === 'rune-gate' ? '道符文門' : '個岔路'}
-        </button>
-        {viewIndex < frontierIndex && (
-          <button type="button" disabled={controlsDisabled} onClick={() => void moveToExploredNode(viewIndex + 1)}>
-            沿發光道路前進
-          </button>
-        )}
-      </div>
-
       <p className="sound-maze-feedback" aria-live="polite">
         {feedback === 'dead-end' ? variant === 'rune-gate'
           ? '錯誤符文門通往廢棄通道，正在返回原本的位置。'
           : '前方是迷霧死路，正在返回原本的岔路。' :
           feedback === 'fragment' ? `找到第 ${fragmentCount + 1} 枚聲音碎片！` :
-            feedback === 'exit' ? `三枚碎片形成了通往${variant === 'rune-gate' ? '秘道' : '迷霧'}出口的光芒。` :
+            feedback === 'exit' ? (
+              <>
+                <span className="sound-maze-feedback-line">三枚碎片形成了通往{variant === 'rune-gate' ? '秘道' : '迷霧'}出口的光芒，</span>
+                <span className="sound-maze-feedback-line">沿著光芒離開迷霧</span>
+              </>
+            ) :
               feedback === 'moving' ? '冒險者正沿著道路前進…' :
                 wrongRouteCount > 0 ? variant === 'rune-gate'
-                  ? '已探索的廢棄通道會留下迷霧記號。'
-                  : '已探索的死路會留下迷霧記號。' : ''}
+                  ? '已探索的廢棄通道會以灰色符文按鈕標示。'
+                  : '已探索的死路會以灰色注音按鈕標示。' : ''}
       </p>
     </div>
   );

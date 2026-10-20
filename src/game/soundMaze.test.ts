@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   createLevelSevenSoundMaze,
   createLevelTwoSoundMaze,
+  levelTwoBlockedRoutePoints,
+  levelTwoCompleteRoutePathData,
+  levelTwoConnectorPoints,
+  levelTwoForkRoutePoints,
+  levelTwoForkRouteSegments,
+  levelTwoMagicWallPoint,
+  levelTwoWrongRouteTravelPoints,
+  LEVEL_TWO_MAZE_EXIT,
+  LEVEL_TWO_MAZE_GEOMETRY,
   LEVEL_SEVEN_OLD_SYMBOLS,
   LEVEL_SEVEN_SYMBOLS,
   soundMazeStars
@@ -30,6 +39,7 @@ describe('level two sound maze', () => {
     ]);
     for (const node of nodes) {
       expect(node.routes).toHaveLength(2);
+      expect(node.routes.map((route) => route.side)).toEqual(['left', 'right']);
       expect(node.routes.filter((route) => route.correct)).toHaveLength(1);
       expect(new Set(node.routes.map((route) => route.symbol)).size).toBe(2);
       expect(node.routes.every((route) => route.id.startsWith(node.id))).toBe(true);
@@ -43,6 +53,96 @@ describe('level two sound maze', () => {
     expect(soundMazeStars(3)).toBe(2);
     expect(soundMazeStars(4)).toBe(1);
     expect(soundMazeStars(12)).toBe(1);
+  });
+
+  it('provides continuous route samples for constant-speed camera movement', () => {
+    for (const [index, geometry] of LEVEL_TWO_MAZE_GEOMETRY.entries()) {
+      for (const side of ['left', 'right'] as const) {
+        const route = levelTwoForkRoutePoints(index, side);
+        const segments = levelTwoForkRouteSegments(index, side);
+        expect(route.length).toBeGreaterThan(20);
+        expect(route[0]).toEqual(geometry.fork);
+        expect(route.at(-1)).toEqual(geometry.merge);
+        expect(segments.front[0]).toEqual(geometry.fork);
+        expect(segments.front.at(-1)).toEqual(geometry.walls[side]);
+        expect(segments.back[0]).toEqual(geometry.walls[side]);
+        expect(segments.back.at(-1)).toEqual(geometry.merge);
+      }
+      const connector = levelTwoConnectorPoints(index);
+      expect(connector[0]).toEqual(geometry.merge);
+      expect(connector.at(-1)).toEqual(index + 1 < LEVEL_TWO_MAZE_GEOMETRY.length
+        ? LEVEL_TWO_MAZE_GEOMETRY[index + 1].fork
+        : LEVEL_TWO_MAZE_EXIT);
+      if (geometry.fragment) {
+        const distanceFromRoadCenter = Math.min(...connector.map((point) => Math.hypot(
+          point.x - geometry.fragment!.x,
+          point.y - geometry.fragment!.y
+        )));
+        expect(distanceFromRoadCenter).toBeLessThan(3);
+      }
+    }
+    expect(LEVEL_TWO_MAZE_GEOMETRY.every(({ fork, merge }) => fork.y - merge.y === 270)).toBe(true);
+
+    const finalGeometry = LEVEL_TWO_MAZE_GEOMETRY.at(-1)!;
+    const finalConnector = levelTwoConnectorPoints(LEVEL_TWO_MAZE_GEOMETRY.length - 1);
+    const fragmentIndex = finalConnector.reduce((nearest, point, index) => (
+      Math.hypot(point.x - finalGeometry.fragment!.x, point.y - finalGeometry.fragment!.y)
+        < Math.hypot(finalConnector[nearest].x - finalGeometry.fragment!.x, finalConnector[nearest].y - finalGeometry.fragment!.y)
+        ? index
+        : nearest
+    ), 0);
+    const postFragmentDistance = finalConnector.slice(fragmentIndex + 1).reduce((total, point, index) => {
+      const previous = finalConnector[fragmentIndex + index];
+      return total + Math.hypot(point.x - previous.x, point.y - previous.y);
+    }, 0);
+    expect(postFragmentDistance / 165).toBeGreaterThanOrEqual(0.95);
+    expect(postFragmentDistance / 165).toBeLessThanOrEqual(1.05);
+  });
+
+  it('keeps every fork route and connector smooth and monotonic', () => {
+    const cosine = (a: { x: number; y: number }, b: { x: number; y: number }) => {
+      const lengthA = Math.hypot(a.x, a.y);
+      const lengthB = Math.hypot(b.x, b.y);
+      return (a.x * b.x + a.y * b.y) / (lengthA * lengthB);
+    };
+    const delta = (from: { x: number; y: number }, to: { x: number; y: number }) => ({
+      x: to.x - from.x,
+      y: to.y - from.y
+    });
+
+    for (const [nodeIndex] of LEVEL_TWO_MAZE_GEOMETRY.entries()) {
+      for (const side of ['left', 'right'] as const) {
+        const { front, back } = levelTwoForkRouteSegments(nodeIndex, side);
+        const connector = levelTwoConnectorPoints(nodeIndex);
+        expect(cosine(delta(front.at(-2)!, front.at(-1)!), delta(back[0], back[1]))).toBeGreaterThan(0.997);
+        expect(front.every((point, index) => index === 0 || point.y < front[index - 1].y)).toBe(true);
+        expect(back.every((point, index) => index === 0 || point.y < back[index - 1].y)).toBe(true);
+        expect(connector.every((point, index) => index === 0 || point.y < connector[index - 1].y)).toBe(true);
+        expect(levelTwoCompleteRoutePathData(nodeIndex, side).match(/\bC\b/g)).toHaveLength(3);
+      }
+    }
+  });
+
+  it('extends each wrong route into an independent dead end and stops the camera before its wall', () => {
+    for (const [nodeIndex, geometry] of LEVEL_TWO_MAZE_GEOMETRY.entries()) {
+      for (const side of ['left', 'right'] as const) {
+        const blockedRoute = levelTwoBlockedRoutePoints(nodeIndex, side);
+        const travelRoute = levelTwoWrongRouteTravelPoints(nodeIndex, side);
+        const wall = levelTwoMagicWallPoint(nodeIndex, side)!;
+        const terminal = blockedRoute.at(-1)!;
+        const stop = travelRoute.at(-1)!;
+        expect(blockedRoute[0]).toEqual(geometry.fork);
+        expect(geometry.walls[side].y - terminal.y).toBeCloseTo(230, 5);
+        expect(side === 'left'
+          ? geometry.walls[side].x - terminal.x
+          : terminal.x - geometry.walls[side].x).toBeCloseTo(72, 5);
+        expect(wall.x).toBeCloseTo(terminal.x, 5);
+        expect(terminal.y - wall.y).toBeCloseTo(70, 5);
+        expect(wall.y + 90).toBeGreaterThan(terminal.y);
+        expect(Math.hypot(terminal.x - stop.x, terminal.y - stop.y)).toBeGreaterThan(20);
+        expect(Math.hypot(terminal.x - stop.x, terminal.y - stop.y)).toBeLessThan(30);
+      }
+    }
   });
 
   it('creates six stable rune-gate nodes with the confirmed level-seven targets', () => {
@@ -60,6 +160,7 @@ describe('level two sound maze', () => {
     ]);
     for (const node of nodes) {
       expect(node.routes).toHaveLength(3);
+      expect(node.routes.map((route) => route.side)).toEqual(['left', 'center', 'right']);
       expect(node.routes.filter((route) => route.correct)).toHaveLength(1);
       expect(new Set(node.routes.map((route) => route.symbol)).size).toBe(3);
       expect(node.routes.every((route) => LEVEL_SEVEN_SYMBOLS.includes(route.symbol as typeof LEVEL_SEVEN_SYMBOLS[number]))).toBe(true);
