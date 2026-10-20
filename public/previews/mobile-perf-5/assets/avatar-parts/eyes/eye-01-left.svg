@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Eye style 01 - wink</title>
+  <defs><clipPath id="isolated-eye-half" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="256" height="512"/></clipPath></defs>
+  <defs>
+    <radialGradient id="iris" cx="38%" cy="30%" r="72%"><stop offset="0" stop-color="#c07a43"/><stop offset=".58" stop-color="#84401f"/><stop offset="1" stop-color="#4b2113"/></radialGradient>
+    <linearGradient id="lid" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#1a1a1a"/><stop offset="1" stop-color="#080808"/></linearGradient>
+  </defs>
+  <g id="eyes" clip-path="url(#isolated-eye-half)" transform="translate(256 263) scale(1.64444 1.44) translate(-252.5 -262.5)" stroke="#151313" stroke-linejoin="round">
+    <ellipse cx="202" cy="263" rx="35" ry="46" fill="#fff" stroke-width="7"/>
+    <ellipse cx="202" cy="267" rx="27" ry="36" fill="url(#iris)" stroke-width="3"/>
+    <ellipse cx="205" cy="268" rx="15" ry="23" fill="#080606" stroke="none"/>
+    <ellipse cx="192" cy="246" rx="10" ry="13" fill="#fff" stroke="none"/>
+    <circle cx="220" cy="280" r="7" fill="#fff" stroke="none"/>
+    <path d="M275 277Q309 224 343 276Q311 246 275 277Z" fill="url(#lid)" stroke="none"/>
+  </g>
+</svg>

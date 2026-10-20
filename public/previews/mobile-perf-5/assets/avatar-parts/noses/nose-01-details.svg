@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Nose 01 details</title>
+  <g id="outline" fill="none" stroke="#3b1d16" stroke-width="6" stroke-linejoin="round"><ellipse cx="256" cy="301" rx="22" ry="15"/></g>
+  <path id="skin-shadow" d="M238 305c8 10 28 11 38-1-4 11-12 15-21 15-8 0-15-4-17-14Z" fill="#7b3027" opacity=".2"/>
+  <ellipse id="highlight" cx="248" cy="296" rx="8" ry="5" fill="#fff" opacity=".82" transform="rotate(-18 248 296)"/>
+</svg>
