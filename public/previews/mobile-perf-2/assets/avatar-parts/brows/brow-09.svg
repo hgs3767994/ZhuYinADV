@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Eyebrow 09</title>
+  <defs>
+    <linearGradient id="brow-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9a7567"/>
+      <stop offset="0.58" stop-color="#806052"/>
+      <stop offset="1" stop-color="#6c4b40"/>
+    </linearGradient>
+  </defs>
+  <g id="brows" fill="url(#brow-fill)" stroke="#38241d" stroke-width="2.2" stroke-linejoin="round">
+    <path d="M172 246.62 L178.55 242 L189.34 236.61 L197.43 233.91 L204.37 232.75 L217.85 233.52 L232.11 237.38 L239.82 241.23 L242.13 245.47 L242.13 248.55 L240.59 250.86 L237.89 251.25 L215.93 243.54 L199.74 240.84 L187.41 242 L172 247.01 Z"/>
+    <path d="M270.26 244.7 L273.34 240.46 L281.05 236.99 L294.92 233.52 L307.25 232.75 L314.57 233.91 L322.66 236.61 L333.45 242 L340 246.62 L340 247.01 L324.59 242 L312.64 240.84 L295.3 243.93 L274.5 251.25 L272.18 251.25 L270.26 248.94 Z"/>
+  </g>
+</svg>
