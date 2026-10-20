@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Nose 06 details</title>
+  <g id="outline" fill="none" stroke="#3b1d16" stroke-width="6" stroke-linecap="round"><path d="M230 306c-3 9-13 9-19 16-7 10 0 24 16 25"/><path d="M282 306c3 9 13 9 19 16 7 10 0 24-16 25"/></g>
+  <path id="skin-shadow" d="M219 329c11 3 18 14 37 14 20 0 27-11 38-14-5 17-19 26-38 26-18 0-32-9-37-26Z" fill="#7b3027" opacity=".22"/>
+  <g id="nostrils" fill="none" stroke="#3b1d16" stroke-width="5" stroke-linecap="round"><path d="M224 341q9-9 18 1"/><path d="M270 342q9-10 18-1"/></g>
+  <path id="highlight" d="M251 281c-5 8-7 15-8 22" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".66"/>
+</svg>

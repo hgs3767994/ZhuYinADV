@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Eye style 03 - displeased</title>
+  <defs><clipPath id="isolated-eye-half" clipPathUnits="userSpaceOnUse"><rect x="256" y="0" width="256" height="512"/></clipPath></defs>
+  <defs>
+    <radialGradient id="iris" cx="42%" cy="22%" r="78%"><stop offset="0" stop-color="#c0835c"/><stop offset=".56" stop-color="#895037"/><stop offset="1" stop-color="#4d2819"/></radialGradient>
+    <clipPath id="left-eye"><path d="M78 247L213 215Q211 272 185 299Q151 318 116 305Q87 289 78 247Z"/></clipPath>
+    <clipPath id="right-eye"><path d="M299 215L434 247Q425 289 396 305Q361 318 327 299Q301 272 299 215Z"/></clipPath>
+  </defs>
+  <g id="eyes" clip-path="url(#isolated-eye-half)" transform="translate(256 263) scale(.98108 .93269) translate(-255.5 -260.5)" stroke="#2a1912" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M78 247L213 215Q211 272 185 299Q151 318 116 305Q87 289 78 247Z" fill="#fff" stroke-width="5"/>
+    <path d="M299 215L434 247Q425 289 396 305Q361 318 327 299Q301 272 299 215Z" fill="#fff" stroke-width="5"/>
+    <g clip-path="url(#left-eye)">
+      <ellipse cx="153" cy="260" rx="49" ry="48" fill="url(#iris)" stroke-width="3"/>
+      <ellipse cx="169" cy="253" rx="27" ry="32" fill="#090707" stroke="none"/>
+      <ellipse cx="134" cy="241" rx="11" ry="13" fill="#fff" stroke="none"/>
+      <circle cx="176" cy="276" r="6.5" fill="#fff" stroke="none"/>
+    </g>
+    <g clip-path="url(#right-eye)">
+      <ellipse cx="359" cy="260" rx="49" ry="48" fill="url(#iris)" stroke-width="3"/>
+      <ellipse cx="343" cy="253" rx="27" ry="32" fill="#090707" stroke="none"/>
+      <ellipse cx="326" cy="241" rx="11" ry="13" fill="#fff" stroke="none"/>
+      <circle cx="338" cy="276" r="6.5" fill="#fff" stroke="none"/>
+    </g>
+    <path d="M76 247L213 214" fill="none" stroke-width="9"/>
+    <path d="M299 214L436 247" fill="none" stroke-width="9"/>
+  </g>
+</svg>
