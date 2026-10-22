@@ -5,7 +5,8 @@ import { SoundMazeFourFixesPreview } from './components/SoundMazeFourFixesPrevie
 import { SoundMazePrototypePreview } from './components/SoundMazePrototypePreview';
 import './styles.css';
 
-const preview = import.meta.env.DEV
+const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_PREVIEWS === 'true';
+const preview = previewEnabled
   ? new URLSearchParams(window.location.search).get('preview')
   : null;
 

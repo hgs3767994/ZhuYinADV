@@ -32,16 +32,17 @@ describe('sound maze gameplay shell', () => {
     expect(html).toContain('sound-maze-game feedback-none is-paused');
     expect(html).toContain('sound-maze-world');
     expect(html).toContain('level-02-forest-ground.webp');
-    expect(html).toContain('level-02-forest-bank-left.webp');
-    expect(html).toContain('sound-maze-corridor-bank-edge-mask');
-    expect(html).toContain('level-02-road-clearing-texture.webp');
-    expect(html).toContain('level-02-road-texture.webp');
+    expect(html).not.toContain('sound-maze-corridor-bank-edge-mask');
+    expect(html).toContain('road-tiles/node-1-waiting.png?v=14f1');
     expect(html).toContain('level-02-landmark-01-stele.png');
     expect((html.match(/sound-maze-map-route route-/g) ?? [])).toHaveLength(2);
     expect(html).toContain('重播目標讀音');
     expect(html).not.toContain('返回上一個岔路');
     expect(html).not.toContain('sound-maze-navigation');
-    expect(html).not.toContain('sound-maze-route-back');
+    expect((html.match(/class="sound-maze-road-tile/g) ?? [])).toHaveLength(10);
+    expect((html.match(/is-visible" src=/g) ?? [])).toHaveLength(1);
+    expect((html.match(/class="sound-maze-node/g) ?? [])).toHaveLength(2);
+    expect(html).not.toContain('sound-maze-road-mask-');
     expect(html).not.toContain('sound-fragment-large.png');
     expect(html).not.toContain('sound-maze-player');
     expect(html).not.toContain('wall-revealed');
@@ -84,7 +85,6 @@ describe('sound maze gameplay shell', () => {
       cameraPoint: LEVEL_TWO_MAZE_GEOMETRY[0].fork,
       exploredWrongRoutes: new Set<string>(),
       chosenCorrectRoutes: new Map<number, 'left' | 'right'>(),
-      previewNodeIndex: null,
       collectedFragmentNodes: new Set<number>(),
       fragmentCount: 0,
       fragmentAnimating: false,
@@ -101,21 +101,22 @@ describe('sound maze gameplay shell', () => {
         focusedRouteSide={wrongRoute.side as 'left' | 'right'}
       />
     );
-    expect(wrongHtml).not.toContain('sound-maze-route-back');
-    expect((wrongHtml.match(/level-02-magic-mist-wall-wide-stretched-192x180\.png/g) ?? [])).toHaveLength(1);
-    expect(wrongHtml).toContain('y="-90"');
-    expect(wrongHtml).toContain('height="180"');
-    expect(wrongHtml).toContain('rotate(0)');
-    expect(wrongHtml).toContain('sound-maze-road-mask-smooth-union');
-    expect(wrongHtml).toContain('sound-maze-road-mask-clearing-feather');
-    expect(wrongHtml).not.toContain('sound-maze-road-mask-rounding');
+    expect((wrongHtml.match(/class="sound-maze-road-tile/g) ?? [])).toHaveLength(10);
+    expect((wrongHtml.match(/is-visible" src=/g) ?? [])).toHaveLength(1);
+    expect(wrongHtml).toContain(`road-tiles/node-1-${wrongRoute.side}-blocked.png`);
+    expect(wrongHtml).toContain(`piece-${wrongRoute.side}-blocked is-visible`);
+    expect((wrongHtml.match(/level-02-magic-mist-wall-wide-stretched-192x180\.png/g) ?? [])).toHaveLength(2);
+    expect(wrongHtml).toContain('height:180px');
+    expect(wrongHtml).not.toContain('sound-maze-road-mask-');
+    expect(wrongHtml).not.toContain('filterUnits="userSpaceOnUse"');
     expect(wrongHtml).not.toContain('<circle');
     expect(wrongHtml).not.toContain('sound-maze-branch-eraser');
-    expect((wrongHtml.match(/sound-maze-route-front route-(?:left|right) is-hidden/g) ?? [])).toHaveLength(3);
+    expect(wrongHtml).toContain('sound-maze-baked-road-network');
+    expect(wrongHtml).not.toContain('sound-maze-road-junction');
     expect(wrongHtml).not.toContain('sound-maze-map-fragment');
-    expect(wrongHtml).toContain('width="108"');
-    expect(wrongHtml).toContain('height="102"');
-    expect(wrongHtml).toContain('translate(320 1988)');
+    expect(wrongHtml).toContain('width:108px');
+    expect(wrongHtml).toContain('height:102px');
+    expect(wrongHtml).toContain('left:266px;top:1937px');
 
     const correctHtml = renderToStaticMarkup(
       <SoundMazeMapViewport
@@ -124,9 +125,34 @@ describe('sound maze gameplay shell', () => {
         focusedRouteSide={correctRoute.side as 'left' | 'right'}
       />
     );
-    expect((correctHtml.match(/sound-maze-route-back/g) ?? [])).toHaveLength(3);
-    expect((correctHtml.match(/sound-maze-route-front route-(?:left|right) is-hidden/g) ?? [])).toHaveLength(3);
-    expect(correctHtml).not.toContain('sound-maze-map-fragment');
+    expect((correctHtml.match(/class="sound-maze-road-tile/g) ?? [])).toHaveLength(10);
+    expect((correctHtml.match(/is-visible" src=/g) ?? [])).toHaveLength(2);
+    expect(correctHtml).toContain(`road-tiles/node-1-${correctRoute.side}-correct.png`);
+    expect(correctHtml).toContain('sound-maze-map-fragment ');
+    expect(correctHtml).not.toContain('sound-maze-map-fragment is-near');
+
+    const fadingHtml = renderToStaticMarkup(
+      <SoundMazeMapViewport
+        {...commonProps}
+        revealedWallRouteId={null}
+        focusedRouteSide={correctRoute.side as 'left' | 'right'}
+      />
+    );
+    expect(fadingHtml).toContain(`piece-${correctRoute.side}-correct is-visible`);
+    expect(fadingHtml).not.toContain('sound-maze-road-mask-');
+    expect(fadingHtml).not.toContain('sound-maze-road-paint-bounds-route-0-right');
+    const fourthForkHtml = renderToStaticMarkup(
+      <SoundMazeMapViewport
+        {...commonProps}
+        viewIndex={3}
+        frontierIndex={3}
+        cameraPoint={LEVEL_TWO_MAZE_GEOMETRY[3].fork}
+        revealedWallRouteId={null}
+        focusedRouteSide={null}
+      />
+    );
+    expect(fourthForkHtml).toContain('road-tiles/node-4-waiting.png?v=14f1');
+    expect(fourthForkHtml).not.toContain('sound-maze-road-paint-bounds-route-3-left');
 
     const nearFragmentHtml = renderToStaticMarkup(
       <SoundMazeMapViewport
@@ -136,22 +162,22 @@ describe('sound maze gameplay shell', () => {
         focusedRouteSide={correctRoute.side as 'left' | 'right'}
       />
     );
-    expect(nearFragmentHtml).toContain('sound-maze-map-fragment');
+    expect(nearFragmentHtml).toContain('sound-maze-map-fragment is-near');
 
-    const previewHtml = renderToStaticMarkup(
+    const preloadedHtml = renderToStaticMarkup(
       <SoundMazeMapViewport
         {...commonProps}
-        previewNodeIndex={1}
         revealedWallRouteId={null}
         focusedRouteSide={correctRoute.side as 'left' | 'right'}
       />
     );
-    expect(previewHtml).toMatch(/sound-maze-node[^\"]*is-preview/);
-    expect((previewHtml.match(/sound-maze-route-front/g) ?? [])).toHaveLength(12);
-    expect(previewHtml).not.toContain('sound-maze-branch-fog');
-    expect(previewHtml).not.toContain('sound-maze-route-focus-fog');
-    expect(previewHtml).not.toContain('sound-maze-footprints');
-    expect(previewHtml).toContain('class="sound-maze-forest-ground" x="-200" y="-520" width="1040" height="3080"');
+    expect((preloadedHtml.match(/sound-maze-node is-visible/g) ?? [])).toHaveLength(2);
+    expect(preloadedHtml).toContain('road-tiles/node-2-waiting.png?v=14f1');
+    expect((preloadedHtml.match(/is-visible" src=/g) ?? [])).toHaveLength(2);
+    expect(preloadedHtml).not.toContain('sound-maze-branch-fog');
+    expect(preloadedHtml).not.toContain('sound-maze-route-focus-fog');
+    expect(preloadedHtml).not.toContain('sound-maze-footprints');
+    expect(preloadedHtml).toContain('class="sound-maze-forest-stage" style="left:-200px;top:-520px;width:1040px;height:3224px;background-image:url(/assets/images/campaign/sound-maze/level-02-forest-ground.webp)"');
 
     const beforeThirdFragmentHtml = renderToStaticMarkup(
       <SoundMazeMapViewport
@@ -186,8 +212,8 @@ describe('sound maze gameplay shell', () => {
     expect(exitHtml).toContain('sound-maze-map-exit-image');
     expect(exitHtml).toContain('class="sound-maze-map-exit-hitbox"');
     expect(exitHtml).toContain('aria-label="沿著光芒離開迷霧"');
-    expect(exitHtml).toContain('width="124.8"');
-    expect(exitHtml).toContain('height="166.4"');
+    expect(exitHtml).toContain('width:124.8px');
+    expect(exitHtml).toContain('height:166.4px');
     expect(exitHtml).not.toContain('sound-maze-map-exit-button');
     expect(exitHtml).not.toContain('<circle');
 

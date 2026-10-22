@@ -1844,89 +1844,107 @@ button:disabled {
   inset: 0;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+}
+
+.sound-maze-coordinate-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 390px;
+  height: 520px;
+  transform-origin: center;
 }
 
 .sound-maze-camera {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
   will-change: transform;
+  backface-visibility: hidden;
+  transform-style: flat;
+  isolation: isolate;
 }
 
-.sound-maze-forest-ground,
-.sound-maze-corridor-bank,
+.sound-maze-forest-stage,
 .sound-maze-landmark-image,
 .sound-maze-magic-wall image {
+  position: absolute;
   pointer-events: none;
 }
 
-.sound-maze-forest-ground {
-  fill: url("#sound-maze-forest-ground");
+.sound-maze-forest-stage {
+  z-index: 0;
+  background-position: -568px -248px;
+  background-repeat: repeat;
+  background-size: 768px 768px;
+  contain: strict;
 }
 
-.sound-maze-road-clearing,
-.sound-maze-road-shoulder,
-.sound-maze-road-fill {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.sound-maze-node,
+.sound-maze-map-exit,
+.sound-maze-magic-wall {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
 }
 
-.sound-maze-road-clearing {
-  stroke: url("#sound-maze-road-clearing-texture");
-  stroke-width: 112px;
-  opacity: 0.92;
-  filter: url("#sound-maze-road-clearing-soften");
-}
+.sound-maze-node { z-index: 20; }
+.sound-maze-map-fragment,
+.sound-maze-map-exit,
+.sound-maze-magic-wall { z-index: 30; }
 
-.sound-maze-road-shoulder {
-  stroke: url("#sound-maze-road-clearing-texture");
-  stroke-width: 82px;
-  opacity: 1;
-}
-
-.sound-maze-road-fill {
-  stroke: url("#sound-maze-road-texture");
-  stroke-width: 62px;
-}
-
-.sound-maze-unified-road-surface {
-  stroke: none;
-}
-
-.sound-maze-unified-road-surface.layer-clearing {
-  fill: url("#sound-maze-road-clearing-texture");
-  opacity: 0.45;
-}
-
-.sound-maze-unified-road-surface.layer-shoulder {
-  fill: url("#sound-maze-road-clearing-texture");
-  opacity: 0.72;
-}
-
-.sound-maze-unified-road-surface.layer-fill {
-  fill: url("#sound-maze-road-texture");
-}
-
-.sound-maze-route-front {
-  opacity: 1;
-  transition: opacity 260ms ease;
-}
-
-.sound-maze-route-front.is-hidden {
+.sound-maze-road-tile {
+  position: absolute;
+  z-index: 10;
   opacity: 0;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+  backface-visibility: hidden;
+}
+
+.sound-maze-road-tile.is-visible {
+  opacity: 1;
+  transition-duration: 0ms;
+}
+
+.sound-maze-road-tile.is-outgoing { z-index: 12; }
+
+.sound-maze-road-tile.piece-left-correct,
+.sound-maze-road-tile.piece-right-correct,
+.sound-maze-road-tile.piece-left-blocked,
+.sound-maze-road-tile.piece-right-blocked { z-index: 11; }
+
+.sound-maze-node {
+  visibility: hidden;
+}
+
+.sound-maze-node.is-visible {
+  visibility: visible;
 }
 
 .sound-maze-landmark {
   filter: drop-shadow(0 3px 3px rgb(18 42 35 / 42%));
 }
 
-.sound-maze-first-fork-corridor {
-  filter: drop-shadow(0 3px 4px rgb(12 35 29 / 30%));
+.sound-maze-map-fragment {
+  position: absolute;
+  opacity: 0;
+  filter: drop-shadow(0 0 8px #f8e886);
+  transition: opacity 160ms ease;
+  will-change: opacity;
 }
 
-.sound-maze-map-fragment {
-  filter: drop-shadow(0 0 8px #f8e886);
+.sound-maze-map-fragment.is-near {
+  opacity: 1;
 }
 
 .sound-maze-map-exit-image {
+  position: absolute;
   opacity: 0.9;
   filter: saturate(0.72) drop-shadow(0 0 8px rgb(220 235 241 / 48%));
   transform-box: fill-box;
@@ -1956,19 +1974,23 @@ button:disabled {
 
 .sound-maze-map-exit-hitbox:hover,
 .sound-maze-map-exit-hitbox:focus-visible {
-  outline: 3px solid rgb(235 246 250 / 64%);
-  box-shadow: 0 0 18px rgb(235 246 250 / 58%);
+  outline: 0;
+  box-shadow: none;
+}
+
+.sound-maze-map-viewport:has(.sound-maze-map-exit-hitbox:hover) .sound-maze-map-exit-image,
+.sound-maze-map-viewport:has(.sound-maze-map-exit-hitbox:focus-visible) .sound-maze-map-exit-image {
+  filter: saturate(0.78) brightness(1.08) drop-shadow(0 0 11px rgb(220 235 241 / 62%));
 }
 
 .sound-maze-map-exit-hitbox:disabled {
   cursor: default;
 }
 
-.sound-maze-magic-wall {
+.sound-maze-magic-wall-image {
+  opacity: 0.9;
   filter: drop-shadow(0 0 5px rgb(192 148 219 / 38%));
 }
-
-.sound-maze-magic-wall-image { opacity: 0.9; }
 
 .sound-maze-game.feedback-dead-end .sound-maze-magic-wall-image {
   transform-box: fill-box;
@@ -1987,17 +2009,15 @@ button:disabled {
 .sound-maze-edge-fog {
   position: absolute;
   z-index: 2;
-  left: 9%;
-  bottom: 15%;
-  width: 82%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow:
-    inset 0 0 58px 18px rgb(184 203 210 / 56%),
-    0 0 62px 38px rgb(184 203 210 / 82%),
-    0 0 0 999px rgb(159 182 192 / 95%);
-  filter: blur(18px);
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 46% 38% at 50% 55%,
+      transparent 0 48%,
+      rgb(184 203 210 / 18%) 58%,
+      rgb(184 203 210 / 62%) 75%,
+      rgb(159 182 192 / 95%) 100%
+    );
   pointer-events: none;
 }
 

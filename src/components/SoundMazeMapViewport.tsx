@@ -1,15 +1,13 @@
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import {
   LEVEL_TWO_MAZE_EXIT,
   LEVEL_TWO_MAZE_GEOMETRY,
-  levelTwoBlockedRoutePoints,
-  levelTwoConnectorPathData,
-  levelTwoForkRoutePathData,
   levelTwoMagicWallPoint,
   type SoundMazeNode,
   type SoundMazePoint,
   type SoundMazeRoute
 } from '../game/soundMaze';
-import { CAMPAIGN_IMAGES } from '../game/campaignAssets';
+import { CAMPAIGN_IMAGES, soundMazeRoadTile } from '../game/campaignAssets';
 
 interface SoundMazeMapViewportProps {
   nodes: readonly SoundMazeNode[];
@@ -19,7 +17,6 @@ interface SoundMazeMapViewportProps {
   exploredWrongRoutes: ReadonlySet<string>;
   revealedWallRouteId: string | null;
   focusedRouteSide: 'left' | 'right' | null;
-  previewNodeIndex: number | null;
   chosenCorrectRoutes: ReadonlyMap<number, 'left' | 'right'>;
   collectedFragmentNodes: ReadonlySet<number>;
   fragmentCount: number;
@@ -30,7 +27,13 @@ interface SoundMazeMapViewportProps {
   onLeaveMaze: () => void;
 }
 
+export interface SoundMazeMapViewportHandle {
+  setCameraPoint: (point: SoundMazePoint) => void;
+}
+
 const screenAnchor = { x: 195, y: 315 };
+const WORLD_TOP = -520;
+const WORLD_BOTTOM = 2704;
 
 const LANDMARK_ASSETS = {
   stone: { source: CAMPAIGN_IMAGES.soundMazeLandmarkStone, width: 108, height: 102 },
@@ -40,76 +43,84 @@ const LANDMARK_ASSETS = {
   arch: { source: CAMPAIGN_IMAGES.soundMazeLandmarkArch, width: 141, height: 162 }
 } as const;
 
-const ROAD_LAYERS = ['clearing', 'shoulder', 'fill'] as const;
-const MAZE_ROAD_MASK_STROKE_WIDTH = { clearing: 138, shoulder: 88, fill: 62 } as const;
+type RoadPiece =
+  | 'waiting'
+  | 'left-correct'
+  | 'right-correct'
+  | 'left-blocked'
+  | 'right-blocked';
 
-interface MazeVisualPath {
-  key: string;
-  d: string;
-  className: string;
+const ROAD_PIECES: readonly RoadPiece[] = [
+  'waiting',
+  'left-correct',
+  'right-correct',
+  'left-blocked',
+  'right-blocked'
+];
+const ROAD_TILE_X = -100;
+const ROAD_TILE_WIDTH = 840;
+const roadPieceUrl = (nodeIndex: number, piece: RoadPiece) =>
+  `${soundMazeRoadTile(`node-${nodeIndex + 1}-${piece}`, 'png')}?v=14f1`;
+
+function roadTileBounds(nodeIndex: number) {
+  const destinationNode = LEVEL_TWO_MAZE_GEOMETRY[nodeIndex + 1];
+  const destination = destinationNode?.fork ?? LEVEL_TWO_MAZE_EXIT;
+  const top = destinationNode ? destinationNode.walls.left.y - 120 : destination.y - 120;
+  const bottom = nodeIndex === 0 ? 2440 : LEVEL_TWO_MAZE_GEOMETRY[nodeIndex].fork.y + 240;
+  return { top, height: bottom - top };
 }
 
-function pointsToPathData(points: readonly SoundMazePoint[]): string {
-  if (points.length === 0) return '';
-  return `M ${points.map((point) => `${point.x} ${point.y}`).join(' L ')}`;
-}
-
-function FirstForkForestCorridor() {
-  const bankRows = [1640, 1980, 2320];
+function RoadTile({
+  nodeIndex,
+  piece,
+  visible,
+  outgoing
+}: {
+  nodeIndex: number;
+  piece: RoadPiece;
+  visible: boolean;
+  outgoing: boolean;
+}) {
+  const bounds = roadTileBounds(nodeIndex);
+  const className = [
+    'sound-maze-road-tile',
+    `piece-${piece}`,
+    visible ? 'is-visible' : null,
+    outgoing ? 'is-outgoing' : null
+  ].filter(Boolean).join(' ');
   return (
-    <g className="sound-maze-first-fork-corridor" aria-hidden="true">
-      {bankRows.map((y) => (
-        <g key={`forest-bank-row-${y}`}>
-          <image
-            className="sound-maze-corridor-bank"
-            href={CAMPAIGN_IMAGES.soundMazeForestBankLeft}
-            x="24"
-            y={y}
-            width="256"
-            height="384"
-            preserveAspectRatio="none"
-            mask="url(#sound-maze-corridor-bank-edge-mask)"
-          />
-          <g transform="translate(640 0) scale(-1 1)">
-            <image
-              className="sound-maze-corridor-bank"
-              href={CAMPAIGN_IMAGES.soundMazeForestBankLeft}
-              x="24"
-              y={y}
-              width="256"
-              height="384"
-              preserveAspectRatio="none"
-              mask="url(#sound-maze-corridor-bank-edge-mask)"
-            />
-          </g>
-        </g>
-      ))}
-    </g>
+    <img
+      className={className}
+      src={roadPieceUrl(nodeIndex, piece)}
+      alt=""
+      draggable={false}
+      decoding="async"
+      style={{ left: ROAD_TILE_X, top: bounds.top, width: ROAD_TILE_WIDTH, height: bounds.height }}
+    />
   );
 }
 
-function Landmark({ nodeIndex }: { nodeIndex: number }) {
+function Landmark({ nodeIndex, visible }: { nodeIndex: number; visible: boolean }) {
   const geometry = LEVEL_TWO_MAZE_GEOMETRY[nodeIndex];
   if (!geometry) return null;
-  const x = geometry.fork.x;
-  const y = geometry.fork.y - 112;
   const asset = LANDMARK_ASSETS[geometry.landmark];
+  const x = geometry.fork.x - asset.width / 2;
+  const y = geometry.fork.y - 112 - asset.height / 2;
   return (
-    <g className="sound-maze-landmark" transform={`translate(${x} ${y})`}>
-      <image
-        className="sound-maze-landmark-image"
-        href={asset.source}
-        x={-asset.width / 2}
-        y={-asset.height / 2}
-        width={asset.width}
-        height={asset.height}
-        preserveAspectRatio="xMidYMid meet"
+    <div className={`sound-maze-node ${visible ? 'is-visible' : ''}`}>
+      <img
+        className="sound-maze-landmark sound-maze-landmark-image"
+        src={asset.source}
+        alt=""
+        draggable={false}
+        decoding="async"
+        style={{ left: x, top: y, width: asset.width, height: asset.height }}
       />
-    </g>
+    </div>
   );
 }
 
-export function SoundMazeMapViewport({
+export const SoundMazeMapViewport = forwardRef<SoundMazeMapViewportHandle, SoundMazeMapViewportProps>(function SoundMazeMapViewport({
   nodes,
   viewIndex,
   frontierIndex,
@@ -117,7 +128,6 @@ export function SoundMazeMapViewport({
   exploredWrongRoutes,
   revealedWallRouteId,
   focusedRouteSide,
-  previewNodeIndex,
   chosenCorrectRoutes,
   collectedFragmentNodes,
   fragmentCount,
@@ -126,203 +136,170 @@ export function SoundMazeMapViewport({
   traveling,
   onChooseRoute,
   onLeaveMaze
-}: SoundMazeMapViewportProps) {
+}: SoundMazeMapViewportProps, ref) {
   const currentNode = viewIndex < nodes.length ? nodes[viewIndex] : null;
   const atUnsolvedFork = currentNode !== null && viewIndex === frontierIndex;
   const revealedRoute = currentNode?.routes.find((route) => route.id === revealedWallRouteId) ?? null;
   const focusedRoute = currentNode?.routes.find((route) => route.side === focusedRouteSide) ?? null;
   const focusedCorrectSide = focusedRoute?.correct && focusedRoute.side !== 'center' ? focusedRoute.side : null;
-  const transform = `translate(${screenAnchor.x - cameraPoint.x}px, ${screenAnchor.y - cameraPoint.y}px)`;
-  const mazeRoadPaths: MazeVisualPath[] = [
-    {
-      key: 'entry',
-      d: 'M 320 2360 C 320 2270, 320 2180, 320 2094',
-      className: 'sound-maze-first-fork-entry'
-    }
-  ];
+  const focusedWrongSide = focusedRoute && !focusedRoute.correct && focusedRoute.side !== 'center' ? focusedRoute.side : null;
+  const cameraGroupRef = useRef<HTMLDivElement>(null);
+  const worldRef = useRef<HTMLDivElement>(null);
+  const coordinateStageRef = useRef<HTMLDivElement>(null);
+  const fragmentRef = useRef<HTMLImageElement>(null);
+  const preloadedRoadImagesRef = useRef<HTMLImageElement[]>([]);
+  const fragmentPoint = focusedCorrectSide === null
+    ? null
+    : LEVEL_TWO_MAZE_GEOMETRY[frontierIndex]?.fragment ?? null;
 
-  LEVEL_TWO_MAZE_GEOMETRY.forEach((geometry, index) => {
+  const setVisualCameraPoint = useCallback((point: SoundMazePoint) => {
+    if (cameraGroupRef.current) {
+      cameraGroupRef.current.style.transform = `translate3d(${screenAnchor.x - point.x}px, ${screenAnchor.y - point.y}px, 0)`;
+    }
+    if (fragmentRef.current && fragmentPoint) {
+      fragmentRef.current.classList.toggle('is-near', Math.hypot(point.x - fragmentPoint.x, point.y - fragmentPoint.y) < 250);
+    }
+  }, [fragmentPoint]);
+
+  useImperativeHandle(ref, () => ({ setCameraPoint: setVisualCameraPoint }), [setVisualCameraPoint]);
+  useLayoutEffect(() => { setVisualCameraPoint(cameraPoint); }, [cameraPoint, setVisualCameraPoint]);
+
+  useLayoutEffect(() => {
+    const world = worldRef.current;
+    const coordinateStage = coordinateStageRef.current;
+    if (!world || !coordinateStage) return undefined;
+    const updateScale = () => {
+      const scale = Math.min(world.clientWidth / 390, world.clientHeight / 520);
+      coordinateStage.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    };
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(world);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const urls = LEVEL_TWO_MAZE_GEOMETRY.flatMap((_, index) =>
+      ROAD_PIECES.map((piece) => roadPieceUrl(index, piece))
+    );
+    const images = urls.map((url) => {
+      const image = new Image();
+      image.decoding = 'async';
+      image.src = url;
+      void image.decode().catch(() => undefined);
+      return image;
+    });
+    preloadedRoadImagesRef.current = images;
+    return () => { preloadedRoadImagesRef.current = []; };
+  }, []);
+
+  const transform = `translate3d(${screenAnchor.x - cameraPoint.x}px, ${screenAnchor.y - cameraPoint.y}px, 0)`;
+  const firstRenderedNodeIndex = Math.min(frontierIndex, LEVEL_TWO_MAZE_GEOMETRY.length - 1);
+  const lastRenderedNodeIndex = Math.min(LEVEL_TWO_MAZE_GEOMETRY.length - 1, frontierIndex + 1);
+
+  const pieceIsVisible = (index: number, piece: RoadPiece): boolean => {
     const isPast = index < frontierIndex;
     const isCurrent = index === frontierIndex;
-    const isPreview = index === previewNodeIndex;
+    const isNext = index === frontierIndex + 1;
     const chosenSide = chosenCorrectRoutes.get(index);
-    const currentCorrectSide = nodes[index]?.routes.find((route) => route.correct)?.side;
-    const showConnector = Boolean((isPast && chosenSide) || (isCurrent && focusedCorrectSide === currentCorrectSide));
-
-    for (const side of ['left', 'right'] as const) {
-      const renderFront = isCurrent || isPreview || (isPast && chosenSide === side);
-      const renderBack = (isPast && chosenSide === side)
-        || (isCurrent && focusedCorrectSide === side);
-      if (renderFront) {
-        const isRevealedWrongRoute = isCurrent && revealedRoute?.side === side && !revealedRoute.correct;
-        const isHidden = isCurrent && focusedRouteSide !== null && focusedRouteSide !== side;
-        const frontPath: MazeVisualPath = {
-          key: `front-${index}-${side}`,
-          d: isRevealedWrongRoute
-            ? pointsToPathData(levelTwoBlockedRoutePoints(index, side))
-            : levelTwoForkRoutePathData(index, side, 'front'),
-          className: `sound-maze-route-front route-${side} ${isHidden ? 'is-hidden' : ''}`
-        };
-        mazeRoadPaths.push(frontPath);
-      }
-      if (renderBack) {
-        mazeRoadPaths.push({
-          key: `back-${index}-${side}`,
-          d: levelTwoForkRoutePathData(index, side, 'back'),
-          className: `sound-maze-route-back route-${side}`
-        });
-      }
+    if (isPast) {
+      if (chosenSide === undefined) return false;
+      return piece === `${chosenSide}-correct`;
     }
-
-    if (showConnector) {
-      mazeRoadPaths.push({
-        key: `connector-${index}`,
-        d: levelTwoConnectorPathData(index),
-        className: 'sound-maze-route-connector'
-      });
+    if (isCurrent) {
+      if (focusedRouteSide === null) return piece === 'waiting';
+      if (focusedCorrectSide !== null) return piece === `${focusedCorrectSide}-correct`;
+      if (focusedWrongSide !== null) return piece === `${focusedWrongSide}-blocked`;
     }
-  });
+    if (isNext && focusedCorrectSide !== null) {
+      return piece === 'waiting';
+    }
+    return false;
+  };
+
+  const pieceIsOutgoing = (index: number, piece: RoadPiece): boolean =>
+    index === frontierIndex && focusedRouteSide !== null && piece === 'waiting';
 
   return (
     <div className={`sound-maze-viewport sound-maze-map-viewport ${atUnsolvedFork ? 'at-unsolved-fork' : ''}`} aria-label="局部可見的迷霧道路">
-      <svg className="sound-maze-world" viewBox="0 0 390 520" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-        <defs>
-          <pattern id="sound-maze-forest-ground" patternUnits="userSpaceOnUse" width="768" height="768">
-            <image href={CAMPAIGN_IMAGES.soundMazeForestGround} width="768" height="768" preserveAspectRatio="none" />
-          </pattern>
-          <pattern id="sound-maze-road-texture" patternUnits="userSpaceOnUse" width="512" height="512">
-            <image href={CAMPAIGN_IMAGES.soundMazeRoadTexture} width="512" height="512" preserveAspectRatio="none" />
-          </pattern>
-          <pattern id="sound-maze-road-clearing-texture" patternUnits="userSpaceOnUse" width="512" height="512">
-            <image href={CAMPAIGN_IMAGES.soundMazeRoadClearingTexture} width="512" height="512" preserveAspectRatio="none" />
-          </pattern>
-          <linearGradient id="sound-maze-corridor-bank-edge-fade" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="black" />
-            <stop offset="0.2" stopColor="white" />
-            <stop offset="1" stopColor="white" />
-          </linearGradient>
-          <mask
-            id="sound-maze-corridor-bank-edge-mask"
-            x="0"
-            y="0"
-            width="1"
-            height="1"
-            maskUnits="objectBoundingBox"
-            maskContentUnits="objectBoundingBox"
-          >
-            <rect x="0" y="0" width="1" height="1" fill="url(#sound-maze-corridor-bank-edge-fade)" />
-          </mask>
-          <filter id="sound-maze-road-mask-clearing-feather" x="-250" y="-250" width="1140" height="2860" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-            <feTurbulence type="fractalNoise" baseFrequency="0.018 0.065" numOctaves="2" seed="21" result="clearing-edge-noise" />
-            <feDisplacementMap in="SourceGraphic" in2="clearing-edge-noise" scale="9" xChannelSelector="R" yChannelSelector="G" result="organic-clearing" />
-            <feGaussianBlur in="organic-clearing" stdDeviation="8" />
-          </filter>
-          <filter id="sound-maze-road-mask-smooth-union" x="-250" y="-250" width="1140" height="2860" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="soft-road-union" />
-            <feComponentTransfer in="soft-road-union" result="threshold-road-union">
-              <feFuncA type="linear" slope="18" intercept="-7.1" />
-            </feComponentTransfer>
-            <feGaussianBlur in="threshold-road-union" stdDeviation="0.65" />
-          </filter>
-          {ROAD_LAYERS.map((layer) => (
-            <mask
-              key={`road-mask-${layer}`}
-              id={`sound-maze-road-${layer}-mask`}
-              x="-200"
-              y="-200"
-              width="1040"
-              height="2760"
-              maskUnits="userSpaceOnUse"
-              maskContentUnits="userSpaceOnUse"
-            >
-              <g
-                className="sound-maze-road-mask-shapes"
-                filter={layer === 'clearing'
-                  ? 'url(#sound-maze-road-mask-clearing-feather)'
-                  : 'url(#sound-maze-road-mask-smooth-union)'}
-              >
-                {mazeRoadPaths.map((path) => (
-                  <path
-                    key={`mask:${layer}:${path.key}`}
-                    className={path.className}
-                    d={path.d}
-                    fill="none"
-                    stroke="white"
-                    strokeWidth={MAZE_ROAD_MASK_STROKE_WIDTH[layer]}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                ))}
-              </g>
-            </mask>
-          ))}
-        </defs>
-        <g className="sound-maze-camera" style={{ transform }}>
-        <rect className="sound-maze-forest-ground" x="-200" y="-520" width="1040" height="3080" />
-        <FirstForkForestCorridor />
-        <g className="sound-maze-unified-road-network">
-          {ROAD_LAYERS.map((layer) => (
-            <rect
-              key={`road-surface-${layer}`}
-              className={`sound-maze-unified-road-surface layer-${layer}`}
-              x="-200"
-              y="-200"
-              width="1040"
-              height="2760"
-              mask={`url(#sound-maze-road-${layer}-mask)`}
+      <div ref={worldRef} className="sound-maze-world" aria-hidden="true">
+        <div ref={coordinateStageRef} className="sound-maze-coordinate-stage">
+        <div ref={cameraGroupRef} className="sound-maze-camera" style={{ transform }}>
+          <div
+            className="sound-maze-forest-stage"
+            style={{
+              left: -200,
+              top: WORLD_TOP,
+              width: 1040,
+              height: WORLD_BOTTOM - WORLD_TOP,
+              backgroundImage: `url(${CAMPAIGN_IMAGES.soundMazeForestGround})`
+            }}
+          />
+          <div className="sound-maze-baked-road-network">
+            {LEVEL_TWO_MAZE_GEOMETRY.slice(firstRenderedNodeIndex, lastRenderedNodeIndex + 1).flatMap((_, offset) => {
+              const index = firstRenderedNodeIndex + offset;
+              return ROAD_PIECES.map((piece) => (
+                <RoadTile
+                  key={`road-${index}-${piece}`}
+                  nodeIndex={index}
+                  piece={piece}
+                  visible={pieceIsVisible(index, piece)}
+                  outgoing={pieceIsOutgoing(index, piece)}
+                />
+              ));
+            })}
+          </div>
+          {LEVEL_TWO_MAZE_GEOMETRY.slice(firstRenderedNodeIndex, lastRenderedNodeIndex + 1).map((_, offset) => {
+            const index = firstRenderedNodeIndex + offset;
+            const isPastOrCurrent = index <= frontierIndex;
+            const isApproachingNext = index === frontierIndex + 1 && focusedCorrectSide !== null;
+            return <Landmark key={`maze-landmark-${index}`} nodeIndex={index} visible={isPastOrCurrent || isApproachingNext} />;
+          })}
+          {LEVEL_TWO_MAZE_GEOMETRY.map((geometry, index) => geometry.fragment
+            && index === frontierIndex
+            && focusedCorrectSide !== null
+            && !collectedFragmentNodes.has(index) && (
+            <img
+              ref={fragmentRef}
+              key={`fragment-${index}`}
+              className={`sound-maze-map-fragment ${Math.hypot(cameraPoint.x - geometry.fragment.x, cameraPoint.y - geometry.fragment.y) < 250 ? 'is-near' : ''}`}
+              src={CAMPAIGN_IMAGES.soundFragmentLarge}
+              alt=""
+              draggable={false}
+              style={{ left: geometry.fragment.x - 24, top: geometry.fragment.y - 24, width: 48, height: 48 }}
             />
           ))}
-        </g>
-        {LEVEL_TWO_MAZE_GEOMETRY.map((geometry, index) => {
-          const isPast = index < frontierIndex;
-          const isCurrent = index === frontierIndex;
-          const isPreview = index === previewNodeIndex;
-          return (
-          <g key={`maze-geometry-${index}`} className={`sound-maze-node ${isPreview ? 'is-preview' : ''}`}>
-            {(isPast || isCurrent || isPreview) && <Landmark nodeIndex={index} />}
-          </g>
-          );
-        })}
-        {LEVEL_TWO_MAZE_GEOMETRY.map((geometry, index) => geometry.fragment
-          && index === frontierIndex
-          && focusedCorrectSide !== null
-          && Math.hypot(cameraPoint.x - geometry.fragment.x, cameraPoint.y - geometry.fragment.y) < 250
-          && !collectedFragmentNodes.has(index) && (
-          <g key={`fragment-${index}`} className="sound-maze-map-fragment" transform={`translate(${geometry.fragment.x} ${geometry.fragment.y})`}>
-            <image href={CAMPAIGN_IMAGES.soundFragmentLarge} x="-24" y="-24" width="48" height="48" />
-          </g>
-        ))}
-        {fragmentCount === 3 && (
-        <g className="sound-maze-map-exit" transform={`translate(${LEVEL_TWO_MAZE_EXIT.x} ${LEVEL_TWO_MAZE_EXIT.y})`}>
-          <image
-            className="sound-maze-map-exit-image"
-            href={CAMPAIGN_IMAGES.soundMazeExitPortal}
-            x="-62.4"
-            y="-83.2"
-            width="124.8"
-            height="166.4"
-            preserveAspectRatio="xMidYMid meet"
-          />
-        </g>
-        )}
-        {revealedRoute && revealedRoute.side !== 'center' && (() => {
-          const wall = levelTwoMagicWallPoint(viewIndex, revealedRoute.side);
-          return wall ? (
-            <g className="sound-maze-magic-wall" transform={`translate(${wall.x} ${wall.y}) rotate(0)`}>
-              <image
-                className="sound-maze-magic-wall-image"
-                href={CAMPAIGN_IMAGES.soundMazeMagicMistWall}
-                x="-96"
-                y="-90"
-                width="192"
-                height="180"
-                preserveAspectRatio="xMidYMid meet"
+          {fragmentCount === 3 && (
+            <div className="sound-maze-map-exit">
+              <img
+                className="sound-maze-map-exit-image"
+                src={CAMPAIGN_IMAGES.soundMazeExitPortal}
+                alt=""
+                draggable={false}
+                style={{ left: LEVEL_TWO_MAZE_EXIT.x - 62.4, top: LEVEL_TWO_MAZE_EXIT.y - 83.2, width: 124.8, height: 166.4 }}
               />
-            </g>
-          ) : null;
-        })()}
-        </g>
-      </svg>
+            </div>
+          )}
+          {revealedRoute && revealedRoute.side !== 'center' && (() => {
+            const wall = levelTwoMagicWallPoint(viewIndex, revealedRoute.side);
+            return wall ? (
+              <div
+                className="sound-maze-magic-wall"
+                style={{ left: wall.x - 96, top: wall.y - 90, width: 192, height: 180 }}
+              >
+                <img
+                  className="sound-maze-magic-wall-image"
+                  src={CAMPAIGN_IMAGES.soundMazeMagicMistWall}
+                  alt=""
+                  draggable={false}
+                  style={{ left: 0, top: 0, width: 192, height: 180 }}
+                />
+              </div>
+            ) : null;
+          })()}
+        </div>
+        </div>
+      </div>
 
       <div className="sound-maze-edge-fog" aria-hidden="true" />
       <div className="sound-maze-merge-fog" aria-hidden="true" />
@@ -362,4 +339,4 @@ export function SoundMazeMapViewport({
       )}
     </div>
   );
-}
+});

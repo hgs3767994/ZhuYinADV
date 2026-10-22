@@ -3,6 +3,9 @@ import { assetUrl } from '../utils/assets';
 const campaignImage = (name: string) => assetUrl(`assets/images/campaign/${name}`);
 const soundMazeImage = (name: string) => campaignImage(`sound-maze/${name}`);
 
+export const soundMazeRoadTile = (name: string, extension: 'webp' | 'png' = 'webp') => soundMazeImage(`road-tiles/${name}.${extension}`);
+export const soundMazeForestStage = (index: number) => soundMazeImage(`road-tiles/forest-stage-${index + 1}.webp`);
+
 export const CAMPAIGN_IMAGES = {
   modeButton: campaignImage('campaign-mode-button.webp'),
   chapterOneMap: campaignImage('chapter-01-map.webp'),

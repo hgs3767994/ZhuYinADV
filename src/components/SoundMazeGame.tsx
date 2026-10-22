@@ -13,7 +13,10 @@ import {
 import { CAMPAIGN_IMAGES } from '../game/campaignAssets';
 import { audioService } from '../services/audio';
 import { CampaignAudioReplayButton } from './CampaignAudioReplayButton';
-import { SoundMazeMapViewport } from './SoundMazeMapViewport';
+import {
+  SoundMazeMapViewport,
+  type SoundMazeMapViewportHandle
+} from './SoundMazeMapViewport';
 
 interface SoundMazeGameProps {
   variant: 'fork' | 'rune-gate';
@@ -34,6 +37,10 @@ type MazeFeedback = 'none' | 'moving' | 'dead-end' | 'fragment' | 'exit';
 
 function fragmentAnimationDuration(): number {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 120 : 1650;
+}
+
+function routeFadeDuration(): number {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 280;
 }
 
 function splitPathAtNearestPoint(
@@ -76,9 +83,9 @@ export function SoundMazeGame({
   const [cameraPoint, setCameraPoint] = useState<SoundMazePoint>(LEVEL_TWO_MAZE_GEOMETRY[0].fork);
   const [revealedWallRouteId, setRevealedWallRouteId] = useState<string | null>(null);
   const [focusedRouteSide, setFocusedRouteSide] = useState<'left' | 'right' | null>(null);
-  const [previewNodeIndex, setPreviewNodeIndex] = useState<number | null>(null);
   const [chosenCorrectRoutes, setChosenCorrectRoutes] = useState<ReadonlyMap<number, 'left' | 'right'>>(() => new Map());
   const [collectedFragmentNodes, setCollectedFragmentNodes] = useState<ReadonlySet<number>>(() => new Set());
+  const mapViewportRef = useRef<SoundMazeMapViewportHandle>(null);
   const startedAtRef = useRef(performance.now());
   const pausedRef = useRef(paused);
   const mountedRef = useRef(true);
@@ -122,7 +129,9 @@ export function SoundMazeGame({
       return;
     }
     if (points.length === 1 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setCameraPoint(points[points.length - 1]);
+      const destination = points[points.length - 1];
+      mapViewportRef.current?.setCameraPoint(destination);
+      setCameraPoint(destination);
       onProgress?.(1);
       resolve();
       return;
@@ -162,7 +171,9 @@ export function SoundMazeGame({
         }
       }
       if (segmentIndex >= lengths.length) {
-        setCameraPoint(points[points.length - 1]);
+        const destination = points[points.length - 1];
+        mapViewportRef.current?.setCameraPoint(destination);
+        setCameraPoint(destination);
         onProgress?.(1);
         resolve();
         return;
@@ -170,7 +181,7 @@ export function SoundMazeGame({
       const start = points[segmentIndex];
       const end = points[segmentIndex + 1];
       const amount = lengths[segmentIndex] === 0 ? 1 : segmentOffset / lengths[segmentIndex];
-      setCameraPoint({
+      mapViewportRef.current?.setCameraPoint({
         x: start.x + (end.x - start.x) * amount,
         y: start.y + (end.y - start.y) * amount
       });
@@ -205,6 +216,8 @@ export function SoundMazeGame({
         setFocusedRouteSide(route.side);
         setRevealedWallRouteId(route.id);
         setFeedback('moving');
+        await waitWhileActive(routeFadeDuration());
+        if (!mountedRef.current) return;
         await moveCameraAlong(wrongPath, 165);
         if (!mountedRef.current) return;
         setFeedback('dead-end');
@@ -222,6 +235,8 @@ export function SoundMazeGame({
       setExploredWrongRoutes((current) => new Set(current).add(route.id));
       setRevealedWallRouteId(null);
       setFocusedRouteSide(null);
+      await waitWhileActive(routeFadeDuration());
+      if (!mountedRef.current) return;
       setFeedback('none');
       busyRef.current = false;
       setBusy(false);
@@ -231,14 +246,16 @@ export function SoundMazeGame({
 
     if (!suppressAudio) audioService.playCorrect();
     const collectedFragment = currentNode.fragment;
+    let completedForkSide: 'left' | 'right' | null = null;
     if (variant === 'fork' && route.side !== 'center') {
       const chosenSide = route.side;
+      completedForkSide = chosenSide;
       setFocusedRouteSide(chosenSide);
       setFeedback('moving');
+      await waitWhileActive(routeFadeDuration());
+      if (!mountedRef.current) return;
       await moveCameraAlong(levelTwoForkRoutePoints(viewIndex, chosenSide), 165);
       if (!mountedRef.current) return;
-      setChosenCorrectRoutes((current) => new Map(current).set(viewIndex, chosenSide));
-      setPreviewNodeIndex(viewIndex + 1 < nodes.length ? viewIndex + 1 : null);
       const connector = levelTwoConnectorPoints(viewIndex);
       if (collectedFragment && LEVEL_TWO_MAZE_GEOMETRY[viewIndex].fragment) {
         const [beforeFragment, afterFragment] = splitPathAtNearestPoint(
@@ -270,10 +287,12 @@ export function SoundMazeGame({
         onFragmentCountChange(nextFragmentCount);
       }
     }
+    if (completedForkSide !== null) {
+      setChosenCorrectRoutes((current) => new Map(current).set(viewIndex, completedForkSide));
+    }
     const nextFrontier = frontierIndex + 1;
     setFrontierIndex(nextFrontier);
     setViewIndex(nextFrontier);
-    setPreviewNodeIndex(null);
     setFocusedRouteSide(null);
     setFeedback(nextFrontier === nodes.length ? 'exit' : 'none');
     busyRef.current = false;
@@ -300,6 +319,7 @@ export function SoundMazeGame({
     <div className={`sound-maze-game feedback-${feedback} ${paused ? 'is-paused' : ''}`}>
       {variant === 'fork' ? (
         <SoundMazeMapViewport
+          ref={mapViewportRef}
           nodes={nodes}
           viewIndex={viewIndex}
           frontierIndex={frontierIndex}
@@ -307,7 +327,6 @@ export function SoundMazeGame({
           exploredWrongRoutes={exploredWrongRoutes}
           revealedWallRouteId={revealedWallRouteId}
           focusedRouteSide={focusedRouteSide}
-          previewNodeIndex={previewNodeIndex}
           chosenCorrectRoutes={chosenCorrectRoutes}
           collectedFragmentNodes={collectedFragmentNodes}
           fragmentCount={fragmentCount}
