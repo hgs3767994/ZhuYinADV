@@ -55,12 +55,18 @@ describe('sound maze closeout safeguards', () => {
     expect(viewport).toContain("piece === 'waiting'");
     expect(viewport).toContain('piece === `${focusedCorrectSide}-correct`');
     expect(viewport).toContain('piece === `${focusedWrongSide}-blocked`');
+    expect(viewport).toContain("restoringWrongRoute && piece === 'waiting'");
+    expect(viewport).toContain("index === frontierIndex && piece === 'waiting'");
+    expect(viewport).not.toContain("index === frontierIndex && focusedRouteSide !== null && piece === 'waiting'");
+    expect(game).toContain('setRestoringWrongRoute(true);');
+    expect(game.indexOf('setRestoringWrongRoute(true);')).toBeLessThan(game.lastIndexOf('setFocusedRouteSide(null);'));
     expect(viewport).not.toContain('sound-maze-road-junction');
     expect(viewport).not.toContain('previewNodeIndex');
     expect(game.lastIndexOf('setChosenCorrectRoutes')).toBeGreaterThan(game.indexOf('await moveCameraAlong(afterFragment, 165)'));
     expect(styles).toMatch(/\.sound-maze-road-tile\s*\{[^}]*opacity:\s*0;[^}]*transition:\s*opacity 260ms ease;/);
     expect(styles).toMatch(/\.sound-maze-road-tile\.is-visible\s*\{[^}]*opacity:\s*1;/);
     expect(styles).toMatch(/\.sound-maze-road-tile\.is-visible\s*\{[^}]*transition-duration:\s*0ms;/);
+    expect(styles).toMatch(/\.sound-maze-road-tile\.is-visible\.is-restoring\s*\{[^}]*transition-duration:\s*260ms;/);
     expect(styles).toMatch(/\.sound-maze-road-tile\.is-outgoing\s*\{[^}]*z-index:\s*12;/);
     expect(styles).toMatch(/\.sound-maze-node\s*\{[^}]*visibility:\s*hidden;/);
     expect(styles).not.toMatch(/\.sound-maze-node\s*\{[^}]*transition:/);
@@ -93,6 +99,9 @@ describe('sound maze closeout safeguards', () => {
     expect(styles).not.toMatch(/\.sound-maze-node\s*\{[^}]*will-change:\s*opacity;/);
     expect(baker).toContain("waiting: [{ d: incoming, capEnd: false }, frontPath(index, 'left'), frontPath(index, 'right')]");
     expect(baker).not.toContain('bakeBranchCover');
+    expect(baker).toContain("'level-02-forest-ground.webp', 768");
+    expect(baker).toContain('flattenVisiblePixelsOntoForest');
+    expect(baker).toContain('flattened[rgbaOffset + 3] = 255');
     expect(baker).toContain('.png({ compressionLevel: 9, adaptiveFiltering: true })');
   });
 });

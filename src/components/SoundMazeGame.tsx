@@ -83,6 +83,7 @@ export function SoundMazeGame({
   const [cameraPoint, setCameraPoint] = useState<SoundMazePoint>(LEVEL_TWO_MAZE_GEOMETRY[0].fork);
   const [revealedWallRouteId, setRevealedWallRouteId] = useState<string | null>(null);
   const [focusedRouteSide, setFocusedRouteSide] = useState<'left' | 'right' | null>(null);
+  const [restoringWrongRoute, setRestoringWrongRoute] = useState(false);
   const [chosenCorrectRoutes, setChosenCorrectRoutes] = useState<ReadonlyMap<number, 'left' | 'right'>>(() => new Map());
   const [collectedFragmentNodes, setCollectedFragmentNodes] = useState<ReadonlySet<number>>(() => new Set());
   const mapViewportRef = useRef<SoundMazeMapViewportHandle>(null);
@@ -234,9 +235,11 @@ export function SoundMazeGame({
       if (!mountedRef.current) return;
       setExploredWrongRoutes((current) => new Set(current).add(route.id));
       setRevealedWallRouteId(null);
-      setFocusedRouteSide(null);
+      setRestoringWrongRoute(true);
       await waitWhileActive(routeFadeDuration());
       if (!mountedRef.current) return;
+      setFocusedRouteSide(null);
+      setRestoringWrongRoute(false);
       setFeedback('none');
       busyRef.current = false;
       setBusy(false);
@@ -327,6 +330,7 @@ export function SoundMazeGame({
           exploredWrongRoutes={exploredWrongRoutes}
           revealedWallRouteId={revealedWallRouteId}
           focusedRouteSide={focusedRouteSide}
+          restoringWrongRoute={restoringWrongRoute}
           chosenCorrectRoutes={chosenCorrectRoutes}
           collectedFragmentNodes={collectedFragmentNodes}
           fragmentCount={fragmentCount}

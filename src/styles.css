@@ -1912,6 +1912,10 @@ button:disabled {
   transition-duration: 0ms;
 }
 
+.sound-maze-road-tile.is-visible.is-restoring {
+  transition-duration: 260ms;
+}
+
 .sound-maze-road-tile.is-outgoing { z-index: 12; }
 
 .sound-maze-road-tile.piece-left-correct,

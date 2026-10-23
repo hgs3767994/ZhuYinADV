@@ -17,6 +17,7 @@ interface SoundMazeMapViewportProps {
   exploredWrongRoutes: ReadonlySet<string>;
   revealedWallRouteId: string | null;
   focusedRouteSide: 'left' | 'right' | null;
+  restoringWrongRoute?: boolean;
   chosenCorrectRoutes: ReadonlyMap<number, 'left' | 'right'>;
   collectedFragmentNodes: ReadonlySet<number>;
   fragmentCount: number;
@@ -60,7 +61,7 @@ const ROAD_PIECES: readonly RoadPiece[] = [
 const ROAD_TILE_X = -100;
 const ROAD_TILE_WIDTH = 840;
 const roadPieceUrl = (nodeIndex: number, piece: RoadPiece) =>
-  `${soundMazeRoadTile(`node-${nodeIndex + 1}-${piece}`, 'png')}?v=14f1`;
+  `${soundMazeRoadTile(`node-${nodeIndex + 1}-${piece}`, 'png')}?v=14f2`;
 
 function roadTileBounds(nodeIndex: number) {
   const destinationNode = LEVEL_TWO_MAZE_GEOMETRY[nodeIndex + 1];
@@ -74,19 +75,22 @@ function RoadTile({
   nodeIndex,
   piece,
   visible,
-  outgoing
+  outgoing,
+  restoring
 }: {
   nodeIndex: number;
   piece: RoadPiece;
   visible: boolean;
   outgoing: boolean;
+  restoring: boolean;
 }) {
   const bounds = roadTileBounds(nodeIndex);
   const className = [
     'sound-maze-road-tile',
     `piece-${piece}`,
     visible ? 'is-visible' : null,
-    outgoing ? 'is-outgoing' : null
+    outgoing ? 'is-outgoing' : null,
+    restoring ? 'is-restoring' : null
   ].filter(Boolean).join(' ');
   return (
     <img
@@ -128,6 +132,7 @@ export const SoundMazeMapViewport = forwardRef<SoundMazeMapViewportHandle, Sound
   exploredWrongRoutes,
   revealedWallRouteId,
   focusedRouteSide,
+  restoringWrongRoute = false,
   chosenCorrectRoutes,
   collectedFragmentNodes,
   fragmentCount,
@@ -207,6 +212,7 @@ export const SoundMazeMapViewport = forwardRef<SoundMazeMapViewportHandle, Sound
       return piece === `${chosenSide}-correct`;
     }
     if (isCurrent) {
+      if (restoringWrongRoute && piece === 'waiting') return true;
       if (focusedRouteSide === null) return piece === 'waiting';
       if (focusedCorrectSide !== null) return piece === `${focusedCorrectSide}-correct`;
       if (focusedWrongSide !== null) return piece === `${focusedWrongSide}-blocked`;
@@ -218,7 +224,7 @@ export const SoundMazeMapViewport = forwardRef<SoundMazeMapViewportHandle, Sound
   };
 
   const pieceIsOutgoing = (index: number, piece: RoadPiece): boolean =>
-    index === frontierIndex && focusedRouteSide !== null && piece === 'waiting';
+    index === frontierIndex && piece === 'waiting';
 
   return (
     <div className={`sound-maze-viewport sound-maze-map-viewport ${atUnsolvedFork ? 'at-unsolved-fork' : ''}`} aria-label="局部可見的迷霧道路">
@@ -245,6 +251,7 @@ export const SoundMazeMapViewport = forwardRef<SoundMazeMapViewportHandle, Sound
                   piece={piece}
                   visible={pieceIsVisible(index, piece)}
                   outgoing={pieceIsOutgoing(index, piece)}
+                  restoring={index === frontierIndex && piece === 'waiting' && restoringWrongRoute}
                 />
               ));
             })}

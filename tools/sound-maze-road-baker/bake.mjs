@@ -157,6 +157,30 @@ async function makeLayer(texture, mask, top, height) {
     .toBuffer();
 }
 
+function flattenVisiblePixelsOntoForest(roadPixels, forestPixels) {
+  const flattened = Buffer.alloc(roadPixels.length);
+  for (let pixel = 0; pixel < roadPixels.length / 4; pixel += 1) {
+    const rgbaOffset = pixel * 4;
+    const rgbOffset = pixel * 3;
+    const alphaByte = roadPixels[rgbaOffset + 3];
+    if (alphaByte === 0) continue;
+
+    const alpha = alphaByte / 255;
+    const inverseAlpha = 1 - alpha;
+    flattened[rgbaOffset] = Math.round(
+      roadPixels[rgbaOffset] * alpha + forestPixels[rgbOffset] * inverseAlpha
+    );
+    flattened[rgbaOffset + 1] = Math.round(
+      roadPixels[rgbaOffset + 1] * alpha + forestPixels[rgbOffset + 1] * inverseAlpha
+    );
+    flattened[rgbaOffset + 2] = Math.round(
+      roadPixels[rgbaOffset + 2] * alpha + forestPixels[rgbOffset + 2] * inverseAlpha
+    );
+    flattened[rgbaOffset + 3] = 255;
+  }
+  return flattened;
+}
+
 async function bake(name, paths, top, bottom, textures) {
   const height = bottom - top;
   const clearingMask = await makeMask(paths, top, height, 130, 'clearing', 0.38);
@@ -165,24 +189,37 @@ async function bake(name, paths, top, bottom, textures) {
   const clearingLayer = await makeLayer(textures.clearingTexture, clearingMask, top, height);
   const shoulderLayer = await makeLayer(textures.clearingTexture, shoulderMask, top, height);
   const fillLayer = await makeLayer(textures.roadTexture, fillMask, top, height);
-  await sharp({ create: { width: tileWidth, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+  const { data: roadPixels, info } = await sharp({
+    create: { width: tileWidth, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
+  })
     .composite([{ input: clearingLayer }, { input: shoulderLayer }, { input: fillLayer }])
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  if (info.width !== tileWidth || info.height !== height || info.channels !== 4) {
+    throw new Error(`Unexpected road tile shape: ${info.width}x${info.height}x${info.channels}`);
+  }
+  const forestPixels = patternPixels(textures.forestTexture, tileX, tileWidth, top, height);
+  const flattened = flattenVisiblePixelsOntoForest(roadPixels, forestPixels);
+  await sharp(flattened, { raw: { width: tileWidth, height, channels: 4 } })
     .png({ compressionLevel: 9, adaptiveFiltering: true })
     .toFile(path.join(outputDirectory, `${name}.png`));
 }
 
 await mkdir(outputDirectory, { recursive: true });
-const loadTexture = async (id, filename) => {
+const loadTexture = async (id, filename, size = 512) => {
   const { data, info } = await sharp(await readFile(path.join(sourceDirectory, filename)))
-    .resize(512, 512)
+    .resize(size, size)
     .removeAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
-  return { id, data, channels: info.channels, width: 512, height: 512 };
+  return { id, data, channels: info.channels, width: size, height: size };
 };
 const roadTexture = await loadTexture('road', 'level-02-road-texture.webp');
 const clearingTexture = await loadTexture('clearing', 'level-02-road-clearing-texture.webp');
-const textures = { roadTexture, clearingTexture };
+// CSS repeats this background at 768px and offsets it by one complete tile,
+// so sampling with world coordinates here matches the stage pixel-for-pixel.
+const forestTexture = await loadTexture('forest', 'level-02-forest-ground.webp', 768);
+const textures = { roadTexture, clearingTexture, forestTexture };
 
 for (let index = 0; index < geometry.length; index += 1) {
   const destination = geometry[index + 1]?.fork ?? exit;
