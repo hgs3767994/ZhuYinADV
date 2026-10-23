@@ -77,7 +77,9 @@ describe('sound maze closeout safeguards', () => {
     expect(game).not.toContain('waitForRoadPaint');
     expect(game).not.toContain('mapViewportRef.current?.beginCameraMovement();');
     expect(game).not.toContain('mapViewportRef.current?.endCameraMovement();');
-    expect(styles).toMatch(/\.sound-maze-merge-fog\s*\{[^}]*height:\s*42%;/);
+    expect(viewport).not.toContain('sound-maze-merge-fog');
+    expect(styles).not.toContain('.sound-maze-merge-fog');
+    expect(styles).toMatch(/\.sound-maze-edge-fog\s*\{[\s\S]*?rgb\(184 203 210 \/ 10%\) 0 44%[\s\S]*?rgb\(159 182 192 \/ 100%\) 92% 100%/);
     expect(styles).toMatch(/\.sound-maze-camera\s*\{[^}]*will-change:\s*transform;/);
     expect(viewport).toContain('ref={cameraGroupRef} className="sound-maze-camera"');
     expect(viewport).not.toContain('roadViewBox');

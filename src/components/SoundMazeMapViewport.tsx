@@ -309,7 +309,6 @@ export const SoundMazeMapViewport = forwardRef<SoundMazeMapViewportHandle, Sound
       </div>
 
       <div className="sound-maze-edge-fog" aria-hidden="true" />
-      <div className="sound-maze-merge-fog" aria-hidden="true" />
 
       {fragmentAnimating && (
         <div className="sound-maze-fragment-collection" aria-hidden="true">

@@ -2017,35 +2017,13 @@ button:disabled {
   background:
     radial-gradient(
       ellipse 46% 38% at 50% 55%,
-      transparent 0 48%,
-      rgb(184 203 210 / 18%) 58%,
-      rgb(184 203 210 / 62%) 75%,
-      rgb(159 182 192 / 95%) 100%
+      rgb(184 203 210 / 10%) 0 44%,
+      rgb(184 203 210 / 18%) 57%,
+      rgb(184 203 210 / 62%) 76%,
+      rgb(159 182 192 / 100%) 92% 100%
     );
   pointer-events: none;
 }
-
-.sound-maze-merge-fog {
-  position: absolute;
-  z-index: 3;
-  top: -8%;
-  left: 0;
-  width: 100%;
-  height: 42%;
-  background:
-    linear-gradient(180deg,
-      rgb(172 194 203 / 100%) 0 58%,
-      rgb(184 203 210 / 100%) 70%,
-      rgb(184 203 210 / 94%) 80%,
-      rgb(184 203 210 / 62%) 90%,
-      transparent 100%);
-  filter: blur(4px);
-  opacity: 0;
-  transition: opacity 300ms ease;
-  pointer-events: none;
-}
-
-.sound-maze-map-viewport.at-unsolved-fork .sound-maze-merge-fog { opacity: 1; }
 
 .sound-maze-fix-stage {
   display: block;

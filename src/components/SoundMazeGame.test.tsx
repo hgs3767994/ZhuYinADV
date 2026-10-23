@@ -31,6 +31,8 @@ describe('sound maze gameplay shell', () => {
     expect(html).toContain('sound-maze-map-viewport');
     expect(html).toContain('sound-maze-game feedback-none is-paused');
     expect(html).toContain('sound-maze-world');
+    expect(html).toContain('sound-maze-edge-fog');
+    expect(html).not.toContain('sound-maze-merge-fog');
     expect(html).toContain('level-02-forest-ground.webp');
     expect(html).not.toContain('sound-maze-corridor-bank-edge-mask');
     expect(html).toContain('road-tiles/node-1-waiting.png?v=14f2');
