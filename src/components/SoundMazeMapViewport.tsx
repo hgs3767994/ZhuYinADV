@@ -61,7 +61,7 @@ const ROAD_PIECES: readonly RoadPiece[] = [
 const ROAD_TILE_X = -100;
 const ROAD_TILE_WIDTH = 840;
 const roadPieceUrl = (nodeIndex: number, piece: RoadPiece) =>
-  `${soundMazeRoadTile(`node-${nodeIndex + 1}-${piece}`, 'png')}?v=14f2`;
+  `${soundMazeRoadTile(`node-${nodeIndex + 1}-${piece}`)}?v=level-02-v1`;
 
 function roadTileBounds(nodeIndex: number) {
   const destinationNode = LEVEL_TWO_MAZE_GEOMETRY[nodeIndex + 1];

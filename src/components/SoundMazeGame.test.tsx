@@ -35,7 +35,7 @@ describe('sound maze gameplay shell', () => {
     expect(html).not.toContain('sound-maze-merge-fog');
     expect(html).toContain('level-02-forest-ground.webp');
     expect(html).not.toContain('sound-maze-corridor-bank-edge-mask');
-    expect(html).toContain('road-tiles/node-1-waiting.png?v=14f2');
+    expect(html).toContain('road-tiles/node-1-waiting.png?v=level-02-v1');
     expect(html).toContain('piece-waiting is-visible is-outgoing');
     expect(html).toContain('level-02-landmark-01-stele.png');
     expect((html.match(/sound-maze-map-route route-/g) ?? [])).toHaveLength(2);
@@ -166,7 +166,7 @@ describe('sound maze gameplay shell', () => {
         focusedRouteSide={null}
       />
     );
-    expect(fourthForkHtml).toContain('road-tiles/node-4-waiting.png?v=14f2');
+    expect(fourthForkHtml).toContain('road-tiles/node-4-waiting.png?v=level-02-v1');
     expect(fourthForkHtml).not.toContain('sound-maze-road-paint-bounds-route-3-left');
 
     const nearFragmentHtml = renderToStaticMarkup(
@@ -187,7 +187,7 @@ describe('sound maze gameplay shell', () => {
       />
     );
     expect((preloadedHtml.match(/sound-maze-node is-visible/g) ?? [])).toHaveLength(2);
-    expect(preloadedHtml).toContain('road-tiles/node-2-waiting.png?v=14f2');
+    expect(preloadedHtml).toContain('road-tiles/node-2-waiting.png?v=level-02-v1');
     expect((preloadedHtml.match(/is-visible" src=/g) ?? [])).toHaveLength(2);
     expect(preloadedHtml).not.toContain('sound-maze-branch-fog');
     expect(preloadedHtml).not.toContain('sound-maze-route-focus-fog');

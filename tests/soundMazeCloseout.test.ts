@@ -24,6 +24,8 @@ describe('sound maze closeout safeguards', () => {
 
     expect(main).toContain("import.meta.env.VITE_ENABLE_PREVIEWS === 'true'");
     expect(main).toContain('const preview = previewEnabled');
+    expect(main).toContain("preview === 'sound-maze-corridor'");
+    expect(main).not.toContain('sound-maze-four-fixes');
   });
 
   it('keeps camera frames outside React state and removes the portal oval focus ring', () => {
@@ -45,6 +47,8 @@ describe('sound maze closeout safeguards', () => {
 
     expect(viewport).toContain('sound-maze-baked-road-network');
     expect(viewport).toContain('soundMazeRoadTile');
+    expect(viewport).toContain('?v=level-02-v1');
+    expect(viewport).not.toContain('?v=14f');
     expect(viewport).toContain('function RoadTile');
     expect(viewport).not.toContain('sound-maze-road-mask-shapes');
     expect(viewport).not.toContain('sound-maze-road-mask-smooth-union');
@@ -79,6 +83,7 @@ describe('sound maze closeout safeguards', () => {
     expect(game).not.toContain('mapViewportRef.current?.endCameraMovement();');
     expect(viewport).not.toContain('sound-maze-merge-fog');
     expect(styles).not.toContain('.sound-maze-merge-fog');
+    expect(styles).not.toContain('.sound-maze-fix-stage');
     expect(styles).toMatch(/\.sound-maze-edge-fog\s*\{[\s\S]*?rgb\(184 203 210 \/ 10%\) 0 44%[\s\S]*?rgb\(159 182 192 \/ 100%\) 92% 100%/);
     expect(styles).toMatch(/\.sound-maze-camera\s*\{[^}]*will-change:\s*transform;/);
     expect(viewport).toContain('ref={cameraGroupRef} className="sound-maze-camera"');
