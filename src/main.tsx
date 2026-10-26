@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { SequenceLockPrototypePreview } from './components/SequenceLockPrototypePreview';
 import { SoundMazePrototypePreview } from './components/SoundMazePrototypePreview';
 import './styles.css';
 
@@ -10,7 +11,9 @@ const preview = previewEnabled
   : null;
 
 createRoot(document.getElementById('root')!).render(
-  preview === 'sound-maze-corridor' ? (
+  preview === 'sequence-lock-gate' ? (
+    <SequenceLockPrototypePreview />
+  ) : preview === 'sound-maze-corridor' ? (
     <SoundMazePrototypePreview />
   ) : (
     <StrictMode>

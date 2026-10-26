@@ -40,4 +40,43 @@ describe('sequence lock gameplay shell', () => {
       expect(html).not.toContain('倒數');
     }
   });
+
+  it('shows the castle gate only for the level one entrance', () => {
+    const entrance = renderVariant('entrance');
+    const magicDoor = renderVariant('magic-door');
+
+    expect(entrance).toContain('/assets/images/campaign/level-01-gate.png');
+    expect(entrance).toContain('sequence-lock-scene-entrance');
+    expect(magicDoor).not.toContain('/assets/images/campaign/level-01-gate.png');
+    expect(magicDoor).toContain('sequence-lock-scene-magic-door');
+  });
+
+  it('centers each rune row using the active puzzle card count', () => {
+    const entrance = renderVariant('entrance');
+
+    expect(entrance).toContain('data-card-count="3"');
+    expect((entrance.match(/--sequence-lock-card-count:3/g) ?? [])).toHaveLength(2);
+  });
+
+  it('places the level one instructions and replay control before the gate', () => {
+    const entrance = renderVariant('entrance');
+    const instructionIndex = entrance.indexOf('sequence-lock-instruction');
+    const replayIndex = entrance.indexOf('campaign-audio-replay-button');
+    const gateIndex = entrance.indexOf('sequence-lock-scene-entrance');
+
+    expect(instructionIndex).toBeGreaterThanOrEqual(0);
+    expect(replayIndex).toBeGreaterThan(instructionIndex);
+    expect(gateIndex).toBeGreaterThan(replayIndex);
+  });
+
+  it('keeps the magic door scene in its original position', () => {
+    const magicDoor = renderVariant('magic-door');
+    const sceneIndex = magicDoor.indexOf('sequence-lock-scene-magic-door');
+    const instructionIndex = magicDoor.indexOf('sequence-lock-instruction');
+    const replayIndex = magicDoor.indexOf('campaign-audio-replay-button');
+
+    expect(sceneIndex).toBeGreaterThanOrEqual(0);
+    expect(instructionIndex).toBeGreaterThan(sceneIndex);
+    expect(replayIndex).toBeGreaterThan(instructionIndex);
+  });
 });

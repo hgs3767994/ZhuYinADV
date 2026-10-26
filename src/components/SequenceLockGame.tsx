@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   createLevelEightSequenceLockPuzzles,
   createSequenceLockPuzzles,
@@ -30,6 +30,18 @@ interface SequenceLockGameProps {
 
 type Feedback = 'none' | 'wrong' | 'correct';
 
+interface SealFlight {
+  id: string;
+  startX: number;
+  startY: number;
+  travelX: number;
+  travelY: number;
+}
+
+function sealFlightDuration(): number {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 120 : 850;
+}
+
 export function SequenceLockGame({
   variant,
   resultId,
@@ -46,17 +58,22 @@ export function SequenceLockGame({
     [resultId, variant]
   );
   const [lockIndex, setLockIndex] = useState(0);
+  const [unlockedSealCount, setUnlockedSealCount] = useState(0);
   const puzzle = puzzles[lockIndex];
   const [slots, setSlots] = useState<SequenceLockSlots>(() =>
     emptySequenceLockSlots(puzzles[0].cards.length)
   );
   const slotsRef = useRef(slots);
+  const gameRef = useRef<HTMLDivElement>(null);
+  const slotsAreaRef = useRef<HTMLElement>(null);
+  const lockRefs = useRef<Array<HTMLImageElement | null>>([]);
   const [wrongSequenceCount, setWrongSequenceCount] = useState(0);
   const wrongCountRef = useRef(0);
   const [feedback, setFeedback] = useState<Feedback>('none');
   const [judging, setJudging] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioCycle, setAudioCycle] = useState(0);
+  const [sealFlight, setSealFlight] = useState<SealFlight | null>(null);
   const startedAtRef = useRef(performance.now());
   const pausedRef = useRef(paused);
   const mountedRef = useRef(true);
@@ -101,6 +118,30 @@ export function SequenceLockGame({
   const stopSequence = useCallback(() => audioService.stopSpeech(), []);
   const handlePlaybackChange = useCallback((playing: boolean) => setAudioPlaying(playing), []);
 
+  const launchSealFlight = useCallback((targetLockIndex: number) => {
+    const duration = sealFlightDuration();
+    const game = gameRef.current;
+    const slotsArea = slotsAreaRef.current;
+    const targetLock = lockRefs.current[targetLockIndex];
+    if (!game || !slotsArea || !targetLock) return duration;
+
+    const gameRect = game.getBoundingClientRect();
+    const slotsRect = slotsArea.getBoundingClientRect();
+    const targetRect = targetLock.getBoundingClientRect();
+    const startX = slotsRect.left + slotsRect.width / 2 - gameRect.left;
+    const startY = slotsRect.top + slotsRect.height / 2 - gameRect.top;
+    const targetX = targetRect.left + targetRect.width / 2 - gameRect.left;
+    const targetY = targetRect.top + targetRect.height / 2 - gameRect.top;
+    setSealFlight({
+      id: `${targetLockIndex}:${performance.now()}`,
+      startX,
+      startY,
+      travelX: targetX - startX,
+      travelY: targetY - startY
+    });
+    return duration;
+  }, []);
+
   const judge = useCallback(async (nextSlots: SequenceLockSlots) => {
     if (!sequenceLockReady(nextSlots)) return;
     setJudging(true);
@@ -123,11 +164,16 @@ export function SequenceLockGame({
 
     setFeedback('correct');
     audioService.playCorrect();
-    await waitWhileActive(750);
+    const flightDuration = launchSealFlight(lockIndex);
+    await waitWhileActive(flightDuration);
     if (!mountedRef.current) return;
     const nextLockIndex = lockIndex + 1;
+    setSealFlight(null);
+    setUnlockedSealCount(nextLockIndex);
     if (nextLockIndex >= puzzles.length) {
       onSealCountChange(0);
+      await waitWhileActive(240);
+      if (!mountedRef.current) return;
       onSolved({
         stars: sequenceLockStars(wrongCountRef.current),
         wrongSequenceCount: wrongCountRef.current,
@@ -144,7 +190,7 @@ export function SequenceLockGame({
     setJudging(false);
     setAudioCycle(0);
     onSealCountChange(puzzles.length - nextLockIndex);
-  }, [lockIndex, onSealCountChange, onSolved, puzzle, puzzles, waitWhileActive]);
+  }, [launchSealFlight, lockIndex, onSealCountChange, onSolved, puzzle, puzzles, waitWhileActive]);
 
   const selectWaitingCard = (cardId: string) => {
     if (!inputEnabled || judging || audioPlaying) return;
@@ -166,37 +212,77 @@ export function SequenceLockGame({
   const selectedIds = new Set(slots.filter((cardId): cardId is string => cardId !== null));
   const cardById = new Map(puzzle.cards.map((card) => [card.id, card]));
   const controlsDisabled = !inputEnabled || judging || audioPlaying;
+  const cardGridStyle = {
+    '--sequence-lock-card-count': puzzle.cards.length
+  } as CSSProperties;
+  const sealScene = (
+    <div className={`sequence-lock-scene sequence-lock-scene-${variant}`} aria-hidden="true">
+      {variant === 'entrance' && (
+        <img
+          className="sequence-lock-gate-art"
+          src={CAMPAIGN_IMAGES.levelOneGate}
+          alt=""
+          draggable="false"
+        />
+      )}
+      <div className="sequence-lock-door">
+        {puzzles.map((item, index) => (
+          <img
+            key={item.id}
+            ref={(element) => {
+              lockRefs.current[index] = element;
+            }}
+            src={index < unlockedSealCount ? CAMPAIGN_IMAGES.sealUnlocked : CAMPAIGN_IMAGES.sealLocked}
+            alt=""
+          />
+        ))}
+      </div>
+    </div>
+  );
+  const instruction = (
+    <div className="sequence-lock-instruction">
+      <strong>第 {lockIndex + 1} 道封印</strong>
+      <span>聽完咒語後，依序放入符文</span>
+    </div>
+  );
+  const replayControl = (
+    <CampaignAudioReplayButton
+      onReplay={replaySequence}
+      onStop={stopSequence}
+      paused={paused}
+      disabled={judging}
+      autoPlayKey={`${puzzle.id}:${audioCycle}`}
+      label="重播聲音"
+      onPlaybackChange={handlePlaybackChange}
+    />
+  );
 
   return (
-    <div className={`sequence-lock-game feedback-${feedback}`}>
-      <div className="sequence-lock-scene" aria-hidden="true">
-        <div className="sequence-lock-door">
-          {puzzles.map((item, index) => (
-            <img
-              key={item.id}
-              src={index < lockIndex ? CAMPAIGN_IMAGES.sealUnlocked : CAMPAIGN_IMAGES.sealLocked}
-              alt=""
-            />
-          ))}
-        </div>
-      </div>
+    <div
+      ref={gameRef}
+      className={`sequence-lock-game feedback-${feedback} ${paused ? 'is-paused' : ''}`}
+    >
+      {variant === 'entrance' ? (
+        <>
+          {instruction}
+          {replayControl}
+          {sealScene}
+        </>
+      ) : (
+        <>
+          {sealScene}
+          {instruction}
+          {replayControl}
+        </>
+      )}
 
-      <div className="sequence-lock-instruction">
-        <strong>第 {lockIndex + 1} 道封印</strong>
-        <span>聽完咒語後，依序放入符文</span>
-      </div>
-
-      <CampaignAudioReplayButton
-        onReplay={replaySequence}
-        onStop={stopSequence}
-        paused={paused}
-        disabled={judging}
-        autoPlayKey={`${puzzle.id}:${audioCycle}`}
-        label="重播聲音"
-        onPlaybackChange={handlePlaybackChange}
-      />
-
-      <section className={`sequence-lock-slots ${feedback === 'wrong' ? 'is-wrong' : ''}`} aria-label="鎖孔區">
+      <section
+        ref={slotsAreaRef}
+        className={`sequence-lock-slots ${feedback === 'wrong' ? 'is-wrong' : ''}`}
+        style={cardGridStyle}
+        data-card-count={puzzle.cards.length}
+        aria-label="鎖孔區"
+      >
         {slots.map((cardId, index) => {
           const card = cardId ? cardById.get(cardId) : undefined;
           return card ? (
@@ -214,7 +300,26 @@ export function SequenceLockGame({
         })}
       </section>
 
-      <section className="sequence-lock-waiting" aria-label="待選區">
+      {sealFlight && (
+        <span
+          key={sealFlight.id}
+          className="sequence-lock-seal-flight"
+          style={{
+            '--sequence-lock-flight-start-x': `${sealFlight.startX}px`,
+            '--sequence-lock-flight-start-y': `${sealFlight.startY}px`,
+            '--sequence-lock-flight-x': `${sealFlight.travelX}px`,
+            '--sequence-lock-flight-y': `${sealFlight.travelY}px`
+          } as CSSProperties}
+          aria-hidden="true"
+        />
+      )}
+
+      <section
+        className="sequence-lock-waiting"
+        style={cardGridStyle}
+        data-card-count={puzzle.cards.length}
+        aria-label="待選區"
+      >
         {puzzle.cards.map((card) => selectedIds.has(card.id) ? (
           <span key={card.id} className="sequence-lock-waiting-empty" aria-hidden="true" />
         ) : (

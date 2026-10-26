@@ -1649,6 +1649,7 @@ button:disabled {
 }
 
 .sequence-lock-game {
+  position: relative;
   display: flex;
   width: min(100%, 420px);
   height: auto;
@@ -1671,6 +1672,28 @@ button:disabled {
   box-shadow: inset 0 0 24px rgb(0 0 0 / 38%), 0 9px 20px rgb(0 0 0 / 25%);
 }
 
+.sequence-lock-scene-entrance {
+  position: relative;
+  display: block;
+  width: min(100%, 380px);
+  min-height: 0;
+  overflow: hidden;
+  aspect-ratio: 768 / 307;
+  border-color: #3f4652;
+  border-radius: 18px;
+  background: #303640;
+  box-shadow: inset 0 0 16px rgb(0 0 0 / 24%), 0 9px 20px rgb(0 0 0 / 25%);
+}
+
+.sequence-lock-gate-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .sequence-lock-door {
   display: flex;
   gap: 18px;
@@ -1682,6 +1705,33 @@ button:disabled {
   height: 50px;
   object-fit: contain;
   filter: drop-shadow(0 3px 5px rgb(0 0 0 / 28%));
+}
+
+.sequence-lock-scene-entrance .sequence-lock-door {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+}
+
+.sequence-lock-scene-entrance .sequence-lock-door img {
+  position: absolute;
+  top: 51%;
+  width: clamp(40px, 11.5vw, 48px);
+  height: clamp(40px, 11.5vw, 48px);
+  transform: translate(-50%, -50%);
+}
+
+.sequence-lock-scene-entrance .sequence-lock-door img:nth-child(1) {
+  left: 35.4%;
+}
+
+.sequence-lock-scene-entrance .sequence-lock-door img:nth-child(2) {
+  left: 50%;
+}
+
+.sequence-lock-scene-entrance .sequence-lock-door img:nth-child(3) {
+  left: 64.6%;
 }
 
 .sequence-lock-instruction {
@@ -1706,7 +1756,7 @@ button:disabled {
 .sequence-lock-waiting {
   display: grid;
   width: min(100%, 340px);
-  grid-template-columns: repeat(4, 58px);
+  grid-template-columns: repeat(var(--sequence-lock-card-count), 58px);
   justify-content: center;
   gap: 12px;
 }
@@ -1784,6 +1834,110 @@ button:disabled {
   font-size: 0.84rem;
   font-weight: 800;
   text-align: center;
+}
+
+.sequence-lock-preview-panel {
+  margin-top: 28px;
+}
+
+.sequence-lock-preview-panel .primary-button {
+  margin-top: 18px;
+}
+
+.sequence-lock-preview-stars {
+  color: #facc15;
+  font-size: 2rem;
+  letter-spacing: 0.12em;
+}
+
+.sequence-lock-seal-flight {
+  position: absolute;
+  z-index: 8;
+  top: var(--sequence-lock-flight-start-y);
+  left: var(--sequence-lock-flight-start-x);
+  width: 15px;
+  height: 15px;
+  border: 1px solid rgb(224 253 255 / 92%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff 0 14%, #a8f7ff 28%, #3bc7ff 52%, #147bd1 76%, #174ca6 100%);
+  box-shadow: 0 0 7px #fff, 0 0 16px #5ee8ff, 0 0 28px rgb(30 144 255 / 88%);
+  pointer-events: none;
+  animation: sequence-lock-seal-flight 850ms cubic-bezier(0.22, 0.7, 0.22, 1) forwards;
+}
+
+.sequence-lock-seal-flight::before {
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(120 231 255 / 52%), transparent 68%);
+  filter: blur(3px);
+  content: '';
+}
+
+.sequence-lock-game.is-paused .sequence-lock-seal-flight {
+  animation-play-state: paused;
+}
+
+.sequence-lock-game.feedback-correct .sequence-lock-slots {
+  animation: sequence-lock-answer-correct 850ms ease-out both;
+}
+
+.sequence-lock-game.is-paused.feedback-correct .sequence-lock-slots {
+  animation-play-state: paused;
+}
+
+@keyframes sequence-lock-seal-flight {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(
+      calc(-50% + var(--sequence-lock-flight-x)),
+      calc(-50% + var(--sequence-lock-flight-y))
+    ) scale(0.3);
+  }
+}
+
+@keyframes sequence-lock-answer-correct {
+  0% {
+    border-color: var(--campaign-border);
+    box-shadow: 0 0 0 rgb(59 199 255 / 0%);
+  }
+  18% {
+    border-color: #9bf5ff;
+    box-shadow:
+      0 0 8px rgb(255 255 255 / 96%),
+      0 0 22px rgb(59 199 255 / 94%),
+      0 0 38px rgb(20 123 209 / 72%),
+      inset 0 0 15px rgb(168 247 255 / 52%);
+  }
+  52% {
+    border-color: #59d9ff;
+    box-shadow:
+      0 0 6px rgb(168 247 255 / 76%),
+      0 0 18px rgb(59 199 255 / 68%),
+      inset 0 0 10px rgb(59 199 255 / 34%);
+  }
+  100% {
+    border-color: var(--campaign-border);
+    box-shadow: 0 0 0 rgb(59 199 255 / 0%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sequence-lock-seal-flight,
+  .sequence-lock-game.feedback-correct .sequence-lock-slots {
+    animation-duration: 120ms;
+  }
 }
 
 .feedback-wrong .sequence-lock-feedback { color: #fecaca; }

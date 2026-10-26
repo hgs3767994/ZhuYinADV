@@ -14,6 +14,7 @@ export const CAMPAIGN_IMAGES = {
   energyEmpty: campaignImage('energy-empty.png'),
   sealLocked: campaignImage('seal-locked.png'),
   sealUnlocked: campaignImage('seal-unlocked.png'),
+  levelOneGate: campaignImage('level-01-gate.png'),
   star: campaignImage('star.png'),
   shieldFull: campaignImage('shield-full.png'),
   shieldBroken: campaignImage('shield-broken.png'),
