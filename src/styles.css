@@ -1794,7 +1794,10 @@ button:disabled {
 }
 
 .sequence-lock-card {
+  -webkit-appearance: none;
+  appearance: none;
   border: 2px solid #8fd4ff;
+  padding: 0;
   background: linear-gradient(145deg, #e6f5ff, #9bd8ff);
   box-shadow: 0 5px 0 #38638a, 0 8px 14px rgb(0 0 0 / 26%);
   color: #15365b;
@@ -1802,6 +1805,17 @@ button:disabled {
   font-family: inherit;
   font-size: 1.6rem;
   font-weight: 950;
+  line-height: 1;
+  text-align: center;
+}
+
+.sequence-lock-card-symbol {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .sequence-lock-card.selected {

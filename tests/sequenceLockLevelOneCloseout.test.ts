@@ -39,4 +39,16 @@ describe('level 1-1 gate artwork closeout safeguards', () => {
     expect(styles).toMatch(/\.sequence-lock-game\.feedback-correct \.sequence-lock-slots\s*\{[\s\S]*?sequence-lock-answer-correct 850ms/);
     expect(styles).toContain('.sequence-lock-game.is-paused .sequence-lock-seal-flight');
   });
+
+  it('neutralizes native button metrics around rune symbols on iPadOS', () => {
+    const game = readFileSync(
+      new URL('../src/components/SequenceLockGame.tsx', import.meta.url),
+      'utf8'
+    );
+    const styles = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+
+    expect(game.match(/className="sequence-lock-card-symbol"/g)).toHaveLength(2);
+    expect(styles).toMatch(/\.sequence-lock-card\s*\{[\s\S]*?-webkit-appearance:\s*none;[\s\S]*?appearance:\s*none;[\s\S]*?padding:\s*0;/);
+    expect(styles).toMatch(/\.sequence-lock-card-symbol\s*\{[\s\S]*?width:\s*100%;[\s\S]*?height:\s*100%;[\s\S]*?place-items:\s*center;/);
+  });
 });

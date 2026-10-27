@@ -56,6 +56,7 @@ describe('sequence lock gameplay shell', () => {
 
     expect(entrance).toContain('data-card-count="3"');
     expect((entrance.match(/--sequence-lock-card-count:3/g) ?? [])).toHaveLength(2);
+    expect((entrance.match(/sequence-lock-card-symbol/g) ?? [])).toHaveLength(3);
   });
 
   it('places the level one instructions and replay control before the gate', () => {

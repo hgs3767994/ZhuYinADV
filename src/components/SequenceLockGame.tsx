@@ -294,7 +294,9 @@ export function SequenceLockGame({
               onClick={() => returnCard(index)}
               aria-label={`將 ${card.symbol} 放回待選區`}
             >
-              {card.symbol}
+              <span className="sequence-lock-card-symbol" aria-hidden="true">
+                {card.symbol}
+              </span>
             </button>
           ) : <span key={index} className="sequence-lock-slot-empty" aria-hidden="true" />;
         })}
@@ -331,7 +333,9 @@ export function SequenceLockGame({
             onClick={() => selectWaitingCard(card.id)}
             aria-label={`選擇 ${card.symbol}`}
           >
-            {card.symbol}
+            <span className="sequence-lock-card-symbol" aria-hidden="true">
+              {card.symbol}
+            </span>
           </button>
         ))}
       </section>
