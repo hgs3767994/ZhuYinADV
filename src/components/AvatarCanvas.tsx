@@ -10,6 +10,7 @@ import {
 import { EYE_SCALE_CALIBRATIONS, eyeTransform } from '../avatar/eyeCalibration';
 import {
   HAIR_FACE_CALIBRATIONS,
+  faceScaleTransform,
   faceTransform,
   hairTransform
 } from '../avatar/hairCalibration';
@@ -155,6 +156,7 @@ export function AvatarCanvas({
   const detailsSource = faceAssetUrl(recipe.face, 'details');
   const calibration = HAIR_FACE_CALIBRATIONS[recipe.hair][recipe.face];
   const calibratedHairTransform = hairTransform(calibration);
+  const calibratedFaceScaleTransform = faceScaleTransform(calibration);
   const canonicalFaceTransform = faceTransform();
   const tintHair = recipe.hairColor !== 'brown';
   return (
@@ -184,15 +186,17 @@ export function AvatarCanvas({
         </filter>
       </defs>
       {showBackground && <circle cx="256" cy="256" r="244" fill="#dff4f0" />}
-      <g transform={canonicalFaceTransform}>
-        <rect x="0" y="0" width="512" height="512" fill={skin} mask={`url(#${faceMaskId})`} />
-        <image href={detailsSource} x="0" y="0" width="512" height="512" />
-      </g>
-      <Brows recipe={recipe} />
-      <g data-avatar-layer="features" transform="translate(0 18)">
-        <Eyes recipe={recipe} />
-        <Nose recipe={recipe} skin={skin} maskId={noseMaskId} />
-        <Mouth recipe={recipe} />
+      <g data-avatar-layer="face-content" transform={calibratedFaceScaleTransform}>
+        <g transform={canonicalFaceTransform}>
+          <rect x="0" y="0" width="512" height="512" fill={skin} mask={`url(#${faceMaskId})`} />
+          <image href={detailsSource} x="0" y="0" width="512" height="512" />
+        </g>
+        <Brows recipe={recipe} />
+        <g data-avatar-layer="features" transform="translate(0 18)">
+          <Eyes recipe={recipe} />
+          <Nose recipe={recipe} skin={skin} maskId={noseMaskId} />
+          <Mouth recipe={recipe} />
+        </g>
       </g>
       <g data-avatar-layer="hair">
         <image

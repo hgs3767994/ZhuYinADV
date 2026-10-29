@@ -76,8 +76,10 @@ describe('AvatarCanvas hairstyles', () => {
 
     expect(markup).toContain('assets/avatar-parts/hair/approved/hair-02.png');
     expect(markup).toContain(
-      'translate(-5.6875 73.405) translate(256 256) scale(1.0741 1.093) translate(-256 -256)'
+      'translate(-4.01 63.36) translate(256 256) scale(0.849 0.849) translate(-256 -256)'
     );
+    expect(markup).toContain('data-avatar-layer="face-content"');
+    expect(markup).toContain('translate(256 256) scale(0.85) translate(-256 -256)');
     expect(markup).toContain('matrix(.65 0 0 .78 89.6 80)');
     expect(markup).not.toContain('back-mask');
     expect(markup).not.toContain('candidates');
