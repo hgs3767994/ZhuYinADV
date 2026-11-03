@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { SequenceLockPrototypePreview } from './components/SequenceLockPrototypePreview';
 import { SoundMazePrototypePreview } from './components/SoundMazePrototypePreview';
+import { MemoryExplorePrototypePreview } from './components/MemoryExplorePrototypePreview';
 import './styles.css';
 
 const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_PREVIEWS === 'true';
@@ -15,6 +16,8 @@ createRoot(document.getElementById('root')!).render(
     <SequenceLockPrototypePreview />
   ) : preview === 'sound-maze-corridor' ? (
     <SoundMazePrototypePreview />
+  ) : preview === 'memory-village' ? (
+    <MemoryExplorePrototypePreview />
   ) : (
     <StrictMode>
       <App />

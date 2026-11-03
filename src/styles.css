@@ -2527,6 +2527,144 @@ button:disabled {
   box-shadow: inset 0 0 30px rgb(0 0 0 / 34%), 0 9px 20px rgb(0 0 0 / 28%);
 }
 
+.memory-explore-village-scene {
+  isolation: isolate;
+  display: block;
+  height: clamp(124px, 20vh, 170px);
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border-color: #80705c;
+  border-radius: 24px;
+  background: #879b91;
+}
+
+.memory-explore-village-art {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 56%;
+  filter: brightness(0.86) saturate(0.86);
+  user-select: none;
+}
+
+.memory-explore-village-haze {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgb(222 233 226 / 24%), transparent 48%),
+    radial-gradient(ellipse at 50% 62%, transparent 30%, rgb(57 72 71 / 18%) 100%);
+  pointer-events: none;
+}
+
+.memory-explore-xia {
+  position: absolute;
+  z-index: 2;
+  inset: 3% 0 0;
+  display: grid;
+  place-items: end center;
+  pointer-events: none;
+}
+
+.memory-explore-xia-art {
+  position: absolute;
+  bottom: -2%;
+  display: block;
+  width: auto;
+  height: 96%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 5px rgb(25 21 18 / 42%));
+  user-select: none;
+}
+
+.memory-explore-xia-smile {
+  opacity: 0;
+}
+
+.memory-explore-village-scene .memory-explore-seals {
+  z-index: 4;
+  inset: auto 6% 10%;
+  width: auto;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.memory-explore-village-scene .memory-explore-seals img {
+  width: clamp(30px, 9vw, 40px);
+  height: clamp(30px, 9vw, 40px);
+  filter: drop-shadow(0 3px 4px rgb(0 0 0 / 52%));
+}
+
+.completion-seals-fading .memory-explore-village-scene .memory-explore-seals {
+  animation: memory-explore-seals-fade 450ms ease-in both;
+}
+
+.completion-smiling .memory-explore-village-scene .memory-explore-seals,
+.completion-smile-hold .memory-explore-village-scene .memory-explore-seals {
+  opacity: 0;
+}
+
+.completion-smiling .memory-explore-xia-worried {
+  animation: memory-explore-face-out 650ms ease-in-out both;
+}
+
+.completion-smiling .memory-explore-xia-smile {
+  animation: memory-explore-face-in 650ms ease-in-out both;
+}
+
+.completion-smile-hold .memory-explore-xia-worried {
+  opacity: 0;
+}
+
+.completion-smile-hold .memory-explore-xia-smile {
+  opacity: 1;
+}
+
+.memory-village-game.is-paused .memory-explore-seals,
+.memory-village-game.is-paused .memory-explore-xia-art {
+  animation-play-state: paused;
+}
+
+@keyframes memory-explore-seals-fade {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-4px) scale(0.94); }
+}
+
+@keyframes memory-explore-face-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes memory-explore-face-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .completion-seals-fading .memory-explore-village-scene .memory-explore-seals {
+    animation-duration: 120ms;
+  }
+
+  .completion-smiling .memory-explore-xia-worried,
+  .completion-smiling .memory-explore-xia-smile {
+    animation-duration: 160ms;
+  }
+}
+
+@media (max-height: 720px) {
+  .memory-explore-village-scene {
+    height: 112px;
+  }
+
+  .memory-explore-village-scene .memory-explore-seals {
+    bottom: 7%;
+  }
+}
+
 .memory-battle-barrier {
   position: absolute;
   z-index: 0;
@@ -2607,6 +2745,20 @@ button:disabled {
   box-shadow: inset 0 0 24px rgb(0 0 0 / 38%);
 }
 
+.memory-explore-game .memory-explore-feedback {
+  order: 1;
+}
+
+.memory-explore-game .memory-instruction-memorize {
+  color: #b22222;
+  font-weight: 950;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 78%), 0 0 8px rgb(255 235 220 / 86%);
+}
+
+.memory-explore-game .memory-explore-grid {
+  order: 2;
+}
+
 .memory-explore-card {
   position: relative;
   display: block;
@@ -2682,6 +2834,15 @@ button:disabled {
 
 .memory-explore-game.feedback-wrong .memory-explore-feedback { color: #fecaca; }
 .memory-explore-game.feedback-correct .memory-explore-feedback { color: #a7f3d0; }
+
+.memory-explore-game .memory-explore-feedback.memory-instruction-memorize {
+  color: #b22222;
+}
+
+.memory-explore-game .memory-explore-feedback.memory-instruction-prompt,
+.memory-explore-game .memory-explore-feedback.memory-instruction-judging {
+  color: #713f22;
+}
 
 .pursuit-game {
   display: flex;

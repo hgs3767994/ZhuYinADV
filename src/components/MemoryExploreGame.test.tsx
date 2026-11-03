@@ -39,12 +39,17 @@ describe('memory explore gameplay shell', () => {
     expect(html).not.toContain('rune-card-back.png');
     expect((html.match(/<img[^>]+seal-locked\.png/g) ?? [])).toHaveLength(5);
     expect(html).toContain('仔細記住九張符文的位置');
+    expect(html).toContain('memory-instruction-memorize');
     expect(html).not.toContain('記住符文的位置');
     expect(html).not.toContain('目標符文');
     expect(html).not.toContain('配對不正確');
     expect(html).not.toContain('配對成功');
     expect(html).toContain('重播目標讀音');
     expect(html).not.toContain('倒數');
+    expect(html).toContain('level-03-village.jpg');
+    expect(html).toContain('level-03-xia-worried.png');
+    expect(html).toContain('level-03-xia-smile.png');
+    expect(html).toContain('神情憂愁的小亞');
   });
 
   it('starts memory battle with nine cards, five barrier shields and no energy skills', () => {
@@ -70,5 +75,9 @@ describe('memory explore gameplay shell', () => {
     expect(html).not.toContain('聲音能量');
     expect(html).not.toContain('符音穿透');
     expect(html).not.toContain('回音護盾');
+    expect(html).toContain('仔細記住九張符文的位置');
+    expect(html).toContain('memory-instruction-memorize');
+    expect(html).not.toContain('level-03-village.jpg');
+    expect(html).not.toContain('level-03-xia-worried.png');
   });
 });

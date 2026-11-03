@@ -34,7 +34,16 @@ interface MemoryExploreGameProps {
 
 type MemoryPhase = 'memorize' | 'prompt' | 'judging';
 type MemoryFeedback = 'none' | 'wrong' | 'attack' | 'correct';
+type ExploreCompletionPhase = 'playing' | 'all-unlocked' | 'seals-fading' | 'smiling' | 'smile-hold';
 const MEMORY_DURATION_MS = 5_000;
+
+const exploreCompletionDurations = () => {
+  const reducedMotion = typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return reducedMotion
+    ? { unlockHold: 80, sealFade: 120, faceCrossfade: 160, smileHold: 200 }
+    : { unlockHold: 250, sealFade: 450, faceCrossfade: 650, smileHold: 600 };
+};
 
 export function MemoryExploreGame({
   variant,
@@ -56,6 +65,8 @@ export function MemoryExploreGame({
     () => createMemoryColorAssignments(plan.cards)
   );
   const [roundIndex, setRoundIndex] = useState(0);
+  const [unlockedSealCount, setUnlockedSealCount] = useState(0);
+  const [completionPhase, setCompletionPhase] = useState<ExploreCompletionPhase>('playing');
   const targetSymbol = plan.targetSymbols[roundIndex];
   const [phase, setPhase] = useState<MemoryPhase>('memorize');
   const [selectedCardIds, setSelectedCardIds] = useState<readonly string[]>([]);
@@ -169,7 +180,23 @@ export function MemoryExploreGame({
     if (!mountedRef.current) return;
     const completedPairs = roundIndex + 1;
     onSealCountChange(MEMORY_GROUP_COUNT - completedPairs);
+    if (variant === 'explore') setUnlockedSealCount(completedPairs);
     if (completedPairs === plan.targetSymbols.length) {
+      if (variant === 'explore') {
+        const durations = exploreCompletionDurations();
+        setCompletionPhase('all-unlocked');
+        await waitWhileActive(durations.unlockHold);
+        if (!mountedRef.current) return;
+        setCompletionPhase('seals-fading');
+        await waitWhileActive(durations.sealFade);
+        if (!mountedRef.current) return;
+        setCompletionPhase('smiling');
+        await waitWhileActive(durations.faceCrossfade);
+        if (!mountedRef.current) return;
+        setCompletionPhase('smile-hold');
+        await waitWhileActive(durations.smileHold);
+        if (!mountedRef.current) return;
+      }
       onSolved({
         stars: variant === 'battle'
           ? memoryBattleStars(livesRef.current)
@@ -207,22 +234,51 @@ export function MemoryExploreGame({
 
   const cardsFaceUp = phase === 'memorize';
   const controlsDisabled = !inputEnabled || phase !== 'prompt' || audioPlaying;
+  const displayedUnlockedSeals = variant === 'explore' ? unlockedSealCount : roundIndex;
 
   return (
-    <div className={`memory-explore-game ${variant === 'battle' ? 'memory-battle-game' : ''} feedback-${feedback}`}>
-      <div className="memory-explore-npc-scene">
+    <div className={`memory-explore-game ${variant === 'battle' ? 'memory-battle-game' : 'memory-village-game'} feedback-${feedback} completion-${completionPhase} ${paused ? 'is-paused' : ''}`}>
+      <div className={`memory-explore-npc-scene ${variant === 'explore' ? 'memory-explore-village-scene' : ''}`}>
+        {variant === 'explore' && (
+          <>
+            <img
+              className="memory-explore-village-art"
+              src={CAMPAIGN_IMAGES.levelThreeVillage}
+              alt=""
+              aria-hidden="true"
+              draggable="false"
+            />
+            <div className="memory-explore-village-haze" aria-hidden="true" />
+            <div className="memory-explore-xia" role="img" aria-label={completionPhase === 'smile-hold' ? '恢復笑容的小亞' : '神情憂愁的小亞'}>
+              <img
+                className="memory-explore-xia-art memory-explore-xia-worried"
+                src={CAMPAIGN_IMAGES.levelThreeXiaWorried}
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+              />
+              <img
+                className="memory-explore-xia-art memory-explore-xia-smile"
+                src={CAMPAIGN_IMAGES.levelThreeXiaSmile}
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+              />
+            </div>
+          </>
+        )}
         {variant === 'battle' && <div className="memory-battle-barrier" aria-label="巨大迷霧結界">巨大迷霧結界</div>}
-        <div className="memory-explore-seals" aria-label={`尚餘 ${MEMORY_GROUP_COUNT - roundIndex} ${variant === 'battle' ? '層結界護盾' : '道迷霧封印'}`}>
+        <div className="memory-explore-seals" aria-label={`尚餘 ${MEMORY_GROUP_COUNT - displayedUnlockedSeals} ${variant === 'battle' ? '層結界護盾' : '道迷霧封印'}`}>
           {Array.from({ length: MEMORY_GROUP_COUNT }, (_, index) => (
             <img
               key={index}
-              src={index < roundIndex ? CAMPAIGN_IMAGES.sealUnlocked : CAMPAIGN_IMAGES.sealLocked}
+              src={index < displayedUnlockedSeals ? CAMPAIGN_IMAGES.sealUnlocked : CAMPAIGN_IMAGES.sealLocked}
               alt=""
               aria-hidden="true"
             />
           ))}
         </div>
-        <div className="memory-explore-npc" aria-label="聲音典籍魔法師">小亞</div>
+        {variant === 'battle' && <div className="memory-explore-npc" aria-label="聲音典籍魔法師">小亞</div>}
       </div>
 
       <CampaignAudioReplayButton
@@ -260,11 +316,11 @@ export function MemoryExploreGame({
         })}
       </section>
 
-      <p className="memory-explore-feedback memory-instruction" aria-live="polite">
+      <p className={`memory-explore-feedback memory-instruction memory-instruction-${phase}`} aria-live="polite">
         {feedback === 'attack' ? `結界釋放黑霧攻擊，剩餘 ${lives} 點生命。` :
-          feedback === 'wrong' || feedback === 'correct' ? '' :
-            phase === 'memorize' ? '仔細記住九張符文的位置' :
-              wrongPairCount > 0 ? '找出兩張與目標讀音相同的符文卡。' : ''}
+          phase === 'memorize'
+            ? '仔細記住九張符文的位置'
+            : '找出兩張與目標讀音相同的符文卡'}
       </p>
     </div>
   );
