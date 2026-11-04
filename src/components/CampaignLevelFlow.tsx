@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import type { AvatarRecipeV2 } from '../avatar/model';
 import type { CampaignLevelDefinition } from '../game/campaignConfig';
 import { campaignFlowContent, campaignFlowReducer, campaignSystemBackAction, createCampaignFlowState, type CampaignStoryPage } from '../game/campaignFlow';
 import { saveCampaignCompletionWithRetry } from '../game/campaignSave';
@@ -18,6 +19,7 @@ import { SoundMazeGame } from './SoundMazeGame';
 interface CampaignLevelFlowProps {
   level: CampaignLevelDefinition;
   profileId: string;
+  avatarRecipe: AvatarRecipeV2;
   campaignId: string;
   appVersion: string;
   tutorialSeen: boolean;
@@ -87,7 +89,7 @@ function StorySequence({ level, page, pageIndex, pageCount, finalLabel, onAdvanc
 }
 
 export function CampaignLevelFlow({
-  level, profileId, campaignId, appVersion, tutorialSeen, initialBestStars, initialCompleted,
+  level, profileId, avatarRecipe, campaignId, appVersion, tutorialSeen, initialBestStars, initialCompleted,
   onTutorialSeen, onComplete, onReturnToMap, onGameplayHistoryArm, onGameplayHistoryDisarm,
   onGameplayBackHandlerChange, onStoryBackHandlerChange
 }: CampaignLevelFlowProps) {
@@ -391,7 +393,7 @@ export function CampaignLevelFlow({
             durationMs: result.durationMs
           })} />
       ) : pursuitMode ? (
-        <PursuitGame key={resultId} variant={chaseMode ? 'chase' : 'escort'} resultId={resultId} paused={paused} inputEnabled={inputEnabled}
+        <PursuitGame key={resultId} variant={chaseMode ? 'chase' : 'escort'} avatarRecipe={avatarRecipe} resultId={resultId} paused={paused} inputEnabled={inputEnabled}
           onStatusChange={setPursuitStatus} onInteractionLockChange={setGameInputLocked}
           onDefeat={() => dispatch({ type: 'defeat' })}
           onSolved={(result) => solveLevel({

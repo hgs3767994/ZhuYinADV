@@ -1,6 +1,14 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_AVATAR_RECIPE } from '../avatar/model';
+import {
+  BROW_OPTIONS,
+  DEFAULT_AVATAR_RECIPE,
+  FACE_OPTIONS,
+  HAIR_COLOR_OPTIONS,
+  NOSE_OPTIONS,
+  SKIN_TONE_OPTIONS
+} from '../avatar/model';
+import { GUEST_AVATAR_RECIPE } from '../services/profileRepository';
 import {
   AVATAR_EDITOR_EYE_OPTIONS,
   AVATAR_EDITOR_HAIR_OPTIONS,
@@ -16,6 +24,17 @@ describe('AvatarEditor', () => {
     expect(DEFAULT_AVATAR_RECIPE.hair).toBe(AVATAR_EDITOR_HAIR_OPTIONS[0]);
     expect(DEFAULT_AVATAR_RECIPE.eyes).toBe(AVATAR_EDITOR_EYE_OPTIONS[0]);
     expect(DEFAULT_AVATAR_RECIPE.mouth).toBe(AVATAR_EDITOR_MOUTH_OPTIONS[0]);
+  });
+
+  it('maps the approved guest appearance from the visible editor order', () => {
+    expect(GUEST_AVATAR_RECIPE.face).toBe(FACE_OPTIONS[0]);
+    expect(GUEST_AVATAR_RECIPE.skinTone).toBe(SKIN_TONE_OPTIONS[0]);
+    expect(GUEST_AVATAR_RECIPE.hair).toBe(AVATAR_EDITOR_HAIR_OPTIONS[9]);
+    expect(GUEST_AVATAR_RECIPE.hairColor).toBe(HAIR_COLOR_OPTIONS[1]);
+    expect(GUEST_AVATAR_RECIPE.brows).toBe(BROW_OPTIONS[0]);
+    expect(GUEST_AVATAR_RECIPE.eyes).toBe(AVATAR_EDITOR_EYE_OPTIONS[0]);
+    expect(GUEST_AVATAR_RECIPE.nose).toBe(NOSE_OPTIONS[0]);
+    expect(GUEST_AVATAR_RECIPE.mouth).toBe(AVATAR_EDITOR_MOUTH_OPTIONS[0]);
   });
 
   it('hides option captions and removes glasses and accessory categories', () => {

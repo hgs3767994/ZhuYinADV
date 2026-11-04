@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { DEFAULT_AVATAR_RECIPE } from '../avatar/model';
 
 vi.mock('../services/audio', () => ({
   audioService: {
@@ -17,6 +18,7 @@ describe('escort gameplay shell', () => {
     const html = renderToStaticMarkup(
       <PursuitGame
         variant="escort"
+        avatarRecipe={DEFAULT_AVATAR_RECIPE}
         resultId="escort-preview"
         paused
         inputEnabled={false}
@@ -27,9 +29,13 @@ describe('escort gameplay shell', () => {
       />
     );
 
-    expect(html).toContain('冒險者');
-    expect(html).toContain('小亞');
+    expect(html).toContain('套用玩家頭像的冒險者紙偶');
+    expect(html).toContain('小亞紙偶');
     expect(html).toContain('後方逼近的黑霧');
+    expect(html).toContain('level-04-forest-backdrop.jpg');
+    expect(html).toContain('level-04-forest-foreground.png');
+    expect(html).toContain('level-04-black-mist.png');
+    expect(html).toContain('--mist-left:-23%');
     expect((html.match(/選擇 [^\s]+ 道路/g) ?? [])).toHaveLength(2);
     expect(html).not.toContain('>聽完讀音後開始倒數<');
     expect(html).toContain('重播目標讀音');
@@ -40,6 +46,7 @@ describe('escort gameplay shell', () => {
     const html = renderToStaticMarkup(
       <PursuitGame
         variant="chase"
+        avatarRecipe={DEFAULT_AVATAR_RECIPE}
         resultId="chase-preview"
         paused
         inputEnabled={false}
@@ -51,6 +58,8 @@ describe('escort gameplay shell', () => {
     );
 
     expect(html).toContain('後方追趕的迷霧哨兵');
+    expect(html).toContain('--mist-left:-18%');
+    expect(html).not.toContain('level-04-black-mist.png');
     expect((html.match(/選擇 [^\s]+ 道路/g) ?? [])).toHaveLength(3);
     expect(html).not.toContain('後方逼近的黑霧');
   });

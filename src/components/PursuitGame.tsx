@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import type { AvatarRecipeV2 } from '../avatar/model';
 import {
   createLevelFourEscort,
   createLevelSixChase,
@@ -10,6 +11,12 @@ import {
 } from '../game/pursuit';
 import { audioService } from '../services/audio';
 import { CampaignAudioReplayButton } from './CampaignAudioReplayButton';
+import { AdventurerPuppet } from './AdventurerPuppet';
+
+const LEVEL_FOUR_FOREST_BACKDROP = '/assets/images/campaign/pursuit/level-04-forest-backdrop.jpg';
+const LEVEL_FOUR_FOREST_FOREGROUND = '/assets/images/campaign/pursuit/level-04-forest-foreground.png';
+const LEVEL_FOUR_BLACK_MIST = '/assets/images/campaign/pursuit/level-04-black-mist.png';
+const XIA_SMILE_PUPPET = '/assets/images/campaign/level-03-xia-smile.png';
 
 export interface PursuitGameStatus extends PursuitState {
   segmentNumber: number;
@@ -17,6 +24,7 @@ export interface PursuitGameStatus extends PursuitState {
 
 interface PursuitGameProps {
   variant: 'escort' | 'chase';
+  avatarRecipe: AvatarRecipeV2;
   resultId: string;
   paused: boolean;
   inputEnabled: boolean;
@@ -32,11 +40,12 @@ interface PursuitGameProps {
 }
 
 type PursuitPhase = 'introducing' | 'answering' | 'resolving';
-type PursuitFeedback = 'none' | 'correct' | 'wrong' | 'timeout' | 'wind';
+type PursuitFeedback = 'none' | 'correct' | 'wrong' | 'timeout';
 const ANSWER_DURATION_MS = 5_000;
 
 export function PursuitGame({
   variant,
+  avatarRecipe,
   resultId,
   paused,
   inputEnabled,
@@ -117,10 +126,10 @@ export function PursuitGame({
     pursuitStateRef.current = nextState;
     setPursuitState(nextState);
     onStatusChange({ segmentNumber: segmentIndex + 1, ...nextState });
-    setFeedback(timedOut ? 'timeout' : resolved.windBoost ? 'wind' : correct ? 'correct' : 'wrong');
+    setFeedback(timedOut ? 'timeout' : correct ? 'correct' : 'wrong');
     correct ? audioService.playCorrect() : audioService.playWrong();
 
-    await waitWhileActive(resolved.windBoost ? 1_000 : 760);
+    await waitWhileActive(760);
     if (!mountedRef.current) return;
     if (resolved.safetyDistance === 0) {
       onDefeat();
@@ -186,21 +195,55 @@ export function PursuitGame({
 
   const controlsDisabled = !inputEnabled || phase !== 'answering' || audioPlaying;
   const countdownSeconds = Math.max(0, Math.ceil(remainingMs / 1_000));
+  const mistOrigin = variant === 'escort' ? -53 : -48;
   const sceneStyle = {
-    '--mist-left': `${-48 + (5 - pursuitState.safetyDistance) * 10}%`
+    '--mist-left': `${mistOrigin + (5 - pursuitState.safetyDistance) * 10}%`
   } as CSSProperties;
 
   return (
-    <div className={`pursuit-game feedback-${feedback}`}>
-      <div className="pursuit-scene" style={sceneStyle}>
-        {variant === 'chase'
-          ? <div className="pursuit-pursuers" aria-label="後方追趕的迷霧哨兵">迷霧哨兵</div>
-          : <div className="pursuit-mist" aria-label="後方逼近的黑霧" />}
-        <div className="pursuit-party" aria-label="冒險者與小亞">
-          <span className="pursuit-player">冒險者</span>
-          <span className="pursuit-npc">小亞</span>
-        </div>
-        <div className="pursuit-path" aria-hidden="true">••••••••••</div>
+    <div className={`pursuit-game pursuit-${variant}-game phase-${phase} feedback-${feedback} ${paused ? 'is-paused' : ''}`}>
+      <div className={`pursuit-scene pursuit-${variant}-scene`} style={sceneStyle}>
+        {variant === 'escort' ? (
+          <>
+            <div
+              className="pursuit-escort-backdrop-track"
+              style={{ backgroundImage: `url(${LEVEL_FOUR_FOREST_BACKDROP})` }}
+              aria-hidden="true"
+            />
+            <div
+              className="pursuit-mist"
+              style={{ backgroundImage: `url(${LEVEL_FOUR_BLACK_MIST})` }}
+              aria-label="後方逼近的黑霧"
+            />
+            <div className="pursuit-party pursuit-escort-party">
+              <div className="pursuit-xia-puppet-wrap">
+                <img
+                  className="pursuit-xia-puppet"
+                  src={XIA_SMILE_PUPPET}
+                  alt="小亞紙偶"
+                  draggable="false"
+                />
+              </div>
+              <div className="pursuit-adventurer-puppet-wrap">
+                <AdventurerPuppet recipe={avatarRecipe} />
+              </div>
+            </div>
+            <div
+              className="pursuit-escort-foreground-track"
+              style={{ backgroundImage: `url(${LEVEL_FOUR_FOREST_FOREGROUND})` }}
+              aria-hidden="true"
+            />
+          </>
+        ) : (
+          <>
+            <div className="pursuit-pursuers" aria-label="後方追趕的迷霧哨兵">迷霧哨兵</div>
+            <div className="pursuit-party pursuit-chase-party" aria-label="冒險者與小亞">
+              <span className="pursuit-player">冒險者</span>
+              <span className="pursuit-npc">小亞</span>
+            </div>
+            <div className="pursuit-path" aria-hidden="true">••••••••••</div>
+          </>
+        )}
       </div>
 
       <CampaignAudioReplayButton
@@ -234,8 +277,7 @@ export function PursuitGame({
       </section>
 
       <p className="pursuit-feedback" aria-live="polite">
-        {feedback === 'wind' ? <>連續答對3次，發動<strong>疾風速度</strong>拉開了距離</> :
-          feedback === 'correct' ? '成功拉開距離！' :
+        {feedback === 'correct' ? '成功拉開距離！' :
             feedback === 'wrong' || feedback === 'timeout'
               ? pursuitState.safetyDistance >= 3 ? '距離被縮短了！' : '快被追上了！'
               : ''}

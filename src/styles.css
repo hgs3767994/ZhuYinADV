@@ -2950,6 +2950,192 @@ button:disabled {
   text-align: right;
 }
 
+.pursuit-escort-scene {
+  isolation: isolate;
+  background: #9cc9c2;
+  box-shadow: inset 0 0 28px rgb(17 51 43 / 20%), 0 10px 22px rgb(0 0 0 / 30%);
+}
+
+.pursuit-escort-backdrop-track,
+.pursuit-escort-foreground-track {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  background-position: left center;
+  background-repeat: repeat-x;
+  background-size: 50% 100%;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.pursuit-escort-backdrop-track {
+  z-index: 0;
+  inset-block: 0;
+  animation: pursuit-backdrop-scroll 14s linear infinite;
+}
+
+.pursuit-escort-foreground-track {
+  z-index: 4;
+  bottom: -1px;
+  height: 48%;
+  animation: pursuit-foreground-scroll 8s linear infinite;
+}
+
+.pursuit-escort-scene .pursuit-mist {
+  z-index: 2;
+  top: 50%;
+  bottom: auto;
+  width: 72%;
+  aspect-ratio: 1;
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: none;
+  opacity: 0.94;
+  transform: translateY(-50%);
+  transition: left 520ms cubic-bezier(.22, .8, .34, 1);
+}
+
+.pursuit-escort-party {
+  z-index: 3;
+  right: -1%;
+  bottom: 3%;
+  width: 69%;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+.pursuit-xia-puppet-wrap,
+.pursuit-adventurer-puppet-wrap {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: end center;
+  transform-origin: 50% 100%;
+  will-change: transform;
+  animation: pursuit-puppet-bob 560ms ease-in-out infinite alternate;
+}
+
+.pursuit-xia-puppet-wrap {
+  z-index: 1;
+  width: 44%;
+  margin-right: -18%;
+  animation-delay: -280ms;
+}
+
+.pursuit-adventurer-puppet-wrap {
+  z-index: 2;
+  width: 48%;
+}
+
+.pursuit-xia-puppet,
+.pursuit-adventurer-puppet-wrap .adventurer-puppet {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 5px 3px rgb(46 33 23 / 34%));
+  user-select: none;
+}
+
+.pursuit-game.is-paused .pursuit-escort-backdrop-track,
+.pursuit-game.is-paused .pursuit-escort-foreground-track,
+.pursuit-game.is-paused .pursuit-xia-puppet-wrap,
+.pursuit-game.is-paused .pursuit-adventurer-puppet-wrap {
+  animation-play-state: paused;
+}
+
+@keyframes pursuit-backdrop-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+.pursuit-prototype-screen {
+  min-height: 100vh;
+  padding: clamp(14px, 3vw, 28px);
+  color: #5e351f;
+  background: linear-gradient(180deg, #e3f7ea 0%, #fff9e8 100%);
+}
+
+.pursuit-prototype-launcher,
+.pursuit-prototype-result {
+  width: min(560px, 100%);
+  margin: 8vh auto 0;
+  padding: clamp(22px, 5vw, 36px);
+  text-align: center;
+  border: 3px solid #efad58;
+  border-radius: 28px;
+  background: rgb(255 251 233 / 94%);
+  box-shadow: 0 18px 42px rgb(63 45 24 / 16%);
+}
+
+.pursuit-prototype-launcher h1,
+.pursuit-prototype-result h2 {
+  margin: 8px 0 10px;
+}
+
+.pursuit-prototype-launcher label {
+  display: grid;
+  gap: 8px;
+  margin: 24px 0 18px;
+  text-align: left;
+  font-weight: 800;
+}
+
+.pursuit-prototype-launcher select {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 2px solid #d69a52;
+  border-radius: 14px;
+  background: #fff;
+  font: inherit;
+}
+
+.pursuit-prototype-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(720px, 100%);
+  margin: 0 auto 12px;
+  padding: 12px 16px;
+  border: 2px solid #efad58;
+  border-radius: 18px;
+  background: rgb(255 251 233 / 92%);
+}
+
+.pursuit-prototype-toolbar div {
+  display: grid;
+  gap: 3px;
+}
+
+.pursuit-prototype-toolbar span {
+  font-size: .86rem;
+}
+
+.pursuit-prototype-screen > .pursuit-game {
+  width: min(720px, 100%);
+  margin: 0 auto;
+}
+
+@keyframes pursuit-foreground-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes pursuit-puppet-bob {
+  from { transform: translate3d(0, 0, 0) rotate(-0.6deg); }
+  to { transform: translate3d(0, -4px, 0) rotate(0.6deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pursuit-escort-backdrop-track,
+  .pursuit-escort-foreground-track,
+  .pursuit-xia-puppet-wrap,
+  .pursuit-adventurer-puppet-wrap {
+    animation: none;
+  }
+}
+
 .pursuit-choice-area {
   width: min(100%, 360px);
 }
@@ -3039,25 +3225,8 @@ button:disabled {
   animation: sequence-lock-shake 280ms ease-in-out 2;
 }
 
-.pursuit-game.feedback-correct .pursuit-party,
-.pursuit-game.feedback-wind .pursuit-party {
+.pursuit-game.feedback-correct .pursuit-party {
   filter: drop-shadow(0 0 12px #f4d35e);
-}
-
-.pursuit-game.feedback-wind .pursuit-scene::after {
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-  background: repeating-linear-gradient(105deg, transparent 0 18px, rgb(143 212 255 / 35%) 20px 23px);
-  content: '';
-  animation: pursuit-wind 420ms linear 2;
-  pointer-events: none;
-}
-
-@keyframes pursuit-wind {
-  from { transform: translateX(-35%); opacity: 0; }
-  35% { opacity: 1; }
-  to { transform: translateX(35%); opacity: 0; }
 }
 
 .battle-game {
@@ -4673,4 +4842,41 @@ button:disabled {
   .campaign-outcome-screen
 ) .secondary-button {
   background: #d58b4d;
+}
+
+.adventurer-puppet {
+  position: relative;
+  aspect-ratio: 1;
+  isolation: isolate;
+}
+
+.adventurer-puppet-body {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.adventurer-puppet-head {
+  position: absolute;
+  z-index: 2;
+  top: calc(0% + var(--puppet-head-y));
+  left: calc(27% + var(--puppet-head-x));
+  width: 46%;
+  aspect-ratio: 1;
+  transform: scale(var(--puppet-head-scale));
+  transform-origin: 50% 82%;
+  pointer-events: none;
+}
+
+.adventurer-puppet-avatar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }

@@ -1426,6 +1426,7 @@ export function App() {
           key={`${activeProfile.id}:${activeCampaignLevel.id}`}
           level={activeCampaignLevel}
           profileId={activeProfile.id}
+          avatarRecipe={activeProfile.avatar}
           campaignId={FIRST_CAMPAIGN_ID}
           appVersion={APP_VERSION}
           tutorialSeen={campaignSnapshot.flags.some((flag) =>

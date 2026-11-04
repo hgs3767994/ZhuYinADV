@@ -4,6 +4,7 @@ import { App } from './App';
 import { SequenceLockPrototypePreview } from './components/SequenceLockPrototypePreview';
 import { SoundMazePrototypePreview } from './components/SoundMazePrototypePreview';
 import { MemoryExplorePrototypePreview } from './components/MemoryExplorePrototypePreview';
+import { PursuitEscortPrototypePreview } from './components/PursuitEscortPrototypePreview';
 import './styles.css';
 
 const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_PREVIEWS === 'true';
@@ -18,6 +19,8 @@ createRoot(document.getElementById('root')!).render(
     <SoundMazePrototypePreview />
   ) : preview === 'memory-village' ? (
     <MemoryExplorePrototypePreview />
+  ) : preview === 'pursuit-escort' ? (
+    <PursuitEscortPrototypePreview />
   ) : (
     <StrictMode>
       <App />

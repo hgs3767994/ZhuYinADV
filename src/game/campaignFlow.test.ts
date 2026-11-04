@@ -51,17 +51,17 @@ describe('campaign level flow', () => {
     expect(content.postStory[0].leadText).toContain('重新發出了聲音');
   });
 
-  it('keeps the confirmed level-four escort story and seven gameplay rules', () => {
+  it('keeps the confirmed level-four escort story without a streak reward rule', () => {
     const content = campaignFlowContent(campaignLevel('campaign-01', 'level-04'));
 
     expect(content.tutorialId).toBe('escort-basic');
     expect(content.preStory).toHaveLength(4);
     expect(content.preStory[2].text).toContain('不擅長戰鬥');
     expect(content.mission).toContain('護送小亞通過十個路段');
-    expect(content.tutorialSteps).toHaveLength(7);
+    expect(content.tutorialSteps).toHaveLength(6);
     expect(content.tutorialSteps.join('')).toContain('5 秒');
     expect(content.tutorialSteps.join('')).toContain('重播不會停止或重置倒數');
-    expect(content.tutorialSteps.join('')).toContain('疾風加速');
+    expect(content.tutorialSteps.join('')).not.toContain('疾風');
     expect(content.postStory).toHaveLength(4);
     expect(content.postStory[1].text).toContain('秘道的入口快到了');
   });
@@ -90,11 +90,12 @@ describe('campaign level flow', () => {
     expect(content.preStory).toHaveLength(4);
     expect(content.preStory[0].text).toBe('更多迷霧哨兵從遠處趕來。');
     expect(content.mission).toContain('穿過十個路段');
-    expect(content.tutorialSteps).toHaveLength(4);
+    expect(content.tutorialSteps).toHaveLength(3);
     expect(content.tutorialSteps.join('')).toContain('超過 5 秒');
     expect(content.tutorialSteps.join('')).toContain('逃離失敗');
-    expect(content.howToSteps).toHaveLength(7);
+    expect(content.howToSteps).toHaveLength(6);
     expect(content.howToSteps?.join('')).toContain('重播不會停止或重置倒數');
+    expect(content.howToSteps?.join('')).not.toContain('疾風');
     expect(content.postStory).toHaveLength(4);
     expect(content.postStory[2].text).toContain('入口隨即在身後關閉');
   });

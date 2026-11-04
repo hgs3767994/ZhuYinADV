@@ -25,9 +25,7 @@ export interface PursuitState {
   maxSuccessStreak: number;
 }
 
-export interface PursuitResolution extends PursuitState {
-  windBoost: boolean;
-}
+export type PursuitResolution = PursuitState;
 
 const browserRandom: RandomSource = { next: () => Math.random() };
 
@@ -136,21 +134,15 @@ export function resolvePursuitSegment(
     return {
       safetyDistance: Math.max(0, state.safetyDistance - 1),
       successStreak: 0,
-      maxSuccessStreak: state.maxSuccessStreak,
-      windBoost: false
+      maxSuccessStreak: state.maxSuccessStreak
     };
   }
 
   const successStreak = state.successStreak + 1;
-  const windBoost = successStreak % 3 === 0;
   return {
-    safetyDistance: Math.min(
-      PURSUIT_MAX_SAFETY,
-      state.safetyDistance + 1 + (windBoost ? 1 : 0)
-    ),
+    safetyDistance: Math.min(PURSUIT_MAX_SAFETY, state.safetyDistance + 1),
     successStreak,
-    maxSuccessStreak: Math.max(state.maxSuccessStreak, successStreak),
-    windBoost
+    maxSuccessStreak: Math.max(state.maxSuccessStreak, successStreak)
   };
 }
 

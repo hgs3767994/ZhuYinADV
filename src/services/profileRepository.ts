@@ -1,6 +1,5 @@
 import { createCredential, verifyCredential, type PasswordCredential } from './credential';
 import {
-  avatarRecipeFromSeed,
   DEFAULT_AVATAR_RECIPE,
   normalizeAvatarRecipe,
   type AvatarRecipe,
@@ -25,6 +24,19 @@ const PASSWORD_MAX_LENGTH = 64;
 const PROFILE_NAME_MAX_LENGTH = 20;
 export const DELETION_GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1_000;
 export const GUEST_PROFILE_ID = 'guest-session';
+export const GUEST_AVATAR_RECIPE: AvatarRecipeV2 = {
+  version: 2,
+  face: 'round',
+  skinTone: 'peach',
+  hair: 'c02',
+  hairColor: 'brown',
+  brows: '01',
+  eyes: '02',
+  nose: '01',
+  mouth: '02',
+  glasses: 'none',
+  hairAccessory: 'none'
+};
 
 export interface PlayerProfile {
   id: string;
@@ -94,7 +106,7 @@ export function createGuestProfile(): PlayerProfile {
   return {
     id: GUEST_PROFILE_ID,
     name: '小小訪客',
-    avatar: avatarRecipeFromSeed('guest'),
+    avatar: { ...GUEST_AVATAR_RECIPE },
     isGuest: true,
     createdAt: new Date().toISOString()
   };
