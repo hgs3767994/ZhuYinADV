@@ -27,6 +27,7 @@
 | `level-04-black-mist.png` | 720×720 | 750,572 bytes |
 
 上述素材均位於 `public/assets/images/campaign/`，正式建置會直接收錄；黑霧素材保留透明通道。
+所有執行期圖片網址均透過共用 `assetUrl()` 組合，確保本機、GitHub Pages 專案子路徑與日後 Capacitor 封裝使用相同的正確基底路徑。
 
 ## 開發與回歸入口
 

@@ -5,9 +5,10 @@ import {
   normalizeAvatarRecipe,
   type AvatarRecipeV2
 } from '../avatar/model';
+import { assetUrl } from '../utils/assets';
 import { AvatarCanvas } from './AvatarCanvas';
 
-const ADVENTURER_BODY_URL = '/assets/images/campaign/level-04-adventurer-body.png?v=2';
+const ADVENTURER_BODY_URL = `${assetUrl('assets/images/campaign/level-04-adventurer-body.png')}?v=2`;
 
 interface AdventurerPuppetProps {
   recipe: AvatarRecipeV2;

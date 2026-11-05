@@ -11,6 +11,10 @@ vi.mock('../services/audio', () => ({
   }
 }));
 
+vi.mock('../utils/assets', () => ({
+  assetUrl: (path: string) => `/__base__/${path}`
+}));
+
 import { PursuitGame } from './PursuitGame';
 
 describe('escort gameplay shell', () => {
@@ -35,6 +39,10 @@ describe('escort gameplay shell', () => {
     expect(html).toContain('level-04-forest-backdrop.jpg');
     expect(html).toContain('level-04-forest-foreground.png');
     expect(html).toContain('level-04-black-mist.png');
+    expect(html).toContain('url(/__base__/assets/images/campaign/pursuit/level-04-forest-backdrop.jpg)');
+    expect(html).toContain('src="/__base__/assets/images/campaign/level-03-xia-smile.png"');
+    expect(html).toContain('src="/__base__/assets/images/campaign/level-04-adventurer-body.png?v=2"');
+    expect(html).not.toContain('src="/assets/images/campaign/');
     expect(html).toContain('--mist-left:-23%');
     expect((html.match(/選擇 [^\s]+ 道路/g) ?? [])).toHaveLength(2);
     expect(html).not.toContain('>聽完讀音後開始倒數<');

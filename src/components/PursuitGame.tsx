@@ -10,13 +10,14 @@ import {
   type PursuitState
 } from '../game/pursuit';
 import { audioService } from '../services/audio';
+import { assetUrl } from '../utils/assets';
 import { CampaignAudioReplayButton } from './CampaignAudioReplayButton';
 import { AdventurerPuppet } from './AdventurerPuppet';
 
-const LEVEL_FOUR_FOREST_BACKDROP = '/assets/images/campaign/pursuit/level-04-forest-backdrop.jpg';
-const LEVEL_FOUR_FOREST_FOREGROUND = '/assets/images/campaign/pursuit/level-04-forest-foreground.png';
-const LEVEL_FOUR_BLACK_MIST = '/assets/images/campaign/pursuit/level-04-black-mist.png';
-const XIA_SMILE_PUPPET = '/assets/images/campaign/level-03-xia-smile.png';
+const LEVEL_FOUR_FOREST_BACKDROP = assetUrl('assets/images/campaign/pursuit/level-04-forest-backdrop.jpg');
+const LEVEL_FOUR_FOREST_FOREGROUND = assetUrl('assets/images/campaign/pursuit/level-04-forest-foreground.png');
+const LEVEL_FOUR_BLACK_MIST = assetUrl('assets/images/campaign/pursuit/level-04-black-mist.png');
+const XIA_SMILE_PUPPET = assetUrl('assets/images/campaign/level-03-xia-smile.png');
 
 export interface PursuitGameStatus extends PursuitState {
   segmentNumber: number;
