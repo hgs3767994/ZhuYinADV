@@ -41,8 +41,8 @@ const exploreCompletionDurations = () => {
   const reducedMotion = typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   return reducedMotion
-    ? { unlockHold: 80, sealFade: 120, faceCrossfade: 160, smileHold: 200 }
-    : { unlockHold: 250, sealFade: 450, faceCrossfade: 650, smileHold: 600 };
+    ? { unlockHold: 80, sealFade: 120, faceCrossfade: 160, smileHold: 320 }
+    : { unlockHold: 250, sealFade: 450, faceCrossfade: 650, smileHold: 1_000 };
 };
 
 export function MemoryExploreGame({
