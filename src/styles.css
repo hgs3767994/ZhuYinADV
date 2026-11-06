@@ -1194,8 +1194,8 @@ button:disabled {
 }
 
 .campaign-map-node-stars img {
-  width: 11px;
-  height: 11px;
+  width: 13px;
+  height: 13px;
 }
 
 .campaign-modal-stars img {
@@ -3005,6 +3005,7 @@ button:disabled {
   align-items: flex-end;
   justify-content: flex-end;
   gap: 0;
+  will-change: transform;
 }
 
 .pursuit-xia-puppet-wrap,
@@ -3040,6 +3041,7 @@ button:disabled {
 
 .pursuit-game.is-paused .pursuit-escort-backdrop-track,
 .pursuit-game.is-paused .pursuit-escort-foreground-track,
+.pursuit-game.is-paused.feedback-correct .pursuit-escort-party,
 .pursuit-game.is-paused .pursuit-xia-puppet-wrap,
 .pursuit-game.is-paused .pursuit-adventurer-puppet-wrap {
   animation-play-state: paused;
@@ -3127,9 +3129,21 @@ button:disabled {
   to { transform: translate3d(0, -4px, 0) rotate(0.6deg); }
 }
 
+.pursuit-game.feedback-correct .pursuit-escort-party {
+  animation: pursuit-party-surge 760ms cubic-bezier(.22, .8, .34, 1) both;
+}
+
+@keyframes pursuit-party-surge {
+  0% { transform: translate3d(0, 0, 0); }
+  52% { transform: translate3d(9%, 0, 0); }
+  62% { transform: translate3d(9%, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pursuit-escort-backdrop-track,
   .pursuit-escort-foreground-track,
+  .pursuit-game.feedback-correct .pursuit-escort-party,
   .pursuit-xia-puppet-wrap,
   .pursuit-adventurer-puppet-wrap {
     animation: none;
@@ -3860,7 +3874,11 @@ button:disabled {
   background: var(--campaign-frame-bg);
 }
 
-.campaign-level-status,
+.campaign-level-status {
+  background: #356b67;
+  color: #fff1b8;
+}
+
 .campaign-level-difficulty {
   background: var(--campaign-frame-bg);
   color: var(--campaign-heading);

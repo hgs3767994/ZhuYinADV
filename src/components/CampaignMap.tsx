@@ -132,11 +132,13 @@ export function CampaignMap({
                   aria-label={`第 ${level.number} 關 ${level.title}，${completed ? `${progress?.bestStars} 星通關` : unlocked ? '可挑戰' : '尚未解鎖'}`}
                 >
                   <span className="campaign-level-number">{level.number}</span>
-                  <span className="campaign-level-status" aria-hidden="true">
-                    {completed
-                      ? <CampaignStarRating stars={progress?.bestStars ?? 0} className="campaign-map-node-stars" />
-                      : unlocked ? '可挑戰' : '🔒'}
-                  </span>
+                  {unlocked && (
+                    <span className="campaign-level-status" aria-hidden="true">
+                      {completed
+                        ? <CampaignStarRating stars={progress?.bestStars ?? 0} className="campaign-map-node-stars" />
+                        : '可挑戰'}
+                    </span>
+                  )}
                 </button>
               </li>
             );

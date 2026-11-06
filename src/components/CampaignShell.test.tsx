@@ -66,8 +66,11 @@ describe('first chapter map shell', () => {
     );
 
     expect((html.match(/campaign-level-node/g) ?? []).length).toBe(11);
+    expect((html.match(/campaign-level-status/g) ?? []).length).toBe(1);
     expect(html).toContain('第 1 關 封印的門扉，可挑戰');
     expect(html).toContain('第 2 關 迷霧之路，尚未解鎖');
+    expect(html).toContain('>可挑戰<');
+    expect(html).not.toContain('🔒');
     expect(html).toContain('決戰迷霧將軍');
     expect(html).not.toContain('通關 0/11');
     expect(html).toContain('/assets/images/campaign/chapter-01-map.webp');
