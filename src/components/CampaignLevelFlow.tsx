@@ -406,7 +406,8 @@ export function CampaignLevelFlow({
             durationMs: result.durationMs
           })} />
       ) : battleMode ? (
-        <BattleGame key={resultId} variant={bossBattle ? 'boss' : castleBattle ? 'castle' : 'beginner'} resultId={resultId} paused={paused} inputEnabled={inputEnabled}
+        <BattleGame key={resultId} variant={bossBattle ? 'boss' : castleBattle ? 'castle' : 'beginner'} avatarRecipe={avatarRecipe}
+          resultId={resultId} paused={paused} inputEnabled={inputEnabled}
           tutorialTipsSeen={battleTipsSeen}
           onTutorialTipSeen={(tip) => setBattleTipsSeen((current) => ({ ...current, [tip]: true }))}
           onStatusChange={setBattleStatus} onInteractionLockChange={setGameInputLocked}

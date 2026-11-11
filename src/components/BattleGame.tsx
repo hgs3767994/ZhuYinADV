@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
+import type { AvatarRecipeV2 } from '../avatar/model';
 import {
   BATTLE_MAX_ENERGY,
   BATTLE_MAX_LIVES,
@@ -14,7 +16,9 @@ import {
   type BattlePlayerState,
   type BattleRuneOption
 } from '../game/battle';
+import { CAMPAIGN_IMAGES } from '../game/campaignAssets';
 import { audioService } from '../services/audio';
+import { AdventurerPuppet } from './AdventurerPuppet';
 import { CampaignAudioReplayButton } from './CampaignAudioReplayButton';
 import { CampaignStatusSlots } from './CampaignStatusSlots';
 
@@ -26,6 +30,7 @@ export interface BattleGameStatus extends BattlePlayerState {
 
 interface BattleGameProps {
   variant: 'beginner' | 'castle' | 'boss';
+  avatarRecipe: AvatarRecipeV2;
   resultId: string;
   paused: boolean;
   inputEnabled: boolean;
@@ -42,7 +47,7 @@ interface BattleGameProps {
 }
 
 type BattlePhase = 'select-enemy' | 'answering' | 'resolving';
-type BattleFeedback = 'none' | 'correct' | 'enemy-attack' | 'echo-shield' | 'piercing';
+type BattleFeedback = 'none' | 'player-attack' | 'enemy-attack' | 'player-defend' | 'echo-shield' | 'piercing';
 type BattleTurn = 'player' | 'enemy';
 
 const TIP_CONTENT: Record<BattleTutorialTip, { title: string; lines: readonly string[] }> = {
@@ -72,8 +77,33 @@ function freshWave(enemies: readonly BattleEnemy[]): BattleEnemy[] {
   return enemies.map((enemy) => ({ ...enemy }));
 }
 
+interface SlashRevealEffectProps {
+  className: string;
+  source: string;
+  path: string;
+  strokeWidth: number;
+}
+
+function SlashRevealEffect({ className, source, path, strokeWidth }: SlashRevealEffectProps) {
+  const maskId = `battle-slash-${useId().replace(/:/g, '')}`;
+  return (
+    <svg className={`battle-effect battle-slash-effect ${className}`} viewBox="0 0 100 100"
+      aria-hidden="true" focusable="false">
+      <defs>
+        <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+          <path className="battle-slash-mask-path" d={path} pathLength="1" fill="none" stroke="#fff"
+            strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+        </mask>
+      </defs>
+      <image href={source} xlinkHref={source} x="0" y="0" width="100" height="100"
+        preserveAspectRatio="xMidYMid meet" mask={`url(#${maskId})`} />
+    </svg>
+  );
+}
+
 export function BattleGame({
   variant,
+  avatarRecipe,
   resultId,
   paused,
   inputEnabled,
@@ -269,16 +299,12 @@ export function BattleGame({
     audioService.stopSpeech();
 
     if (!option.correct) {
-      setFeedback('enemy-attack');
-      audioService.playWrong();
-      await waitWhileActive(430);
-      if (!mountedRef.current) return;
       const attacked = resolveEnemyAttack(playerRef.current);
+      setFeedback(attacked.echoShieldTriggered ? 'echo-shield' : 'enemy-attack');
+      audioService.playWrong();
+      await waitWhileActive(attacked.echoShieldTriggered ? 900 : 650);
+      if (!mountedRef.current) return;
       updatePlayer({ lives: attacked.lives, energy: attacked.energy });
-      if (attacked.echoShieldTriggered) {
-        setFeedback('echo-shield');
-        await waitWhileActive(760);
-      }
       if (!mountedRef.current) return;
       if (attacked.lives === 0) {
         onDefeat();
@@ -288,15 +314,15 @@ export function BattleGame({
       return;
     }
 
-    setFeedback('correct');
+    const defendedEnemyTurn = turn === 'enemy';
+    setFeedback(defendedEnemyTurn ? 'player-defend' : 'player-attack');
     audioService.playCorrect();
-    const attackedEnemies = turn === 'player'
-      ? enemies.map((enemy) => enemy.id === selectedEnemyId ? normalBattleAttack(enemy) : enemy)
-      : enemies;
+    const attackedEnemies = defendedEnemyTurn
+      ? enemies
+      : enemies.map((enemy) => enemy.id === selectedEnemyId ? normalBattleAttack(enemy) : enemy);
     const nextEnergy = Math.min(BATTLE_MAX_ENERGY, playerRef.current.energy + 1);
     updatePlayer({ lives: playerRef.current.lives, energy: nextEnergy });
-    setEnemies(attackedEnemies);
-    await waitWhileActive(720);
+    await waitWhileActive(defendedEnemyTurn ? 900 : 650);
     if (!mountedRef.current) return;
     const tips: BattleTutorialTip[] = [];
     if (!tutorialTipsSeen.correct) tips.push('correct');
@@ -314,8 +340,7 @@ export function BattleGame({
     const attackedEnemies = enemies.map((enemy) =>
       enemy.id === selectedEnemyId ? piercingBattleAttack(enemy) : enemy
     );
-    setEnemies(attackedEnemies);
-    await waitWhileActive(850);
+    await waitWhileActive(650);
     if (!mountedRef.current) return;
     continueBattle(attackedEnemies, questionIndex + 1, true);
   };
@@ -325,26 +350,55 @@ export function BattleGame({
   const currentTip = tutorialQueue[0];
   const targetReady = selectedEnemyId !== null && phase !== 'select-enemy';
   const controlsDisabled = !inputEnabled || phase !== 'answering' || audioPlaying || tutorialQueue.length > 0;
+  const battleSceneStyle = {
+    '--battle-forest-backdrop': `url(${CAMPAIGN_IMAGES.battleForestBackdrop})`,
+    '--battle-forest-foreground': `url(${CAMPAIGN_IMAGES.battleForestForeground})`
+  } as CSSProperties;
 
   return (
     <div className={`battle-game feedback-${feedback}`}>
-      <div className="battle-scene">
-        <div className={`battle-player ${feedback === 'echo-shield' ? 'echo-shield' : ''}`} aria-label="冒險者">
-          <span>冒險者</span>
+      <div className="battle-scene" style={battleSceneStyle}>
+        <div className="battle-player-side">
+          <div className={`battle-player ${feedback === 'echo-shield' ? 'echo-shield' : ''}`} aria-label="冒險者">
+            <AdventurerPuppet recipe={avatarRecipe} className="battle-adventurer-puppet" />
+            {(feedback === 'enemy-attack' || feedback === 'player-defend' || feedback === 'echo-shield') &&
+              <SlashRevealEffect className="battle-enemy-slash-effect" source={CAMPAIGN_IMAGES.battleEnemyAttack}
+                path="M 84 16 L 16 84" strokeWidth={28} />}
+            {feedback === 'player-defend' &&
+              <img className="battle-effect battle-defense-success-effect" src={CAMPAIGN_IMAGES.battleDefenseSuccess}
+                alt="" aria-hidden="true" draggable="false" />}
+            {feedback === 'echo-shield' &&
+              <img className="battle-effect battle-echo-shield-effect" src={CAMPAIGN_IMAGES.battleEchoShield}
+                alt="" aria-hidden="true" draggable="false" />}
+          </div>
         </div>
-        {variant !== 'boss' && <div className="battle-xiaoya" aria-label="小亞在後方觀戰">小亞</div>}
+        {variant === 'castle' && <div className="battle-xiaoya" aria-label="小亞在後方觀戰">小亞</div>}
         {variant === 'boss' && waveIndex < 4 && <div className="battle-boss-overseer" aria-label="迷霧將軍在封印水晶前指揮戰鬥">迷霧將軍</div>}
-        <div className="battle-enemies" aria-label="迷霧哨兵">
-          {enemies.filter((enemy) => enemy.life > 0).map((enemy) => (
-            <button type="button" key={enemy.id}
-              className={`battle-enemy ${enemy.kind === 'shielded' ? 'shielded' : ''} ${enemy.kind === 'boss' ? 'boss' : ''} ${selectedEnemyId === enemy.id ? 'selected' : ''}`}
-              disabled={!inputEnabled || phase === 'resolving' || audioPlaying}
-              onClick={() => selectEnemy(enemy.id)} aria-label={`${selectedEnemyId === enemy.id ? '已選定' : '選定'}${enemy.kind === 'boss' ? '迷霧將軍' : `${enemy.kind === 'shielded' ? '護盾' : ''}迷霧哨兵`}`}>
-              <span className="battle-enemy-figure" aria-hidden="true">{enemy.kind === 'boss' ? '♛' : '♟'}</span>
-              <CampaignStatusSlots kind="life" current={enemy.life} maximum={enemy.kind === 'boss' ? 6 : 2} label={enemy.kind === 'boss' ? '迷霧將軍生命' : '敵人生命'} />
-              {enemy.shield > 0 && <CampaignStatusSlots kind="shield" current={enemy.shield} maximum={enemy.kind === 'boss' ? 2 : 1} label={enemy.kind === 'boss' ? '迷霧將軍護盾' : '敵人護盾'} />}
-            </button>
-          ))}
+        <div className="battle-enemy-side">
+          <div key={`battle-wave-${waveIndex}`} className="battle-enemies" aria-label="迷霧哨兵">
+            {enemies.filter((enemy) => enemy.life > 0).map((enemy) => (
+              <button type="button" key={enemy.id}
+                className={`battle-enemy ${enemy.kind === 'shielded' ? 'shielded' : ''} ${enemy.kind === 'boss' ? 'boss' : ''} ${selectedEnemyId === enemy.id ? 'selected' : ''}`}
+                disabled={!inputEnabled || phase === 'resolving' || audioPlaying}
+                onClick={() => selectEnemy(enemy.id)} aria-label={`${selectedEnemyId === enemy.id ? '已選定' : '選定'}${enemy.kind === 'boss' ? '迷霧將軍' : `${enemy.kind === 'shielded' ? '護盾' : ''}迷霧哨兵`}`}>
+                {enemy.kind === 'boss' ? (
+                  <span className="battle-enemy-figure battle-boss-figure" aria-hidden="true">♛</span>
+                ) : (
+                  <img className="battle-enemy-figure" src={enemy.kind === 'shielded'
+                    ? CAMPAIGN_IMAGES.battleFogSoldierShielded
+                    : CAMPAIGN_IMAGES.battleFogSoldier} alt="" aria-hidden="true" draggable="false" />
+                )}
+                {selectedEnemyId === enemy.id && feedback === 'player-attack' &&
+                  <SlashRevealEffect className="battle-regular-attack-effect" source={CAMPAIGN_IMAGES.battleRegularAttack}
+                    path="M 84 16 L 16 84" strokeWidth={28} />}
+                {selectedEnemyId === enemy.id && feedback === 'piercing' &&
+                  <SlashRevealEffect className="battle-piercing-attack-effect" source={CAMPAIGN_IMAGES.battleSkillAttack}
+                    path="M 7 35 C 35 13 77 14 91 37 C 101 54 91 73 62 84" strokeWidth={28} />}
+                <CampaignStatusSlots kind="life" current={enemy.life} maximum={enemy.kind === 'boss' ? 6 : 2} label={enemy.kind === 'boss' ? '迷霧將軍生命' : '敵人生命'} />
+                {enemy.shield > 0 && <CampaignStatusSlots kind="shield" current={enemy.shield} maximum={enemy.kind === 'boss' ? 2 : 1} label={enemy.kind === 'boss' ? '迷霧將軍護盾' : '敵人護盾'} />}
+              </button>
+            ))}
+          </div>
         </div>
         {bossIntroVisible && <div className="battle-boss-intro" role="status">
           <strong>迷霧將軍親自上陣！</strong>
@@ -352,9 +406,12 @@ export function BattleGame({
         </div>}
       </div>
 
-      <p className={`battle-turn-label ${turn}`} aria-live="polite">
-        {turn === 'player' ? '玩家回合' : '敵人回合'}
-      </p>
+      <div className="battle-turn-label-row" aria-live="polite">
+        <p className={`battle-turn-label player ${turn === 'player' ? 'active' : ''}`}
+          aria-hidden={turn !== 'player'}>玩家回合</p>
+        <p className={`battle-turn-label enemy ${turn === 'enemy' ? 'active' : ''}`}
+          aria-hidden={turn !== 'enemy'}>敵人回合</p>
+      </div>
 
       {targetReady ? <CampaignAudioReplayButton onReplay={replayTarget} onStop={stopTarget}
         paused={paused} disabled={phase === 'resolving' || tutorialQueue.length > 0}
@@ -374,7 +431,23 @@ export function BattleGame({
       <button type="button" className={`battle-piercing-button ${turn === 'player' && player.energy >= BATTLE_SKILL_COST ? 'ready' : ''}`}
         disabled={controlsDisabled || turn !== 'player' || !selectedEnemyId || player.energy < BATTLE_SKILL_COST}
         onClick={() => void usePiercing()}>
-        符音穿透 <span>消耗 ●●●</span>
+        <span className="battle-skill-title">
+          <img className="battle-skill-icon" src={CAMPAIGN_IMAGES.battleSkillAttack} alt="" aria-hidden="true" />
+          <strong>符音穿透</strong>
+        </span>
+        <span className="battle-skill-energy" aria-hidden="true">
+          {Array.from({ length: BATTLE_SKILL_COST }, (_, index) => (
+            <img key={index} src={CAMPAIGN_IMAGES.energyFull} alt="" draggable="false" />
+          ))}
+        </span>
+      </button>
+
+      <button type="button" className={`battle-echo-button ${player.energy >= BATTLE_SKILL_COST ? 'ready' : ''}`}
+        disabled aria-label={`回音護盾，被動技能，需要 ${BATTLE_SKILL_COST} 點聲音能量`}>
+        <span className="battle-skill-title">
+          <img className="battle-skill-icon" src={CAMPAIGN_IMAGES.battleEchoShield} alt="" aria-hidden="true" />
+          <strong>回音護盾（被動技能）</strong>
+        </span>
       </button>
 
       <p className="battle-feedback" aria-live="polite">

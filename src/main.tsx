@@ -5,6 +5,7 @@ import { SequenceLockPrototypePreview } from './components/SequenceLockPrototype
 import { SoundMazePrototypePreview } from './components/SoundMazePrototypePreview';
 import { MemoryExplorePrototypePreview } from './components/MemoryExplorePrototypePreview';
 import { PursuitEscortPrototypePreview } from './components/PursuitEscortPrototypePreview';
+import { BattlePrototypePreview } from './components/BattlePrototypePreview';
 import './styles.css';
 
 const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_PREVIEWS === 'true';
@@ -21,6 +22,8 @@ createRoot(document.getElementById('root')!).render(
     <MemoryExplorePrototypePreview />
   ) : preview === 'pursuit-escort' ? (
     <PursuitEscortPrototypePreview />
+  ) : preview === 'zhuyin-battle' ? (
+    <BattlePrototypePreview />
   ) : (
     <StrictMode>
       <App />
