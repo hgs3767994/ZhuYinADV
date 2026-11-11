@@ -3276,11 +3276,7 @@ button:disabled {
   align-items: end;
   border: 3px solid #665b91;
   border-radius: 28px;
-  background:
-    linear-gradient(rgb(18 39 32 / 12%), rgb(18 39 32 / 12%)),
-    var(--battle-forest-foreground) center / cover no-repeat,
-    var(--battle-forest-backdrop) center / cover no-repeat,
-    #9cc9c2;
+  background: #9cc9c2;
   box-shadow: inset 0 0 28px rgb(17 51 43 / 20%), 0 10px 22px rgb(0 0 0 / 30%);
 }
 

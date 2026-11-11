@@ -34,6 +34,10 @@ describe('level-five battle shell', () => {
     expect(html).toContain('battle-adventurer-puppet');
     expect(html).toContain('level-04-forest-backdrop.jpg');
     expect(html).toContain('level-04-forest-foreground.png');
+    expect(html).toContain('style="background:linear-gradient(');
+    expect(html).toContain('url(&quot;/assets/images/campaign/pursuit/level-04-forest-foreground.png&quot;)');
+    expect(html).toContain('url(&quot;/assets/images/campaign/pursuit/level-04-forest-backdrop.jpg&quot;)');
+    expect(html).not.toContain('--battle-forest-');
     expect(html).not.toContain('小亞在後方觀戰');
     expect(html).toContain('玩家回合');
     expect(html).not.toContain('注音水晶化為光芒攻擊敵人');

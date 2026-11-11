@@ -351,8 +351,12 @@ export function BattleGame({
   const targetReady = selectedEnemyId !== null && phase !== 'select-enemy';
   const controlsDisabled = !inputEnabled || phase !== 'answering' || audioPlaying || tutorialQueue.length > 0;
   const battleSceneStyle = {
-    '--battle-forest-backdrop': `url(${CAMPAIGN_IMAGES.battleForestBackdrop})`,
-    '--battle-forest-foreground': `url(${CAMPAIGN_IMAGES.battleForestForeground})`
+    background: [
+      'linear-gradient(rgb(18 39 32 / 12%), rgb(18 39 32 / 12%))',
+      `url("${CAMPAIGN_IMAGES.battleForestForeground}") center / cover no-repeat`,
+      `url("${CAMPAIGN_IMAGES.battleForestBackdrop}") center / cover no-repeat`,
+      '#9cc9c2'
+    ].join(', ')
   } as CSSProperties;
 
   return (

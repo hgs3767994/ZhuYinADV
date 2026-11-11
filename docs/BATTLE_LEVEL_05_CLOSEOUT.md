@@ -34,6 +34,8 @@
 
 上述素材均位於 `public/assets/images/campaign/`，並透過共用 `assetUrl()` 組合網址，以支援本機、GitHub Pages 專案子路徑及日後 Capacitor 封裝。
 
+森林背景與前景網址由 `assetUrl()` 產生後，直接寫入戰鬥場景的行內 `background`；不得先存入外部 CSS 使用的自訂變數，避免 `base: './'` 正式建置在 GitHub Pages 專案子路徑下被解析成重複的 `assets/assets/` 路徑。
+
 ## 開發與回歸入口
 
 - 保留 `?preview=zhuyin-battle` 完整玩法預覽，僅在開發環境或明確啟用 `VITE_ENABLE_PREVIEWS` 時可用。
