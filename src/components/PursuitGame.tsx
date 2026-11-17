@@ -17,6 +17,7 @@ import { AdventurerPuppet } from './AdventurerPuppet';
 const LEVEL_FOUR_FOREST_BACKDROP = assetUrl('assets/images/campaign/pursuit/level-04-forest-backdrop.jpg');
 const LEVEL_FOUR_FOREST_FOREGROUND = assetUrl('assets/images/campaign/pursuit/level-04-forest-foreground.png');
 const LEVEL_FOUR_BLACK_MIST = assetUrl('assets/images/campaign/pursuit/level-04-black-mist.png');
+const LEVEL_SIX_FOG_PURSUERS = assetUrl('assets/images/campaign/pursuit/level-06-fog-pursuers.png');
 const XIA_SMILE_PUPPET = assetUrl('assets/images/campaign/level-03-xia-smile.png');
 
 export interface PursuitGameStatus extends PursuitState {
@@ -196,7 +197,7 @@ export function PursuitGame({
 
   const controlsDisabled = !inputEnabled || phase !== 'answering' || audioPlaying;
   const countdownSeconds = Math.max(0, Math.ceil(remainingMs / 1_000));
-  const mistOrigin = variant === 'escort' ? -53 : -48;
+  const mistOrigin = variant === 'escort' ? -53 : -68;
   const sceneStyle = {
     '--mist-left': `${mistOrigin + (5 - pursuitState.safetyDistance) * 10}%`
   } as CSSProperties;
@@ -204,47 +205,43 @@ export function PursuitGame({
   return (
     <div className={`pursuit-game pursuit-${variant}-game phase-${phase} feedback-${feedback} ${paused ? 'is-paused' : ''}`}>
       <div className={`pursuit-scene pursuit-${variant}-scene`} style={sceneStyle}>
+        <div
+          className="pursuit-escort-backdrop-track"
+          style={{ backgroundImage: `url(${LEVEL_FOUR_FOREST_BACKDROP})` }}
+          aria-hidden="true"
+        />
         {variant === 'escort' ? (
-          <>
-            <div
-              className="pursuit-escort-backdrop-track"
-              style={{ backgroundImage: `url(${LEVEL_FOUR_FOREST_BACKDROP})` }}
-              aria-hidden="true"
-            />
-            <div
-              className="pursuit-mist"
-              style={{ backgroundImage: `url(${LEVEL_FOUR_BLACK_MIST})` }}
-              aria-label="後方逼近的黑霧"
-            />
-            <div className="pursuit-party pursuit-escort-party">
-              <div className="pursuit-xia-puppet-wrap">
-                <img
-                  className="pursuit-xia-puppet"
-                  src={XIA_SMILE_PUPPET}
-                  alt="小亞紙偶"
-                  draggable="false"
-                />
-              </div>
-              <div className="pursuit-adventurer-puppet-wrap">
-                <AdventurerPuppet recipe={avatarRecipe} />
-              </div>
-            </div>
-            <div
-              className="pursuit-escort-foreground-track"
-              style={{ backgroundImage: `url(${LEVEL_FOUR_FOREST_FOREGROUND})` }}
-              aria-hidden="true"
-            />
-          </>
+          <div
+            className="pursuit-mist"
+            style={{ backgroundImage: `url(${LEVEL_FOUR_BLACK_MIST})` }}
+            aria-label="後方逼近的黑霧"
+          />
         ) : (
-          <>
-            <div className="pursuit-pursuers" aria-label="後方追趕的迷霧哨兵">迷霧哨兵</div>
-            <div className="pursuit-party pursuit-chase-party" aria-label="冒險者與小亞">
-              <span className="pursuit-player">冒險者</span>
-              <span className="pursuit-npc">小亞</span>
-            </div>
-            <div className="pursuit-path" aria-hidden="true">••••••••••</div>
-          </>
+          <img
+            className="pursuit-chase-pursuers"
+            src={LEVEL_SIX_FOG_PURSUERS}
+            alt="後方追趕的迷霧哨兵"
+            draggable="false"
+          />
         )}
+        <div className="pursuit-party pursuit-escort-party" aria-label="冒險者與小亞">
+          <div className="pursuit-xia-puppet-wrap">
+            <img
+              className="pursuit-xia-puppet"
+              src={XIA_SMILE_PUPPET}
+              alt="小亞紙偶"
+              draggable="false"
+            />
+          </div>
+          <div className="pursuit-adventurer-puppet-wrap">
+            <AdventurerPuppet recipe={avatarRecipe} />
+          </div>
+        </div>
+        <div
+          className="pursuit-escort-foreground-track"
+          style={{ backgroundImage: `url(${LEVEL_FOUR_FOREST_FOREGROUND})` }}
+          aria-hidden="true"
+        />
       </div>
 
       <CampaignAudioReplayButton
@@ -271,7 +268,6 @@ export function PursuitGame({
               aria-label={`選擇 ${road.symbol} 道路`}
             >
               <span>{road.symbol}</span>
-              <small>前進</small>
             </button>
           ))}
         </div>

@@ -2885,25 +2885,6 @@ button:disabled {
   transition: left 420ms ease;
 }
 
-.pursuit-pursuers {
-  position: absolute;
-  z-index: 2;
-  bottom: 48px;
-  left: calc(var(--mist-left) + 45%);
-  display: grid;
-  width: 74px;
-  height: 82px;
-  border: 2px solid #7c6b92;
-  border-radius: 42% 42% 30% 30%;
-  place-items: center;
-  background: linear-gradient(155deg, #30283e, #15121d);
-  box-shadow: -25px 9px 0 -7px #221d2d, 24px 12px 0 -9px #292235, 0 0 24px rgb(15 12 22 / 88%);
-  color: #ddd6fe;
-  font-size: 0.58rem;
-  font-weight: 950;
-  transition: left 420ms ease;
-}
-
 .pursuit-party {
   position: absolute;
   z-index: 3;
@@ -2914,43 +2895,8 @@ button:disabled {
   gap: 9px;
 }
 
-.pursuit-player,
-.pursuit-npc {
-  display: grid;
-  border: 2px solid #fff1a8;
-  place-items: center;
-  box-shadow: 0 0 16px rgb(244 211 94 / 48%);
-  font-size: 0.62rem;
-  font-weight: 950;
-}
-
-.pursuit-player {
-  width: 57px;
-  height: 68px;
-  border-radius: 45% 45% 35% 35%;
-  background: linear-gradient(155deg, #4f7da0, #263e61);
-}
-
-.pursuit-npc {
-  width: 49px;
-  height: 58px;
-  border-color: #d8b4fe;
-  border-radius: 45% 45% 35% 35%;
-  background: linear-gradient(155deg, #7668a1, #41335f);
-  box-shadow: 0 0 14px rgb(168 85 247 / 42%);
-}
-
-.pursuit-path {
-  position: absolute;
-  right: 7%;
-  bottom: 23px;
-  left: 7%;
-  color: rgb(215 238 213 / 58%);
-  letter-spacing: 0.7em;
-  text-align: right;
-}
-
-.pursuit-escort-scene {
+.pursuit-escort-scene,
+.pursuit-chase-scene {
   isolation: isolate;
   background: #9cc9c2;
   box-shadow: inset 0 0 28px rgb(17 51 43 / 20%), 0 10px 22px rgb(0 0 0 / 30%);
@@ -2995,6 +2941,23 @@ button:disabled {
   opacity: 0.94;
   transform: translateY(-50%);
   transition: left 520ms cubic-bezier(.22, .8, .34, 1);
+}
+
+.pursuit-chase-pursuers {
+  position: absolute;
+  z-index: 2;
+  bottom: 1%;
+  left: calc(var(--mist-left) + 45%);
+  display: block;
+  width: 39%;
+  height: auto;
+  opacity: .96;
+  filter: drop-shadow(0 5px 4px rgb(26 22 30 / 34%));
+  transform: translateZ(0);
+  transition: left 520ms cubic-bezier(.22, .8, .34, 1);
+  pointer-events: none;
+  user-select: none;
+  will-change: left;
 }
 
 .pursuit-escort-party {
@@ -3195,41 +3158,38 @@ button:disabled {
 
 .pursuit-roads {
   display: grid;
+  width: min(100%, 310px);
+  min-height: 70px;
+  margin: 0 auto;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 14px;
+}
+
+.pursuit-chase-game .pursuit-roads {
+  width: min(100%, 360px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .pursuit-roads button {
-  position: relative;
-  display: flex;
-  min-height: 94px;
-  padding: 11px;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 4px;
-  border: 2px solid #9ac8ad;
-  border-radius: 50% 50% 17px 17px;
-  background: linear-gradient(180deg, #426657, #263d34);
-  box-shadow: 0 7px 0 #172820, 0 10px 18px rgb(0 0 0 / 30%);
-  color: #fff;
+  min-width: 0;
+  min-height: 68px;
+  padding: 8px;
+  border: 2px solid #8fd4ff;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #e7f6ff, #9bd8ff);
+  box-shadow: 0 5px 0 #38638a, 0 8px 14px rgb(0 0 0 / 26%);
+  color: #15365b;
   cursor: pointer;
-}
-
-.pursuit-roads button > span {
-  display: grid;
-  width: 49px;
-  height: 49px;
-  border: 2px solid #c9f0d7;
-  border-radius: 50%;
-  place-items: center;
-  background: #e4f7eb;
-  color: #19412e;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 950;
 }
 
-.pursuit-roads button small { font-weight: 900; }
+.pursuit-roads button > span {
+  display: block;
+  line-height: 1;
+}
+
 .pursuit-roads button:disabled { cursor: default; opacity: 0.64; }
 
 .pursuit-feedback {

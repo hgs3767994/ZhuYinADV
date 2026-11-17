@@ -66,8 +66,16 @@ describe('escort gameplay shell', () => {
     );
 
     expect(html).toContain('後方追趕的迷霧哨兵');
-    expect(html).toContain('--mist-left:-18%');
+    expect(html).toContain('小亞紙偶');
+    expect(html).toContain('套用玩家頭像的冒險者紙偶');
+    expect(html).toContain('level-04-forest-backdrop.jpg');
+    expect(html).toContain('level-04-forest-foreground.png');
+    expect(html).toContain('level-06-fog-pursuers.png');
+    expect(html).toContain('src="/__base__/assets/images/campaign/pursuit/level-06-fog-pursuers.png"');
+    expect(html).toContain('--mist-left:-38%');
     expect(html).not.toContain('level-04-black-mist.png');
+    expect(html).not.toContain('class="pursuit-player"');
+    expect(html).not.toContain('class="pursuit-npc"');
     expect((html.match(/選擇 [^\s]+ 道路/g) ?? [])).toHaveLength(3);
     expect(html).not.toContain('後方逼近的黑霧');
   });
