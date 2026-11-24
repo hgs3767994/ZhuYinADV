@@ -11,10 +11,28 @@ vi.mock('../services/audio', () => ({
 }));
 
 import { SoundMazeGame } from './SoundMazeGame';
+import { DungeonMazeViewport } from './DungeonMazeViewport';
 import { SoundMazeMapViewport } from './SoundMazeMapViewport';
 import { createLevelTwoSoundMaze, LEVEL_TWO_MAZE_EXIT, LEVEL_TWO_MAZE_GEOMETRY } from '../game/soundMaze';
 
 describe('sound maze gameplay shell', () => {
+  it('makes the connected dungeon portal the only exit control after three fragments', () => {
+    const renderExit = (fragmentCount: number) => renderToStaticMarkup(
+      <DungeonMazeViewport currentNode={null} viewIndex={6} nodeCount={6}
+        atUnsolvedFork={false} exploredWrongRoutes={new Set()} focusedRouteSide={null}
+        revealedBlockageRouteId={null} fragmentCount={fragmentCount} fragmentAnimating={false}
+        controlsDisabled={false} traveling={false} returning={false} deadEnd={false}
+        onChooseRoute={() => undefined} onLeaveMaze={() => undefined}
+        connected={{ ref: null, camera: { x: 0, y: 0 }, completed: new Map(),
+          paused: false, fragmentVisible: false, showExit: true }} />
+    );
+    expect(renderExit(2)).not.toContain('sound-maze-map-exit-hitbox');
+    const exit = renderExit(3);
+    expect(exit).toContain('maze-exit-radiance-v1.png');
+    expect(exit).toContain('aria-label="點擊光芒出口離開秘道"');
+    expect(exit).not.toContain('沿著碎片光芒離開秘道');
+  });
+
   it('renders a local two-way fork without a full-map, timer or rune gate', () => {
     const html = renderToStaticMarkup(
       <SoundMazeGame
@@ -210,7 +228,7 @@ describe('sound maze gameplay shell', () => {
         traveling={false}
       />
     );
-    expect(beforeThirdFragmentHtml).not.toContain('level-02-exit-portal-soft-v01.png');
+    expect(beforeThirdFragmentHtml).not.toContain('maze-exit-radiance-v1.png');
     expect(beforeThirdFragmentHtml).not.toContain('sound-maze-map-exit');
 
     const exitHtml = renderToStaticMarkup(
@@ -226,7 +244,7 @@ describe('sound maze gameplay shell', () => {
         controlsDisabled={false}
       />
     );
-    expect(exitHtml).toContain('level-02-exit-portal-soft-v01.png');
+    expect(exitHtml).toContain('maze-exit-radiance-v1.png');
     expect(exitHtml).toContain('class="sound-maze-map-exit"');
     expect(exitHtml).toContain('sound-maze-map-exit-image');
     expect(exitHtml).toContain('class="sound-maze-map-exit-hitbox"');

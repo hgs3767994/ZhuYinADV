@@ -59,6 +59,7 @@ export function DungeonMazeViewport({
   onLeaveMaze
 }: DungeonMazeViewportProps) {
   const revealedRoute = currentNode?.routes.find((route) => route.id === revealedBlockageRouteId) ?? null;
+  const atExit = !currentNode && fragmentCount === 3 && (!connected || connected.showExit);
   const routeBySide = new Map(currentNode?.routes.map((route) => [route.side, route]) ?? []);
   const className = [
     'sound-maze-viewport',
@@ -91,13 +92,9 @@ export function DungeonMazeViewport({
         </div>}
         <div className="dungeon-maze-light" />
         <div className="dungeon-maze-darkness" />
-        {currentNode && (
-          <span className="dungeon-maze-node-counter">第 {viewIndex + 1}／{nodeCount} 岔路</span>
-        )}
-        {!currentNode && !connected && (
-          <div className="dungeon-maze-exit-art">
-            <span className="dungeon-maze-exit-glow">✦</span>
-            <strong>秘道出口</strong>
+        {atExit && !connected && (
+          <div className="sound-maze-map-exit dungeon-maze-preview-exit">
+            <img className="sound-maze-map-exit-image" src={CAMPAIGN_IMAGES.soundMazeExitPortal} alt="" />
           </div>
         )}
       </div>
@@ -131,15 +128,14 @@ export function DungeonMazeViewport({
         </div>
       )}
 
-      {!currentNode && (!connected || connected.showExit) && (
+      {atExit && (
         <button
           type="button"
-          className="dungeon-maze-exit-button"
-          disabled={controlsDisabled || fragmentCount !== 3}
+          className="sound-maze-map-exit-hitbox"
+          disabled={controlsDisabled}
           onClick={onLeaveMaze}
-        >
-          沿著碎片光芒離開秘道
-        </button>
+          aria-label="點擊光芒出口離開秘道"
+        />
       )}
     </div>
   );

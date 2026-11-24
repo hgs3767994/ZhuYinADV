@@ -2140,21 +2140,6 @@ button:disabled {
   pointer-events: none;
 }
 
-.dungeon-maze-node-counter {
-  position: absolute;
-  z-index: 8;
-  top: 4.5%;
-  left: 50%;
-  padding: 5px 12px;
-  border: 1px solid rgb(217 196 157 / 38%);
-  border-radius: 999px;
-  background: rgb(14 15 17 / 76%);
-  color: #d8c7a5;
-  font-size: 0.72rem;
-  font-weight: 850;
-  transform: translateX(-50%);
-}
-
 .dungeon-maze-route-options {
   position: absolute;
   z-index: 10;
@@ -2317,50 +2302,20 @@ button:disabled {
   box-shadow: inset 0 2px #d6c2a5, 0 3px 4px #201914;
 }
 
-.dungeon-maze-exit-art {
+.dungeon-maze-preview-exit {
   position: absolute;
-  z-index: 8;
-  top: 42%;
+  top: 60.58%;
   left: 50%;
-  display: grid;
-  width: 144px;
-  height: 176px;
-  border: 12px solid #56504a;
-  border-bottom-width: 18px;
-  border-radius: 70px 70px 8px 8px;
-  place-items: center;
-  background: linear-gradient(180deg, #181c25, #293548);
-  box-shadow: inset 0 0 34px #0b0d12, 0 0 28px rgb(124 225 232 / 24%);
-  color: #e6f8f7;
+  width: 32%;
+  aspect-ratio: 3 / 4;
   transform: translate(-50%, -50%);
 }
 
-.dungeon-maze-exit-glow {
-  color: #8ce7e6;
-  font-size: 2.4rem;
-  text-shadow: 0 0 14px #72dce1;
+.dungeon-maze-preview-exit .sound-maze-map-exit-image {
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
-
-.dungeon-maze-exit-art strong { font-size: 0.9rem; }
-
-.dungeon-maze-exit-button {
-  position: absolute;
-  z-index: 11;
-  bottom: 9%;
-  left: 50%;
-  width: min(78%, 270px);
-  min-height: 46px;
-  border: 2px solid #8ce7e6;
-  border-radius: 999px;
-  background: #284e58;
-  color: #efffff;
-  cursor: pointer;
-  font-family: inherit;
-  font-weight: 900;
-  transform: translateX(-50%);
-}
-
-.dungeon-maze-exit-button:disabled { cursor: default; opacity: 0.55; }
 
 @keyframes dungeon-maze-camera-left { from { transform: none; } to { transform: translate(88px, 112px) scale(1.12); } }
 @keyframes dungeon-maze-camera-center { from { transform: none; } to { transform: translateY(142px) scale(1.12); } }
@@ -2487,6 +2442,7 @@ button:disabled {
 
 .sound-maze-map-exit-image {
   position: absolute;
+  object-fit: contain;
   opacity: 0.9;
   filter: saturate(0.72) drop-shadow(0 0 8px rgb(220 235 241 / 48%));
   transform-box: fill-box;
@@ -2527,6 +2483,10 @@ button:disabled {
 
 .sound-maze-map-exit-hitbox:disabled {
   cursor: default;
+}
+
+.dungeon-maze-viewport .sound-maze-map-exit-hitbox:focus-visible {
+  outline: 2px solid #bffaff;
 }
 
 .sound-maze-magic-wall-image {
