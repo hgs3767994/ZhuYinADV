@@ -7,6 +7,7 @@ interface CampaignAudioReplayButtonProps {
   paused?: boolean;
   disabled?: boolean;
   autoPlayKey?: string | number;
+  playbackTimeoutMs?: number;
   label?: string;
   onPlaybackChange?: (playing: boolean) => void;
 }
@@ -17,6 +18,7 @@ export function CampaignAudioReplayButton({
   paused = false,
   disabled = false,
   autoPlayKey,
+  playbackTimeoutMs,
   label = '重播讀音',
   onPlaybackChange
 }: CampaignAudioReplayButtonProps) {
@@ -39,15 +41,27 @@ export function CampaignAudioReplayButton({
     const request = ++requestRef.current;
     setFailed(false);
     updatePlaying(true);
+    let timeoutId: number | undefined;
     try {
-      await onReplay();
+      const playback = onReplay();
+      if (playbackTimeoutMs === undefined) {
+        await playback;
+      } else {
+        await Promise.race([playback, new Promise<never>((_, reject) => {
+          timeoutId = window.setTimeout(() => reject(new Error('目標讀音播放逾時')), playbackTimeoutMs);
+        })]);
+      }
     } catch (error) {
       console.warn('無法播放目標讀音', error);
-      if (requestRef.current === request) setFailed(true);
+      if (requestRef.current === request) {
+        onStop?.();
+        setFailed(true);
+      }
     } finally {
+      window.clearTimeout(timeoutId);
       if (requestRef.current === request) updatePlaying(false);
     }
-  }, [disabled, onReplay, paused, updatePlaying]);
+  }, [disabled, onReplay, onStop, paused, playbackTimeoutMs, updatePlaying]);
 
   useEffect(() => {
     if (autoPlayKey === undefined || paused || disabled) return;

@@ -45,7 +45,10 @@ export const CAMPAIGN_IMAGES = {
   soundMazeLandmarkRocks: soundMazeImage('level-02-landmark-04-rocks.png'),
   soundMazeLandmarkArch: soundMazeImage('level-02-landmark-05-arch.png'),
   soundMazeMagicMistWall: soundMazeImage('level-02-magic-mist-wall-wide-stretched-192x180.png'),
-  soundMazeExitPortal: soundMazeImage('level-02-exit-portal-soft-v01.png')
+  soundMazeExitPortal: soundMazeImage('level-02-exit-portal-soft-v01.png'),
+  dungeonForkEntrance: soundMazeImage('level-07-connected-fork1.png'),
+  dungeonForkRoad: soundMazeImage('level-07-connected-fork2.png'),
+  dungeonCollapsedStone: soundMazeImage('level-07-collapsed-stone.png')
 } as const;
 
 export const CAMPAIGN_IMAGE_PRELOADS = Object.values(CAMPAIGN_IMAGES);

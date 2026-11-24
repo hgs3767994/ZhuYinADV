@@ -2006,6 +2006,376 @@ button:disabled {
   isolation: isolate;
 }
 
+/* Level 1-7 underground-passage graybox. The final art will replace these
+   procedural stones after the three-way route and camera flow are approved. */
+.dungeon-maze-viewport {
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 3 / 4;
+  border-color: #5d5146;
+  background: #090a0c;
+  box-shadow: inset 0 0 52px #000, 0 10px 22px rgb(15 13 12 / 38%);
+  isolation: isolate;
+}
+
+.dungeon-maze-scene {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  background: #07080a;
+}
+
+.connected-dungeon-road {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.connected-dungeon-unselected { transition: opacity 260ms ease, visibility 0s; }
+.connected-dungeon-unselected.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  transition-delay: 0s, 260ms;
+}
+.connected-dungeon-viewport .dungeon-maze-floor { background: #0a0b0d; }
+.connected-dungeon-viewport .dungeon-maze-route.route-left { left: 22%; }
+.connected-dungeon-viewport .dungeon-maze-route.route-right { left: 78%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .connected-dungeon-unselected { transition: none; }
+}
+
+.dungeon-maze-floor {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 62%, rgb(72 65 56 / 58%) 0 16%, transparent 58%),
+    #07080a;
+}
+
+.dungeon-maze-path-network {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 64%;
+  will-change: transform;
+}
+
+.dungeon-maze-corridor {
+  position: absolute;
+  left: 50%;
+  display: block;
+  width: 86px;
+  border-right: 10px solid #514b45;
+  border-left: 10px solid #514b45;
+  background:
+    linear-gradient(90deg, rgb(18 17 17 / 45%) 1px, transparent 1px) 0 0 / 22px 100%,
+    linear-gradient(0deg, #766d62 2px, transparent 2px) 0 0 / 100% 24px,
+    linear-gradient(145deg, #403c38, #2d2b29);
+  box-shadow:
+    inset 7px 0 9px rgb(0 0 0 / 34%),
+    inset -7px 0 9px rgb(0 0 0 / 34%),
+    -5px 0 0 #262320,
+    5px 0 0 #262320;
+  transform-origin: 50% 100%;
+}
+
+.dungeon-maze-trunk {
+  bottom: -2%;
+  height: 47%;
+  transform: translateX(-50%);
+}
+
+.dungeon-maze-branch {
+  bottom: 39%;
+  height: 58%;
+}
+
+.dungeon-maze-branch.branch-left { transform: translateX(-50%) rotate(-35deg); }
+.dungeon-maze-branch.branch-center { transform: translateX(-50%); }
+.dungeon-maze-branch.branch-right { transform: translateX(-50%) rotate(35deg); }
+
+.dungeon-maze-viewport.is-traveling.focus-left:not(.is-returning) .dungeon-maze-path-network {
+  animation: dungeon-maze-camera-left 1100ms ease-in-out forwards;
+}
+.dungeon-maze-viewport.is-traveling.focus-center:not(.is-returning) .dungeon-maze-path-network {
+  animation: dungeon-maze-camera-center 1100ms ease-in-out forwards;
+}
+.dungeon-maze-viewport.is-traveling.focus-right:not(.is-returning) .dungeon-maze-path-network {
+  animation: dungeon-maze-camera-right 1100ms ease-in-out forwards;
+}
+.dungeon-maze-viewport.is-at-dead-end.focus-left .dungeon-maze-path-network { transform: translate(88px, 112px) scale(1.12); }
+.dungeon-maze-viewport.is-at-dead-end.focus-center .dungeon-maze-path-network { transform: translateY(142px) scale(1.12); }
+.dungeon-maze-viewport.is-at-dead-end.focus-right .dungeon-maze-path-network { transform: translate(-88px, 112px) scale(1.12); }
+.dungeon-maze-viewport.is-returning.focus-left .dungeon-maze-path-network { animation: dungeon-maze-camera-return-left 1100ms ease-in-out forwards; }
+.dungeon-maze-viewport.is-returning.focus-center .dungeon-maze-path-network { animation: dungeon-maze-camera-return-center 1100ms ease-in-out forwards; }
+.dungeon-maze-viewport.is-returning.focus-right .dungeon-maze-path-network { animation: dungeon-maze-camera-return-right 1100ms ease-in-out forwards; }
+.sound-maze-game.is-paused .dungeon-maze-path-network { animation-play-state: paused; }
+
+.dungeon-maze-light {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 58% 43% at 50% 58%,
+    rgb(245 218 159 / 12%) 0 34%,
+    rgb(176 151 111 / 8%) 52%,
+    transparent 74%
+  );
+  pointer-events: none;
+}
+
+.dungeon-maze-darkness {
+  position: absolute;
+  z-index: 7;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 49% 39% at 50% 57%,
+    rgb(12 13 15 / 12%) 0 38%,
+    rgb(12 13 15 / 30%) 55%,
+    rgb(10 11 13 / 78%) 77%,
+    #0a0b0d 94% 100%
+  );
+  pointer-events: none;
+}
+
+.dungeon-maze-node-counter {
+  position: absolute;
+  z-index: 8;
+  top: 4.5%;
+  left: 50%;
+  padding: 5px 12px;
+  border: 1px solid rgb(217 196 157 / 38%);
+  border-radius: 999px;
+  background: rgb(14 15 17 / 76%);
+  color: #d8c7a5;
+  font-size: 0.72rem;
+  font-weight: 850;
+  transform: translateX(-50%);
+}
+
+.dungeon-maze-route-options {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dungeon-maze-route.sound-maze-map-route {
+  top: 29%;
+  width: 62px;
+  height: 62px;
+  border-color: #746143;
+  background: #f1e2ba;
+  box-shadow: 0 5px 0 #453824, 0 7px 16px rgb(0 0 0 / 52%);
+  color: #47371f;
+  pointer-events: auto;
+}
+
+.dungeon-maze-route.route-left { left: 20%; }
+.dungeon-maze-route.route-center { left: 50%; }
+.dungeon-maze-route.route-right { left: 80%; }
+
+.dungeon-maze-route.sound-maze-map-route.explored-dead-end {
+  border-color: #55565b;
+  background: #777980;
+  box-shadow: 0 4px 0 #3f4044;
+  color: #d4d4d6;
+}
+
+.dungeon-maze-rubble {
+  position: absolute;
+  z-index: 4;
+  top: 24%;
+  left: 50%;
+  width: 102px;
+  height: 54px;
+  transform: translate(-50%, -35%);
+}
+
+.dungeon-maze-rubble i {
+  position: absolute;
+  display: block;
+  width: 31px;
+  height: 22px;
+  border: 3px solid #37322d;
+  border-radius: 4px;
+  background: linear-gradient(145deg, #a19689, #625b54);
+  box-shadow: 0 4px 5px rgb(0 0 0 / 55%), 0 0 7px rgb(226 203 160 / 20%);
+}
+
+.dungeon-maze-rubble i:nth-child(1) { bottom: 0; left: 0; transform: rotate(-12deg); }
+.dungeon-maze-rubble i:nth-child(2) { bottom: 2px; left: 27px; transform: rotate(8deg); }
+.dungeon-maze-rubble i:nth-child(3) { right: 13px; bottom: 0; transform: rotate(-4deg); }
+.dungeon-maze-rubble i:nth-child(4) { bottom: 17px; left: 14px; transform: rotate(7deg); }
+.dungeon-maze-rubble i:nth-child(5) { right: 28px; bottom: 20px; transform: rotate(-10deg); }
+.dungeon-maze-rubble i:nth-child(6) { top: 0; left: 37px; transform: rotate(4deg); }
+.dungeon-maze-rubble i:nth-child(7) { top: 9px; right: 2px; width: 25px; transform: rotate(13deg); }
+
+.dungeon-art-preview [data-fork-number="1"] .dungeon-maze-floor {
+  background: #0a0b0d;
+}
+
+.dungeon-art-preview [data-fork-number="1"] .dungeon-maze-corridor {
+  border-color: transparent;
+  background:
+    repeating-linear-gradient(0deg, #28231e 0 2px, transparent 2px 22px) left / 9px 100% no-repeat border-box,
+    repeating-linear-gradient(0deg, #28231e 0 2px, transparent 2px 22px) right / 9px 100% no-repeat border-box,
+    linear-gradient(90deg, #211d19, #948474 27%, #64594f 70%, #29231e) left / 9px 100% no-repeat border-box,
+    linear-gradient(270deg, #211d19, #948474 27%, #64594f 70%, #29231e) right / 9px 100% no-repeat border-box,
+    repeating-linear-gradient(0deg, #28231e 0 2px, #786b5d 2px 3px, transparent 3px 22px) padding-box,
+    repeating-linear-gradient(90deg, #322b24 0 2px, #776a5d 2px 3px, transparent 3px 31px) padding-box,
+    repeating-linear-gradient(0deg, #64594e 0 22px, #524941 22px 44px) padding-box;
+  box-shadow: inset 6px 0 12px #28221b, inset -6px 0 12px #28221b;
+}
+
+.dungeon-mossy-road-preview [data-fork-number="1"] .dungeon-maze-corridor {
+  /* Frame the straight section of the supplied 1536 × 1024 source. */
+  background: url('/assets/images/campaign/sound-maze/level-07-mossy-stone-source.png')
+    21.4% 50% / 500% 103% no-repeat border-box;
+  box-shadow: none;
+}
+
+.dungeon-three-prong-preview [data-fork-number="1"] {
+  --dungeon-road-image: url('/assets/images/campaign/sound-maze/level-07-mossy-stone-source.png');
+}
+
+.dungeon-three-prong-preview [data-fork-number="1"] .dungeon-maze-branch {
+  bottom: 35%;
+  height: 60%;
+  transform: translateX(-50%);
+}
+
+.dungeon-three-prong-preview [data-fork-number="1"] .branch-left { left: 20%; }
+.dungeon-three-prong-preview [data-fork-number="1"] .branch-right { left: 80%; }
+.dungeon-three-prong-preview [data-fork-number="1"] .dungeon-maze-trunk { height: 39%; }
+
+/* The crosswalk covers the interior curb stones where the corridors meet. */
+.dungeon-three-prong-preview [data-fork-number="1"] .dungeon-maze-path-network::after {
+  position: absolute;
+  top: 57%;
+  left: 50%;
+  width: 80px;
+  height: calc(min(60vw, 230px) + 68px);
+  height: calc(60cqw + 68px);
+  background: var(--dungeon-road-image) 24% 50% / 820% 103% no-repeat;
+  box-shadow: inset 3px 0 4px #3b31294d, inset -3px 0 4px #3b31294d;
+  transform: translate(-50%, -50%) rotate(90deg);
+  content: '';
+}
+
+.dungeon-three-prong-preview [data-fork-number="1"] .dungeon-maze-scene {
+  container-type: inline-size;
+}
+
+.dungeon-three-prong-preview [data-fork-number="1"] .dungeon-maze-rubble {
+  z-index: 5;
+  width: 212px;
+  height: 140px;
+  background: url('/assets/images/campaign/sound-maze/level-07-collapsed-stone.png') center / contain no-repeat;
+  border-radius: 50%;
+  mask-image: radial-gradient(ellipse 68% 66%, #000 63%, transparent 97%);
+  -webkit-mask-image: radial-gradient(ellipse 68% 66%, #000 63%, transparent 97%);
+}
+
+.dungeon-three-prong-preview [data-fork-number="1"] .dungeon-maze-rubble i { display: none; }
+
+.dungeon-three-prong-preview [data-fork-number="1"].focus-left { --dungeon-side-pan: 30%; }
+.dungeon-three-prong-preview [data-fork-number="1"].focus-right { --dungeon-side-pan: -30%; }
+
+.dungeon-three-prong-preview [data-fork-number="1"]:is(.focus-left, .focus-right).is-traveling:not(.is-returning) .dungeon-maze-path-network {
+  animation-name: dungeon-three-prong-side-pan;
+}
+
+.dungeon-three-prong-preview [data-fork-number="1"]:is(.focus-left, .focus-right).is-at-dead-end .dungeon-maze-path-network {
+  transform: translate(var(--dungeon-side-pan), 32%);
+}
+
+.dungeon-three-prong-preview [data-fork-number="1"]:is(.focus-left, .focus-right).is-returning .dungeon-maze-path-network {
+  animation-name: dungeon-three-prong-side-pan;
+  animation-direction: reverse;
+}
+
+@keyframes dungeon-three-prong-side-pan {
+  0% { transform: none; }
+  30% { transform: translateY(8%); }
+  65% { transform: translate(var(--dungeon-side-pan), 8%); }
+  100% { transform: translate(var(--dungeon-side-pan), 32%); }
+}
+
+.dungeon-art-preview [data-fork-number="1"] .dungeon-maze-light {
+  background: radial-gradient(ellipse 57% 46% at 50% 53%, #f8cf852b, #e4ae6319 52%, transparent 87%);
+}
+
+.dungeon-art-preview [data-fork-number="1"] .dungeon-maze-rubble i {
+  border: 2px solid #322a24;
+  border-radius: 4px 7px 3px 5px;
+  background:
+    linear-gradient(153deg, transparent 35%, #3c312a 37% 41%, transparent 43%) 2px 0 / 12px 100% no-repeat,
+    linear-gradient(160deg, #baaa92, #7f6e5e 55%, #463a32);
+  box-shadow: inset 0 2px #d6c2a5, 0 3px 4px #201914;
+}
+
+.dungeon-maze-exit-art {
+  position: absolute;
+  z-index: 8;
+  top: 42%;
+  left: 50%;
+  display: grid;
+  width: 144px;
+  height: 176px;
+  border: 12px solid #56504a;
+  border-bottom-width: 18px;
+  border-radius: 70px 70px 8px 8px;
+  place-items: center;
+  background: linear-gradient(180deg, #181c25, #293548);
+  box-shadow: inset 0 0 34px #0b0d12, 0 0 28px rgb(124 225 232 / 24%);
+  color: #e6f8f7;
+  transform: translate(-50%, -50%);
+}
+
+.dungeon-maze-exit-glow {
+  color: #8ce7e6;
+  font-size: 2.4rem;
+  text-shadow: 0 0 14px #72dce1;
+}
+
+.dungeon-maze-exit-art strong { font-size: 0.9rem; }
+
+.dungeon-maze-exit-button {
+  position: absolute;
+  z-index: 11;
+  bottom: 9%;
+  left: 50%;
+  width: min(78%, 270px);
+  min-height: 46px;
+  border: 2px solid #8ce7e6;
+  border-radius: 999px;
+  background: #284e58;
+  color: #efffff;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  transform: translateX(-50%);
+}
+
+.dungeon-maze-exit-button:disabled { cursor: default; opacity: 0.55; }
+
+@keyframes dungeon-maze-camera-left { from { transform: none; } to { transform: translate(88px, 112px) scale(1.12); } }
+@keyframes dungeon-maze-camera-center { from { transform: none; } to { transform: translateY(142px) scale(1.12); } }
+@keyframes dungeon-maze-camera-right { from { transform: none; } to { transform: translate(-88px, 112px) scale(1.12); } }
+@keyframes dungeon-maze-camera-return-left { from { transform: translate(88px, 112px) scale(1.12); } to { transform: none; } }
+@keyframes dungeon-maze-camera-return-center { from { transform: translateY(142px) scale(1.12); } to { transform: none; } }
+@keyframes dungeon-maze-camera-return-right { from { transform: translate(-88px, 112px) scale(1.12); } to { transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .dungeon-maze-viewport.is-traveling .dungeon-maze-path-network,
+  .dungeon-maze-viewport.is-returning .dungeon-maze-path-network {
+    animation-duration: 120ms;
+  }
+}
+
 .sound-maze-world {
   position: absolute;
   z-index: 1;

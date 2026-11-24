@@ -145,7 +145,7 @@ describe('level two sound maze', () => {
     }
   });
 
-  it('creates six stable rune-gate nodes with the confirmed level-seven targets', () => {
+  it('creates six stable three-way dungeon forks with the confirmed level-seven targets', () => {
     const nodes = createLevelSevenSoundMaze('gate-run', new FixedRandom([0.13, 0.84, 0.37, 0.62]));
     expect(nodes).toHaveLength(6);
     expect(nodes.filter((node) => node.targetSymbol === 'ㄅ')).toHaveLength(2);
@@ -154,9 +154,9 @@ describe('level two sound maze', () => {
     expect(oldTargets).toHaveLength(2);
     expect(new Set(oldTargets.map((node) => node.targetSymbol)).size).toBe(2);
     expect(nodes.filter((node) => node.fragment).map((node) => node.id)).toEqual([
-      'gate-run:rune-gate-node-01',
-      'gate-run:rune-gate-node-03',
-      'gate-run:rune-gate-node-06'
+      'gate-run:dungeon-fork-node-01',
+      'gate-run:dungeon-fork-node-03',
+      'gate-run:dungeon-fork-node-06'
     ]);
     for (const node of nodes) {
       expect(node.routes).toHaveLength(3);

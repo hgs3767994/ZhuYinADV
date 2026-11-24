@@ -315,7 +315,7 @@ export function createLevelSevenSoundMaze(
   const seenNewSymbols = new Set<string>();
   return targets.map((targetSymbol, nodeIndex) => {
     const nodeNumber = String(nodeIndex + 1).padStart(2, '0');
-    const nodeId = `${runId}:rune-gate-node-${nodeNumber}`;
+    const nodeId = `${runId}:dungeon-fork-node-${nodeNumber}`;
     const isNewSymbol = targetSymbol === 'ㄅ' || targetSymbol === 'ㄉ';
     const firstNewOccurrence = isNewSymbol && !seenNewSymbols.has(targetSymbol);
     if (isNewSymbol) seenNewSymbols.add(targetSymbol);
@@ -336,7 +336,7 @@ export function createLevelSevenSoundMaze(
       targetSymbol,
       fragment: LEVEL_SEVEN_FRAGMENT_NODE_INDEXES.has(nodeIndex),
       routes: optionSymbols.map((symbol, routeIndex) => ({
-        id: `${nodeId}:gate-${String(routeIndex + 1).padStart(2, '0')}`,
+        id: `${nodeId}:route-${String(routeIndex + 1).padStart(2, '0')}`,
         symbol,
         correct: symbol === targetSymbol,
         side: routeIndex === 0 ? 'left' : routeIndex === 1 ? 'center' : 'right'

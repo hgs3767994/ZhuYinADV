@@ -100,16 +100,16 @@ describe('campaign level flow', () => {
     expect(content.postStory[2].text).toContain('入口隨即在身後關閉');
   });
 
-  it('keeps level seven as a rune-gate-only maze with the confirmed story', () => {
+  it('keeps level seven as a three-way underground maze with the confirmed story', () => {
     const content = campaignFlowContent(campaignLevel('campaign-01', 'level-07'));
 
-    expect(content.tutorialId).toBe('sound-maze-rune-gate');
+    expect(content.tutorialId).toBe('sound-maze-dungeon-fork');
     expect(content.preStory).toHaveLength(4);
     expect(content.preStory[0].text).toContain('只能看清附近的一小段道路');
-    expect(content.mission).toContain('選擇正確的符文門');
+    expect(content.mission).toContain('選擇正確的石磚道路');
     expect(content.tutorialSteps).toHaveLength(5);
-    expect(content.tutorialSteps.join('')).toContain('選錯符文門');
-    expect(content.tutorialSteps.join('')).not.toContain('選擇顯示正確符號的岔路');
+    expect(content.tutorialSteps.join('')).toContain('倒塌的石磚');
+    expect(content.tutorialSteps.join('')).toContain('選擇顯示正確符號的道路');
     expect(content.postStory).toHaveLength(4);
     expect(content.postStory[2].text).toContain('首席魔法師');
     expect(content.postStory[3].text).toContain('注音水晶產生了共鳴');

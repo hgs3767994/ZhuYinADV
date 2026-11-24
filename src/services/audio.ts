@@ -62,11 +62,11 @@ class AudioService {
     this.bgm.src = BGM_FILE;
   }
 
-  unlock(): void {
+  unlock(playBackgroundMusic = true): void {
     this.unlocked = true;
     const context = this.ensureContext();
-    if (context?.state === 'suspended') void context.resume();
-    this.playBgm();
+    if (context && context.state !== 'running') void context.resume().catch(() => undefined);
+    if (playBackgroundMusic) this.playBgm();
   }
 
   playBgm(): void {

@@ -327,7 +327,7 @@ export function CampaignLevelFlow({
   );
 
   const mazeMode = level.gameplayId === 'sound-maze';
-  const runeGateMaze = level.id === 'level-07';
+  const dungeonForkMaze = level.id === 'level-07';
   const memoryExploreMode = level.gameplayId === 'memory-explore';
   const memoryBattleMode = level.gameplayId === 'memory-battle';
   const memoryMode = memoryExploreMode || memoryBattleMode;
@@ -374,7 +374,8 @@ export function CampaignLevelFlow({
       onResume={() => dispatch({ type: 'resume' })} onRequestAbandon={() => dispatch({ type: 'request-abandon' })}
       onCancelAbandon={() => dispatch({ type: 'cancel-abandon' })} onAbandon={onReturnToMap} inputLocked={gameInputLocked}>
       {({ paused, inputEnabled }) => resultId && (mazeMode ? (
-        <SoundMazeGame key={resultId} variant={runeGateMaze ? 'rune-gate' : 'fork'} resultId={resultId} paused={paused} inputEnabled={inputEnabled}
+        <SoundMazeGame key={resultId} variant={dungeonForkMaze ? 'dungeon-fork' : 'fork'} resultId={resultId} paused={paused} inputEnabled={inputEnabled}
+          connectedDungeon={dungeonForkMaze ? 'full' : undefined}
           onFragmentCountChange={setCollectedFragments} onInteractionLockChange={setGameInputLocked}
           onSolved={(result) => solveLevel({
             stars: result.stars,

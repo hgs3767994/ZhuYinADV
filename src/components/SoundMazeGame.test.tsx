@@ -56,11 +56,11 @@ describe('sound maze gameplay shell', () => {
     expect(html).not.toContain('倒數');
   });
 
-  it('renders three rune gates without fork wording, a timer or a full map', () => {
+  it('renders a three-way underground passage without rune gates, a timer or a full map', () => {
     const html = renderToStaticMarkup(
       <SoundMazeGame
-        variant="rune-gate"
-        resultId="rune-gate-preview"
+        variant="dungeon-fork"
+        resultId="dungeon-fork-preview"
         paused
         inputEnabled={false}
         onFragmentCountChange={() => undefined}
@@ -69,9 +69,13 @@ describe('sound maze gameplay shell', () => {
       />
     );
 
-    expect((html.match(/sound-maze-rune-gate /g) ?? [])).toHaveLength(3);
-    expect((html.match(/選擇 [^\s]+ 符文門/g) ?? [])).toHaveLength(3);
-    expect(html).not.toContain('返回上一道符文門');
+    expect(html).toContain('dungeon-maze-viewport');
+    expect(html).toContain('dungeon-maze-darkness');
+    expect(html).toContain('dungeon-maze-floor');
+    expect((html.match(/dungeon-maze-corridor dungeon-maze-branch/g) ?? [])).toHaveLength(3);
+    expect((html.match(/sound-maze-map-route dungeon-maze-route/g) ?? [])).toHaveLength(3);
+    expect(html).not.toContain('sound-maze-rune-gate');
+    expect(html).not.toContain('符文門');
     expect(html).not.toContain('返回上一個岔路');
     expect(html).not.toContain('倒數');
     expect(html).not.toContain('完整地圖');
