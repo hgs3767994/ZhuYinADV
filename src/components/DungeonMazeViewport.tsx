@@ -5,13 +5,12 @@ import { ConnectedDungeonRoad } from './ConnectedDungeonRoad';
 import type { SoundMazeMapViewportHandle } from './SoundMazeMapViewport';
 
 interface DungeonMazeViewportProps {
-  connected?: {
+  connected: {
     ref: Ref<SoundMazeMapViewportHandle>;
     camera: SoundMazePoint;
     completed: ReadonlyMap<number, SoundMazeRoute['side']>;
     fragmentVisible: boolean;
     paused: boolean;
-    showExit: boolean;
   };
   currentNode: SoundMazeNode | null;
   viewIndex: number;
@@ -19,7 +18,6 @@ interface DungeonMazeViewportProps {
   atUnsolvedFork: boolean;
   exploredWrongRoutes: ReadonlySet<string>;
   focusedRouteSide: SoundMazeRoute['side'] | null;
-  revealedBlockageRouteId: string | null;
   fragmentCount: number;
   fragmentAnimating: boolean;
   controlsDisabled: boolean;
@@ -32,14 +30,6 @@ interface DungeonMazeViewportProps {
 
 const ROUTE_SIDES: readonly SoundMazeRoute['side'][] = ['left', 'center', 'right'];
 
-function RubblePile() {
-  return (
-    <span className="dungeon-maze-rubble" aria-hidden="true">
-      <i /><i /><i /><i /><i /><i /><i />
-    </span>
-  );
-}
-
 export function DungeonMazeViewport({
   connected,
   currentNode,
@@ -48,7 +38,6 @@ export function DungeonMazeViewport({
   atUnsolvedFork,
   exploredWrongRoutes,
   focusedRouteSide,
-  revealedBlockageRouteId,
   fragmentCount,
   fragmentAnimating,
   controlsDisabled,
@@ -58,45 +47,19 @@ export function DungeonMazeViewport({
   onChooseRoute,
   onLeaveMaze
 }: DungeonMazeViewportProps) {
-  const revealedRoute = currentNode?.routes.find((route) => route.id === revealedBlockageRouteId) ?? null;
-  const atExit = !currentNode && fragmentCount === 3 && (!connected || connected.showExit);
+  const atExit = !currentNode && fragmentCount === 3;
   const routeBySide = new Map(currentNode?.routes.map((route) => [route.side, route]) ?? []);
-  const className = [
-    'sound-maze-viewport',
-    'dungeon-maze-viewport',
-    connected ? 'connected-dungeon-viewport' : null,
-    atUnsolvedFork ? 'at-unsolved-fork' : null,
-    traveling ? 'is-traveling' : null,
-    returning ? 'is-returning' : null,
-    deadEnd ? 'is-at-dead-end' : null,
-    focusedRouteSide ? `focus-${focusedRouteSide}` : null
-  ].filter(Boolean).join(' ');
-
   return (
-    <div className={className} data-fork-number={currentNode ? viewIndex + 1 : undefined} aria-label="城堡地下秘道的三岔路">
+    <div className="sound-maze-viewport dungeon-maze-viewport connected-dungeon-viewport" aria-label="城堡地下秘道的三岔路">
       <div className="dungeon-maze-scene" aria-hidden="true">
         <div className="dungeon-maze-floor" />
-        {connected ? (
-          <ConnectedDungeonRoad ref={connected.ref} camera={connected.camera} index={viewIndex} nodeCount={nodeCount}
-            selected={focusedRouteSide ? routeBySide.get(focusedRouteSide) ?? null : null}
-            returning={returning} deadEnd={deadEnd} paused={connected.paused} fragmentVisible={connected.fragmentVisible}
-            exitVisible={connected.showExit && fragmentCount === 3}
-            completed={connected.completed} />
-        ) : <div className="dungeon-maze-path-network">
-          <span className="dungeon-maze-corridor dungeon-maze-trunk" />
-          {ROUTE_SIDES.map((side) => (
-            <span key={side} className={`dungeon-maze-corridor dungeon-maze-branch branch-${side}`}>
-              {deadEnd && revealedRoute?.side === side && <RubblePile />}
-            </span>
-          ))}
-        </div>}
+        <ConnectedDungeonRoad ref={connected.ref} camera={connected.camera} index={viewIndex} nodeCount={nodeCount}
+          selected={focusedRouteSide ? routeBySide.get(focusedRouteSide) ?? null : null}
+          returning={returning} deadEnd={deadEnd} paused={connected.paused} fragmentVisible={connected.fragmentVisible}
+          exitVisible={fragmentCount === 3}
+          completed={connected.completed} />
         <div className="dungeon-maze-light" />
         <div className="dungeon-maze-darkness" />
-        {atExit && !connected && (
-          <div className="sound-maze-map-exit dungeon-maze-preview-exit">
-            <img className="sound-maze-map-exit-image" src={CAMPAIGN_IMAGES.soundMazeExitPortal} alt="" />
-          </div>
-        )}
       </div>
 
       {fragmentAnimating && (

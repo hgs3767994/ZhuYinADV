@@ -375,7 +375,6 @@ export function CampaignLevelFlow({
       onCancelAbandon={() => dispatch({ type: 'cancel-abandon' })} onAbandon={onReturnToMap} inputLocked={gameInputLocked}>
       {({ paused, inputEnabled }) => resultId && (mazeMode ? (
         <SoundMazeGame key={resultId} variant={dungeonForkMaze ? 'dungeon-fork' : 'fork'} resultId={resultId} paused={paused} inputEnabled={inputEnabled}
-          connectedDungeon={dungeonForkMaze ? 'full' : undefined}
           onFragmentCountChange={setCollectedFragments} onInteractionLockChange={setGameInputLocked}
           onSolved={(result) => solveLevel({
             stars: result.stars,

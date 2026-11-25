@@ -20,11 +20,11 @@ describe('sound maze gameplay shell', () => {
     const renderExit = (fragmentCount: number) => renderToStaticMarkup(
       <DungeonMazeViewport currentNode={null} viewIndex={6} nodeCount={6}
         atUnsolvedFork={false} exploredWrongRoutes={new Set()} focusedRouteSide={null}
-        revealedBlockageRouteId={null} fragmentCount={fragmentCount} fragmentAnimating={false}
+        fragmentCount={fragmentCount} fragmentAnimating={false}
         controlsDisabled={false} traveling={false} returning={false} deadEnd={false}
         onChooseRoute={() => undefined} onLeaveMaze={() => undefined}
         connected={{ ref: null, camera: { x: 0, y: 0 }, completed: new Map(),
-          paused: false, fragmentVisible: false, showExit: true }} />
+          paused: false, fragmentVisible: false }} />
     );
     expect(renderExit(2)).not.toContain('sound-maze-map-exit-hitbox');
     const exit = renderExit(3);
@@ -90,7 +90,8 @@ describe('sound maze gameplay shell', () => {
     expect(html).toContain('dungeon-maze-viewport');
     expect(html).toContain('dungeon-maze-darkness');
     expect(html).toContain('dungeon-maze-floor');
-    expect((html.match(/dungeon-maze-corridor dungeon-maze-branch/g) ?? [])).toHaveLength(3);
+    expect(html).toContain('level-07-connected-fork1.png');
+    expect(html).toContain('level-07-connected-fork2.png');
     expect((html.match(/sound-maze-map-route dungeon-maze-route/g) ?? [])).toHaveLength(3);
     expect(html).not.toContain('sound-maze-rune-gate');
     expect(html).not.toContain('符文門');

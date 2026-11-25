@@ -25,7 +25,6 @@ interface SoundMazeGameProps {
   paused: boolean;
   inputEnabled: boolean;
   suppressAudio?: boolean;
-  connectedDungeon?: 'sample' | 'full';
   onFragmentCountChange: (collected: number) => void;
   onInteractionLockChange: (locked: boolean) => void;
   onSolved: (result: {
@@ -63,7 +62,6 @@ export function SoundMazeGame({
   paused,
   inputEnabled,
   suppressAudio = false,
-  connectedDungeon,
   onFragmentCountChange,
   onInteractionLockChange,
   onSolved
@@ -71,10 +69,9 @@ export function SoundMazeGame({
   const nodes = useMemo(
     () => {
       if (variant !== 'dungeon-fork') return createLevelTwoSoundMaze(resultId);
-      const dungeonNodes = createLevelSevenSoundMaze(resultId);
-      return connectedDungeon === 'sample' ? dungeonNodes.slice(0, 2) : dungeonNodes;
+      return createLevelSevenSoundMaze(resultId);
     },
-    [connectedDungeon, resultId, variant]
+    [resultId, variant]
   );
   const [frontierIndex, setFrontierIndex] = useState(0);
   const [viewIndex, setViewIndex] = useState(0);
@@ -88,7 +85,7 @@ export function SoundMazeGame({
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioCycle, setAudioCycle] = useState(0);
   const [cameraPoint, setCameraPoint] = useState<SoundMazePoint>(() =>
-    connectedDungeon ? connectedDungeonFork(0) : LEVEL_TWO_MAZE_GEOMETRY[0].fork);
+    variant === 'dungeon-fork' ? connectedDungeonFork(0) : LEVEL_TWO_MAZE_GEOMETRY[0].fork);
   const [connectedChoices, setConnectedChoices] = useState<ReadonlyMap<number, SoundMazeRoute['side']>>(() => new Map());
   const [revealedWallRouteId, setRevealedWallRouteId] = useState<string | null>(null);
   const [focusedRouteSide, setFocusedRouteSide] = useState<SoundMazeRoute['side'] | null>(null);
@@ -236,7 +233,7 @@ export function SoundMazeGame({
         if (!mountedRef.current) return;
         setFeedback('moving');
         await moveCameraAlong([...wrongPath].reverse(), 165);
-      } else if (connectedDungeon) {
+      } else if (variant === 'dungeon-fork') {
         const { approach } = connectedDungeonPath(viewIndex, route.side, false, nodes.length);
         setFocusedRouteSide(route.side);
         setRevealedWallRouteId(route.id);
@@ -253,19 +250,6 @@ export function SoundMazeGame({
         await moveCameraAlong([...approach].reverse(), CONNECTED_DUNGEON_SPEED);
         if (!mountedRef.current) return;
         setRestoringWrongRoute(true);
-      } else if (variant === 'dungeon-fork') {
-        setFocusedRouteSide(route.side);
-        setRevealedWallRouteId(route.id);
-        setFeedback('moving');
-        await waitWhileActive(1100);
-        if (!mountedRef.current) return;
-        setFeedback('dead-end');
-        if (!suppressAudio) audioService.playWrong();
-        await waitWhileActive(720);
-        if (!mountedRef.current) return;
-        setRestoringWrongRoute(true);
-        setFeedback('moving');
-        await waitWhileActive(1100);
       } else {
         setFeedback('dead-end');
         if (!suppressAudio) audioService.playWrong();
@@ -276,7 +260,7 @@ export function SoundMazeGame({
       setRevealedWallRouteId(null);
       if (variant !== 'dungeon-fork') setRestoringWrongRoute(true);
       // Keep the selected road beneath the restoring layer until it is opaque.
-      await waitWhileActive(variant === 'dungeon-fork' && !connectedDungeon ? 120 : routeFadeDuration());
+      await waitWhileActive(routeFadeDuration());
       if (!mountedRef.current) return;
       setFocusedRouteSide(null);
       setRestoringWrongRoute(false);
@@ -320,7 +304,7 @@ export function SoundMazeGame({
         await moveCameraAlong(connector, 165);
       }
       if (!mountedRef.current) return;
-    } else if (connectedDungeon) {
+    } else if (variant === 'dungeon-fork') {
       const { approach, onward } = connectedDungeonPath(viewIndex, route.side, true, nodes.length);
       setFocusedRouteSide(route.side);
       setFeedback('moving');
@@ -340,19 +324,6 @@ export function SoundMazeGame({
       await moveCameraAlong(onward, CONNECTED_DUNGEON_SPEED);
       if (!mountedRef.current) return;
       setConnectedChoices((current) => new Map(current).set(viewIndex, route.side));
-    } else {
-      setFocusedRouteSide(route.side);
-      setFeedback('moving');
-      await waitWhileActive(1100);
-      if (!mountedRef.current) return;
-      setFeedback(collectedFragment ? 'fragment' : 'moving');
-      await waitWhileActive(collectedFragment ? fragmentAnimationDuration() : 180);
-      if (!mountedRef.current) return;
-      if (collectedFragment) {
-        const nextFragmentCount = fragmentCount + 1;
-        setFragmentCount(nextFragmentCount);
-        onFragmentCountChange(nextFragmentCount);
-      }
     }
     if (completedForkSide !== null) {
       setChosenCorrectRoutes((current) => new Map(current).set(viewIndex, completedForkSide));
@@ -406,19 +377,17 @@ export function SoundMazeGame({
         />
       ) : (
         <DungeonMazeViewport
-          connected={connectedDungeon ? {
+          connected={{
             ref: mapViewportRef, camera: cameraPoint, completed: connectedChoices,
             paused,
-            showExit: connectedDungeon === 'full',
             fragmentVisible: currentNode?.fragment === true && !collectedFragmentNodes.has(viewIndex)
-          } : undefined}
+          }}
           currentNode={currentNode}
           viewIndex={viewIndex}
           nodeCount={nodes.length}
           atUnsolvedFork={atUnsolvedFork}
           exploredWrongRoutes={exploredWrongRoutes}
           focusedRouteSide={focusedRouteSide}
-          revealedBlockageRouteId={revealedWallRouteId}
           fragmentCount={fragmentCount}
           fragmentAnimating={feedback === 'fragment'}
           controlsDisabled={controlsDisabled}
@@ -444,7 +413,7 @@ export function SoundMazeGame({
       )}
 
       <p className="sound-maze-feedback" aria-live="polite">
-        {connectedDungeon === 'sample' && feedback === 'exit' ? '兩個岔路皆已通過。' : feedback === 'dead-end' ? variant === 'dungeon-fork'
+        {feedback === 'dead-end' ? variant === 'dungeon-fork'
           ? '前方被倒塌的石磚阻擋，正在返回原本的岔路。'
           : '前方是迷霧死路，正在返回原本的岔路。' :
           feedback === 'fragment' ? `找到第 ${fragmentCount + 1} 枚聲音碎片！` :
