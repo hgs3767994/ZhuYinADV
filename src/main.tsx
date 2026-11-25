@@ -16,6 +16,8 @@ const preview = previewEnabled
 createRoot(document.getElementById('root')!).render(
   preview === 'sequence-lock-gate' ? (
     <SequenceLockPrototypePreview />
+  ) : preview === 'sequence-lock-magic-door' ? (
+    <SequenceLockPrototypePreview variant="magic-door" />
   ) : preview === 'sound-maze-corridor' || preview === 'sound-maze-dungeon' ? (
     <SoundMazePrototypePreview />
   ) : preview === 'memory-village' ? (

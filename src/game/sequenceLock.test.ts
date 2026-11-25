@@ -68,7 +68,7 @@ describe('sequence lock gameplay', () => {
 
   it('creates the confirmed level-eight symbol distribution without repeating old symbols', () => {
     const puzzles = createLevelEightSequenceLockPuzzles('magic-door-run', new FixedRandom([0.12, 0.87, 0.36, 0.64]));
-    expect(puzzles.map((puzzle) => puzzle.cards.length)).toEqual([3, 4, 4]);
+    expect(puzzles.map((puzzle) => puzzle.cards.length)).toEqual([3, 3, 4, 4, 4]);
     const symbols = puzzles.map((puzzle) => puzzle.cards.map((card) => card.symbol));
     expect(symbols[0].filter((symbol) => symbol === 'ㄍ')).toHaveLength(1);
     expect(symbols[0].filter((symbol) => symbol === 'ㄐ')).toHaveLength(1);
@@ -76,13 +76,13 @@ describe('sequence lock gameplay', () => {
     expect(symbols[2].filter((symbol) => symbol === 'ㄐ')).toHaveLength(1);
     expect(symbols.flat().filter((symbol) => symbol === 'ㄍ')).toHaveLength(2);
     expect(symbols.flat().filter((symbol) => symbol === 'ㄐ')).toHaveLength(2);
-    expect(symbols.flat().filter((symbol) => symbol === 'ㄅ')).toHaveLength(1);
-    expect(symbols.flat().filter((symbol) => symbol === 'ㄉ')).toHaveLength(1);
+    expect(symbols.flat().filter((symbol) => symbol === 'ㄅ')).toHaveLength(2);
+    expect(symbols.flat().filter((symbol) => symbol === 'ㄉ')).toHaveLength(2);
     const oldSymbols = symbols.flat().filter((symbol) =>
       LEVEL_EIGHT_OLD_SYMBOLS.includes(symbol as typeof LEVEL_EIGHT_OLD_SYMBOLS[number])
     );
-    expect(oldSymbols).toHaveLength(5);
-    expect(new Set(oldSymbols).size).toBe(5);
+    expect(oldSymbols).toHaveLength(10);
+    expect(new Set(oldSymbols).size).toBe(10);
     for (const puzzle of puzzles) {
       expect(new Set(puzzle.cards.map((card) => card.symbol)).size).toBe(puzzle.cards.length);
       expect(puzzle.targetSymbols).not.toEqual(puzzle.cards.map((card) => card.symbol));

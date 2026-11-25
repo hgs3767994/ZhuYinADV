@@ -6,6 +6,7 @@ import { saveCampaignCompletionWithRetry } from '../game/campaignSave';
 import type { CampaignCompletionInput, CampaignPerformance, CampaignStars, SavedCampaignCompletion } from '../game/campaignTypes';
 import { MEMORY_GROUP_COUNT } from '../game/memoryExplore';
 import { PURSUIT_INITIAL_SAFETY } from '../game/pursuit';
+import { LEVEL_EIGHT_SEAL_COUNT, SEQUENCE_LOCK_SIZES } from '../game/sequenceLock';
 import { BattleGame, type BattleGameStatus, type BattleTutorialTip } from './BattleGame';
 import { CampaignGameplayFrame } from './CampaignGameplayFrame';
 import { CampaignDefeatScreen, CampaignSuccessScreen } from './CampaignOutcomeScreen';
@@ -100,7 +101,8 @@ export function CampaignLevelFlow({
   const [tutorialError, setTutorialError] = useState(false);
   const [tutorialPageIndex, setTutorialPageIndex] = useState(0);
   const [resultId, setResultId] = useState<string | null>(null);
-  const [remainingSeals, setRemainingSeals] = useState(3);
+  const sequenceSealCount = level.id === 'level-08' ? LEVEL_EIGHT_SEAL_COUNT : SEQUENCE_LOCK_SIZES.length;
+  const [remainingSeals, setRemainingSeals] = useState<number>(sequenceSealCount);
   const [collectedFragments, setCollectedFragments] = useState(0);
   const [pursuitStatus, setPursuitStatus] = useState<PursuitGameStatus>({
     segmentNumber: 1,
@@ -152,7 +154,7 @@ export function CampaignLevelFlow({
 
   const beginGameplay = useCallback(() => {
     setResultId(newResultId());
-    setRemainingSeals(level.gameplayId === 'memory-explore' || level.gameplayId === 'memory-battle' ? MEMORY_GROUP_COUNT : 3);
+    setRemainingSeals(level.gameplayId === 'memory-explore' || level.gameplayId === 'memory-battle' ? MEMORY_GROUP_COUNT : sequenceSealCount);
     setCollectedFragments(0);
     setPursuitStatus({ segmentNumber: 1, safetyDistance: PURSUIT_INITIAL_SAFETY, successStreak: 0, maxSuccessStreak: 0 });
     setBattleStatus({ waveNumber: 1, lives: 5, energy: 0 });
@@ -162,7 +164,7 @@ export function CampaignLevelFlow({
     completionInputRef.current = null;
     setCompletionSummary(null);
     setSaveError(false);
-  }, [level.gameplayId]);
+  }, [level.gameplayId, sequenceSealCount]);
 
   const completeTutorial = async () => {
     if (tutorialSaving) return;

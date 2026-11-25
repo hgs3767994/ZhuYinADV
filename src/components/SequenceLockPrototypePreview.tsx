@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { CAMPAIGN_IMAGES } from '../game/campaignAssets';
+import { audioService } from '../services/audio';
+import { LEVEL_EIGHT_SEAL_COUNT, SEQUENCE_LOCK_SIZES } from '../game/sequenceLock';
 import { SequenceLockGame } from './SequenceLockGame';
 
 interface SequenceLockPreviewResult {
@@ -8,15 +10,20 @@ interface SequenceLockPreviewResult {
   durationMs: number;
 }
 
-export function SequenceLockPrototypePreview() {
-  const [sealCount, setSealCount] = useState(3);
+export function SequenceLockPrototypePreview({ variant = 'entrance' }: { variant?: 'entrance' | 'magic-door' }) {
+  const magicDoor = variant === 'magic-door';
+  const title = magicDoor ? '魔法之門' : '封印的門扉';
+  const totalSeals = magicDoor ? LEVEL_EIGHT_SEAL_COUNT : SEQUENCE_LOCK_SIZES.length;
+  const sealLabel = magicDoor ? '五道封印' : '三道封印';
+  const [sealCount, setSealCount] = useState<number>(totalSeals);
   const [paused, setPaused] = useState(false);
   const [started, setStarted] = useState(false);
   const [runNumber, setRunNumber] = useState(0);
   const [result, setResult] = useState<SequenceLockPreviewResult | null>(null);
 
   const startTest = () => {
-    setSealCount(3);
+    if (magicDoor) audioService.unlock(false);
+    setSealCount(totalSeals);
     setPaused(false);
     setResult(null);
     setRunNumber((current) => current + 1);
@@ -49,15 +56,15 @@ export function SequenceLockPrototypePreview() {
           <img src={CAMPAIGN_IMAGES.pauseButton} alt="" aria-hidden="true" draggable="false" />
         </button>
         <div className="campaign-gameplay-heading">
-          <strong>第 1 關・封印的門扉</strong>
-          <div>{subtitle}</div>
+          <strong>第 {magicDoor ? 8 : 1} 關・{title}</strong>
+          {(!magicDoor || !started) && <div>{subtitle}</div>}
         </div>
         <span className="campaign-gameplay-header-spacer" aria-hidden="true" />
       </header>
       <section className="campaign-gameplay-stage">
         {result ? (
           <div className="campaign-gameplay-placeholder sequence-lock-preview-panel" role="status">
-            <strong>三道封印已全部解除</strong>
+            <strong>{sealLabel}已全部解除</strong>
             <p aria-label={`${result.stars} 顆星`} className="sequence-lock-preview-stars">
               {'★'.repeat(result.stars)}{'☆'.repeat(3 - result.stars)}
             </p>
@@ -69,7 +76,7 @@ export function SequenceLockPrototypePreview() {
         ) : started ? (
           <SequenceLockGame
             key={`sequence-lock-preview-${runNumber}`}
-            variant="entrance"
+            variant={variant}
             resultId={`sequence-lock-gate-gameplay-test-${runNumber}`}
             paused={paused}
             inputEnabled={!paused}
@@ -79,8 +86,8 @@ export function SequenceLockPrototypePreview() {
           />
         ) : (
           <div className="campaign-gameplay-placeholder sequence-lock-preview-panel">
-            <strong>封印的門扉・正式玩法測試</strong>
-            <p>點擊開始後，聽取咒語並依序放入符文，完成三道封印。</p>
+            <strong>{title}・正式玩法測試</strong>
+            <p>點擊開始後，聽取咒語並依序放入符文，完成{sealLabel}。</p>
             <button type="button" className="primary-button" onClick={startTest}>
               開始玩法測試
             </button>

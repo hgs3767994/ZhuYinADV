@@ -34,20 +34,22 @@ describe('sequence lock gameplay shell', () => {
       expect(html).toContain('重播聲音');
       expect(html).toContain('鎖孔區');
       expect(html).toContain('待選區');
-      expect((html.match(/<img src="\/assets\/images\/campaign\/seal-locked\.png"/g) ?? [])).toHaveLength(3);
+      expect((html.match(/<img src="\/assets\/images\/campaign\/seal-locked\.png"/g) ?? [])).toHaveLength(variant === 'entrance' ? 3 : 5);
       expect(html).not.toContain('◇');
       expect((html.match(/sequence-lock-slot-empty/g) ?? [])).toHaveLength(3);
       expect(html).not.toContain('倒數');
     }
   });
 
-  it('shows the castle gate only for the level one entrance', () => {
+  it('shows the respective gate art for the entrance and magic door', () => {
     const entrance = renderVariant('entrance');
     const magicDoor = renderVariant('magic-door');
 
     expect(entrance).toContain('/assets/images/campaign/level-01-gate.png');
     expect(entrance).toContain('sequence-lock-scene-entrance');
+    expect(entrance).not.toContain('/assets/images/campaign/level-08-magic-door.webp');
     expect(magicDoor).not.toContain('/assets/images/campaign/level-01-gate.png');
+    expect(magicDoor).toContain('/assets/images/campaign/level-08-magic-door.webp');
     expect(magicDoor).toContain('sequence-lock-scene-magic-door');
   });
 

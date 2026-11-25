@@ -121,7 +121,7 @@ describe('campaign level flow', () => {
     expect(content.tutorialId).toBe('sequence-lock-magic-door');
     expect(content.preStory).toHaveLength(4);
     expect(content.preStory[1].text).toContain('第一道封印傳出了一段咒語聲');
-    expect(content.mission).toContain('魔法之門的三道封印');
+    expect(content.mission).toContain('魔法之門的五道封印');
     expect(content.tutorialSteps).toHaveLength(4);
     expect(content.tutorialSteps.join('')).toContain('點擊鎖孔內的卡片');
     expect(content.tutorialSteps.join('')).not.toContain('倒數');

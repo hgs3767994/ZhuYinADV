@@ -4,6 +4,14 @@ export const LEVEL_ONE_SYMBOLS = ['ㄧ', 'ㄨ', 'ㄩ', 'ㄚ', 'ㄛ'] as const;
 export const LEVEL_EIGHT_OLD_SYMBOLS = ['ㄧ', 'ㄨ', 'ㄩ', 'ㄚ', 'ㄛ', 'ㄞ', 'ㄟ', 'ㄠ', 'ㄢ', 'ㄣ', 'ㄦ'] as const;
 export const LEVEL_EIGHT_SYMBOLS = [...LEVEL_EIGHT_OLD_SYMBOLS, 'ㄅ', 'ㄉ', 'ㄍ', 'ㄐ'] as const;
 export const SEQUENCE_LOCK_SIZES = [3, 4, 4] as const;
+const LEVEL_EIGHT_LOCKS = [
+  { newSymbols: ['ㄍ', 'ㄐ'], oldCount: 1 },
+  { newSymbols: ['ㄍ', 'ㄅ', 'ㄉ'], oldCount: 0 },
+  { newSymbols: ['ㄐ'], oldCount: 3 },
+  { newSymbols: ['ㄅ'], oldCount: 3 },
+  { newSymbols: ['ㄉ'], oldCount: 3 }
+] as const;
+export const LEVEL_EIGHT_SEAL_COUNT = LEVEL_EIGHT_LOCKS.length;
 
 export interface SequenceLockCard {
   id: string;
@@ -104,15 +112,13 @@ export function createLevelEightSequenceLockPuzzles(
   runId: string,
   random: RandomSource = browserRandom
 ): readonly SequenceLockPuzzle[] {
-  const oldSymbols = shuffled(LEVEL_EIGHT_OLD_SYMBOLS, random).slice(0, 5);
-  const lockSymbols: readonly (readonly string[])[] = [
-    ['ㄍ', 'ㄐ', oldSymbols[0]],
-    ['ㄍ', 'ㄅ', 'ㄉ', oldSymbols[1]],
-    ['ㄐ', ...oldSymbols.slice(2, 5)]
-  ];
-  return lockSymbols.map((symbols, lockIndex) =>
-    createPuzzle(runId, 'magic-door-lock', lockIndex, symbols, random)
-  );
+  const oldSymbols = shuffled(LEVEL_EIGHT_OLD_SYMBOLS, random);
+  let oldIndex = 0;
+  return LEVEL_EIGHT_LOCKS.map(({ newSymbols, oldCount }, lockIndex) => {
+    const symbols = [...newSymbols, ...oldSymbols.slice(oldIndex, oldIndex + oldCount)];
+    oldIndex += oldCount;
+    return createPuzzle(runId, 'magic-door-lock', lockIndex, symbols, random);
+  });
 }
 
 export function emptySequenceLockSlots(size: number): SequenceLockSlots {

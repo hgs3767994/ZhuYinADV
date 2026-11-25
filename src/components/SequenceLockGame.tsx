@@ -217,14 +217,12 @@ export function SequenceLockGame({
   } as CSSProperties;
   const sealScene = (
     <div className={`sequence-lock-scene sequence-lock-scene-${variant}`} aria-hidden="true">
-      {variant === 'entrance' && (
-        <img
-          className="sequence-lock-gate-art"
-          src={CAMPAIGN_IMAGES.levelOneGate}
-          alt=""
-          draggable="false"
-        />
-      )}
+      <img
+        className="sequence-lock-gate-art"
+        src={variant === 'entrance' ? CAMPAIGN_IMAGES.levelOneGate : CAMPAIGN_IMAGES.levelEightMagicDoor}
+        alt=""
+        draggable="false"
+      />
       <div className="sequence-lock-door">
         {puzzles.map((item, index) => (
           <img

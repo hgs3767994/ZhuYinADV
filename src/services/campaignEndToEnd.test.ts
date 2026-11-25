@@ -648,7 +648,7 @@ describe('level one end-to-end data flow', () => {
     expect(await storedCampaignCounts(profile.id)).toEqual({ results: 7, events: 28 });
   });
 
-  it('persists all three magic-door locks and unlocks the castle guard battle atomically', async () => {
+  it('persists all five magic-door locks and unlocks the castle guard battle atomically', async () => {
     const profile = await profileRepository.create('魔法門整合測試', '1234');
     await campaignRepository.startCampaign(profile.id, FIRST_CAMPAIGN_ID, '2026-10-12T05:40:00.000Z');
     await campaignRepository.completeLevel(completion(profile.id, 'door-level-one-prerequisite', '2026-10-12T05:41:00.000Z'));
@@ -694,7 +694,7 @@ describe('level one end-to-end data flow', () => {
       resultId,
       new DeterministicRandom([0.16, 0.79, 0.41, 0.67])
     );
-    expect(puzzles.map((puzzle) => puzzle.cards.length)).toEqual([3, 4, 4]);
+    expect(puzzles.map((puzzle) => puzzle.cards.length)).toEqual([3, 3, 4, 4, 4]);
     for (const puzzle of puzzles) {
       const slots = puzzle.targetSymbols.map((symbol) =>
         puzzle.cards.find((card) => card.symbol === symbol)!.id

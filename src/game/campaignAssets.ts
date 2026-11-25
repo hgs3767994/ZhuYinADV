@@ -15,6 +15,7 @@ export const CAMPAIGN_IMAGES = {
   sealLocked: campaignImage('seal-locked.png'),
   sealUnlocked: campaignImage('seal-unlocked.png'),
   levelOneGate: campaignImage('level-01-gate.png'),
+  levelEightMagicDoor: campaignImage('level-08-magic-door.webp'),
   levelThreeVillage: campaignImage('level-03-village.jpg'),
   levelThreeXiaWorried: campaignImage('level-03-xia-worried.png'),
   levelThreeXiaSmile: campaignImage('level-03-xia-smile.png'),

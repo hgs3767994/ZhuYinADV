@@ -34,7 +34,7 @@ export const FIRST_CAMPAIGN: CampaignDefinition = {
     { id: 'level-05', gameplayId: 'zhuyin-battle', number: 5, title: '迷霧哨兵', difficultyLabel: '入門', objective: '擊敗巡邏的迷霧哨兵，學會運用生命與聲音能量。' },
     { id: 'level-06', gameplayId: 'chase', number: 6, title: '逃離追兵', difficultyLabel: '一般', objective: '穿過十個路段，與小亞一起甩開追兵。' },
     { id: 'level-07', gameplayId: 'sound-maze', number: 7, title: '地下秘道', difficultyLabel: '一般', objective: '在黑暗的地下秘道中找出通往城堡內部的道路。' },
-    { id: 'level-08', gameplayId: 'sequence-lock', number: 8, title: '魔法之門', difficultyLabel: '一般', objective: '依正確順序排列符文，解除秘道出口的三道封印。' },
+    { id: 'level-08', gameplayId: 'sequence-lock', number: 8, title: '魔法之門', difficultyLabel: '一般', objective: '依正確順序排列符文，解除秘道出口的五道封印。' },
     { id: 'level-09', gameplayId: 'zhuyin-battle', number: 9, title: '城堡守衛戰', difficultyLabel: '一般', objective: '擊敗城堡守衛與護盾敵人，突破前往封印水晶的道路。' },
     { id: 'level-10', gameplayId: 'memory-battle', number: 10, title: '破除結界', difficultyLabel: '特殊關卡', objective: '完成五組符文配對，擊破阻擋在迷霧將軍前的結界。' },
     { id: 'level-11', gameplayId: 'boss-battle', number: 11, title: '決戰迷霧將軍', difficultyLabel: '頭目戰', objective: '擊敗迷霧將軍並破壞封印魔法水晶，讓王國恢復聲音。' }
