@@ -3402,24 +3402,6 @@ button:disabled {
   height: 100%;
 }
 
-.battle-xiaoya {
-  position: absolute;
-  z-index: 2;
-  bottom: 22px;
-  left: 8px;
-  display: grid;
-  width: 43px;
-  height: 50px;
-  border: 2px solid #b99cdb;
-  border-radius: 45% 45% 34% 34%;
-  place-items: center;
-  background: #4a3c66;
-  color: #e9d5ff;
-  font-size: 0.61rem;
-  font-weight: 900;
-  opacity: 0.82;
-}
-
 .battle-enemies {
   position: relative;
   display: flex;

@@ -15,7 +15,8 @@ const INITIAL_STATUS: BattleGameStatus = {
   energy: 0
 };
 
-export function BattlePrototypePreview() {
+export function BattlePrototypePreview({ variant = 'beginner' }: { variant?: 'beginner' | 'castle' }) {
+  const castle = variant === 'castle';
   const [profiles, setProfiles] = useState<PlayerProfile[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState('guest');
   const [loading, setLoading] = useState(true);
@@ -61,9 +62,10 @@ export function BattlePrototypePreview() {
     return (
       <main className="pursuit-prototype-screen battle-prototype-screen">
         <section className="pursuit-prototype-launcher">
-          <small>第 1-5 關美術工程・第二階段</small>
-          <h1>攻防動畫測試</h1>
-          <p>檢查玩家攻擊、敵人攻擊、防禦成功、符音穿透與回音護盾的動畫時序。</p>
+          <small>{castle ? '第 1-9 關美術工程' : '第 1-5 關美術工程・第二階段'}</small>
+          <h1>{castle ? '城堡守衛戰' : '攻防動畫測試'}</h1>
+          <p>{castle ? '試玩城堡內部的五波戰鬥，檢查城堡背景、冒險者和迷霧哨兵的顯示。'
+            : '檢查玩家攻擊、敵人攻擊、防禦成功、符音穿透與回音護盾的動畫時序。'}</p>
           <label>
             <span>冒險者頭像</span>
             <select
@@ -100,7 +102,7 @@ export function BattlePrototypePreview() {
       {result === 'playing' ? (
         <BattleGame
           key={`battle-art-preview-${runId}`}
-          variant="beginner"
+          variant={variant}
           avatarRecipe={selectedProfile.avatar}
           resultId={`battle-art-preview-${runId}`}
           paused={paused}

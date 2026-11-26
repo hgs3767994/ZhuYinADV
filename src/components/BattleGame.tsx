@@ -351,7 +351,9 @@ export function BattleGame({
   const targetReady = selectedEnemyId !== null && phase !== 'select-enemy';
   const controlsDisabled = !inputEnabled || phase !== 'answering' || audioPlaying || tutorialQueue.length > 0;
   const battleSceneStyle = {
-    background: [
+    background: variant === 'castle'
+      ? `url("${CAMPAIGN_IMAGES.battleCastleBackdrop}") center bottom / cover no-repeat #4c4852`
+      : [
       'linear-gradient(rgb(18 39 32 / 12%), rgb(18 39 32 / 12%))',
       `url("${CAMPAIGN_IMAGES.battleForestForeground}") center / cover no-repeat`,
       `url("${CAMPAIGN_IMAGES.battleForestBackdrop}") center / cover no-repeat`,
@@ -376,7 +378,6 @@ export function BattleGame({
                 alt="" aria-hidden="true" draggable="false" />}
           </div>
         </div>
-        {variant === 'castle' && <div className="battle-xiaoya" aria-label="小亞在後方觀戰">小亞</div>}
         {variant === 'boss' && waveIndex < 4 && <div className="battle-boss-overseer" aria-label="迷霧將軍在封印水晶前指揮戰鬥">迷霧將軍</div>}
         <div className="battle-enemy-side">
           <div key={`battle-wave-${waveIndex}`} className="battle-enemies" aria-label="迷霧哨兵">

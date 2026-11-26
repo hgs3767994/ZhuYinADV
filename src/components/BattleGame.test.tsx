@@ -74,6 +74,9 @@ describe('level-five battle shell', () => {
       onInteractionLockChange={() => undefined} onDefeat={() => undefined} onSolved={() => undefined} />);
 
     expect(html).toContain('已選定迷霧哨兵');
+    expect(html).toContain('level-09-castle-guard-hall.webp');
+    expect(html).not.toContain('level-04-forest-backdrop.jpg');
+    expect(html).not.toContain('battle-xiaoya');
     expect((html.match(/aria-label="選擇 [^"]+"/g) ?? [])).toHaveLength(3);
     expect(html).not.toContain('護盾敵人');
     expect(html).not.toContain('倒數');

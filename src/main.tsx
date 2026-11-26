@@ -26,6 +26,8 @@ createRoot(document.getElementById('root')!).render(
     <PursuitEscortPrototypePreview />
   ) : preview === 'zhuyin-battle' ? (
     <BattlePrototypePreview />
+  ) : preview === 'castle-battle' ? (
+    <BattlePrototypePreview variant="castle" />
   ) : (
     <StrictMode>
       <App />
