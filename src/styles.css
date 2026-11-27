@@ -3473,51 +3473,76 @@ button:disabled {
 
 .battle-enemy.boss {
   width: 150px;
+  flex-basis: 150px;
   min-height: 150px;
-  border-color: #c084fc;
-  background: radial-gradient(circle at 50% 30%, #67417d, #24162f 72%);
-  box-shadow: inset 0 0 26px rgb(216 180 254 / 25%), 0 0 28px rgb(168 85 247 / 45%);
 }
 
 .battle-enemy.boss .battle-boss-figure {
-  font-size: 3.3rem;
-  text-shadow: 0 0 18px #c084fc;
+  width: 120px;
+  height: 120px;
 }
 
+.battle-throne-stage {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: max(100%, 380px);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.battle-throne-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.battle-sealed-crystal,
 .battle-boss-overseer {
   position: absolute;
-  z-index: 1;
-  top: 12px;
-  left: 50%;
-  padding: 7px 12px;
-  border: 1px solid #a78bfa;
-  border-radius: 999px;
-  background: rgb(30 18 42 / 86%);
-  box-shadow: 0 0 18px rgb(168 85 247 / 35%);
-  color: #ede9fe;
-  font-size: 0.72rem;
-  font-weight: 950;
+  width: auto;
+  object-fit: contain;
   transform: translateX(-50%);
 }
 
-.battle-boss-intro {
-  position: absolute;
-  z-index: 8;
-  inset: 18px;
-  display: grid;
-  padding: 20px;
-  border: 2px solid #c084fc;
-  border-radius: 22px;
-  place-content: center;
-  gap: 8px;
-  background: rgb(24 14 34 / 94%);
-  box-shadow: inset 0 0 35px rgb(126 34 206 / 38%), 0 0 28px rgb(168 85 247 / 42%);
-  color: #f3e8ff;
-  text-align: center;
+.battle-sealed-crystal {
+  left: 63%;
+  top: 0;
+  height: 48%;
 }
 
-.battle-boss-intro strong { font-size: 1.2rem; }
-.battle-boss-intro span { color: #ddd6fe; font-weight: 850; }
+.battle-boss-overseer {
+  left: 50%;
+  bottom: 42%;
+  height: 44%;
+  opacity: 0.83;
+  filter: blur(0.45px) brightness(1.08) contrast(0.87);
+}
+
+.battle-boss-overseer.is-departing {
+  animation: battle-boss-depart 500ms ease-in both;
+}
+
+.battle-enemies.battle-final-wave { animation: none; }
+.battle-enemies.battle-final-wave.is-entering {
+  animation: battle-boss-arrive 650ms 500ms ease-out both;
+}
+
+.battle-game.is-paused .battle-boss-overseer,
+.battle-game.is-paused .battle-final-wave {
+  animation-play-state: paused;
+}
+
+@keyframes battle-boss-depart { to { opacity: 0; } }
+@keyframes battle-boss-arrive { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-boss-overseer.is-departing { opacity: 0; animation: none; }
+  .battle-enemies.battle-final-wave.is-entering { animation: none; }
+}
 
 .battle-enemy:disabled { cursor: default; opacity: 0.78; }
 .battle-enemy.selected:disabled { opacity: 1; }
@@ -3533,13 +3558,36 @@ button:disabled {
 
 img.battle-enemy-figure { transform: scaleX(-1); }
 
-.battle-boss-figure {
+.battle-enemy-portrait {
+  position: relative;
   display: grid;
-  width: auto;
-  height: auto;
-  color: #d8b4fe;
-  line-height: 1;
+  width: 100%;
   place-items: center;
+}
+
+.battle-enemy-shields {
+  position: absolute;
+  z-index: 2;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  display: flex;
+  gap: 4px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.battle-enemy-shields img {
+  width: 17px;
+  height: 17px;
+  object-fit: contain;
+  transform: scale(1.5);
+  transition: opacity 280ms ease-out;
+}
+
+.battle-enemy-shields img.is-depleted { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-enemy-shields img { transition: none; }
 }
 
 .battle-enemy .campaign-status-slots {

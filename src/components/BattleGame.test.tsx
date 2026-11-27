@@ -89,7 +89,11 @@ describe('level-five battle shell', () => {
       onTutorialTipSeen={() => undefined} onStatusChange={() => undefined}
       onInteractionLockChange={() => undefined} onDefeat={() => undefined} onSolved={() => undefined} />);
 
-    expect(html).toContain('迷霧將軍在封印水晶前指揮戰鬥');
+    expect(html).toContain('王座前的迷霧將軍');
+    expect(html).toContain('castle-throne-hall.webp');
+    expect(html).toContain('level-11-sealed-crystal.webp');
+    expect(html).toContain('level-11-fog-general.webp');
+    expect(html).not.toContain('迷霧將軍親自上陣');
     expect(html).not.toContain('小亞在後方觀戰');
     expect((html.match(/aria-label="選擇 [^"]+"/g) ?? [])).toHaveLength(3);
     expect(html).not.toContain('倒數');

@@ -30,6 +30,8 @@ createRoot(document.getElementById('root')!).render(
     <BattlePrototypePreview />
   ) : preview === 'castle-battle' ? (
     <BattlePrototypePreview variant="castle" />
+  ) : preview === 'boss-battle' ? (
+    <BattlePrototypePreview variant="boss" />
   ) : (
     <StrictMode>
       <App />

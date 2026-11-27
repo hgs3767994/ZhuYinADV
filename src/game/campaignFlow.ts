@@ -384,7 +384,7 @@ const LEVEL_ELEVEN_FLOW: CampaignLevelFlowContent = {
   levelId: 'level-11',
   tutorialId: 'boss-battle-reminder',
   preStory: [
-    { text: '冒險者獨自走進房間。巨大的封印水晶懸浮在房間中央，迷霧將軍正站在水晶前方。' },
+    { text: '冒險者獨自走進大廳。巨大的封印水晶懸浮在王座右側，迷霧將軍正站在王座前。' },
     { speaker: '迷霧將軍', text: '「竟然能突破城堡的守衛與迷霧結界，看來我小看了注音水晶的力量。」' },
     { speaker: '迷霧將軍', text: '「不過，只要我還守在這裡，你就別想破壞封印水晶！」' },
     { text: '迷霧將軍舉起武器，周圍的黑霧化為一批又一批迷霧士兵。' },

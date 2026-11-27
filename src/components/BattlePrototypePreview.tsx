@@ -15,8 +15,9 @@ const INITIAL_STATUS: BattleGameStatus = {
   energy: 0
 };
 
-export function BattlePrototypePreview({ variant = 'beginner' }: { variant?: 'beginner' | 'castle' }) {
+export function BattlePrototypePreview({ variant = 'beginner' }: { variant?: 'beginner' | 'castle' | 'boss' }) {
   const castle = variant === 'castle';
+  const boss = variant === 'boss';
   const [profiles, setProfiles] = useState<PlayerProfile[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState('guest');
   const [loading, setLoading] = useState(true);
@@ -62,9 +63,10 @@ export function BattlePrototypePreview({ variant = 'beginner' }: { variant?: 'be
     return (
       <main className="pursuit-prototype-screen battle-prototype-screen">
         <section className="pursuit-prototype-launcher">
-          <small>{castle ? '第 1-9 關美術工程' : '第 1-5 關美術工程・第二階段'}</small>
-          <h1>{castle ? '城堡守衛戰' : '攻防動畫測試'}</h1>
-          <p>{castle ? '試玩城堡內部的五波戰鬥，檢查城堡背景、冒險者和迷霧哨兵的顯示。'
+          <small>{boss ? '第 1-11 關美術工程' : castle ? '第 1-9 關美術工程' : '第 1-5 關美術工程・第二階段'}</small>
+          <h1>{boss ? '決戰迷霧將軍' : castle ? '城堡守衛戰' : '攻防動畫測試'}</h1>
+          <p>{boss ? '試玩五波戰鬥，檢查封印水晶與迷霧將軍進入戰鬥區的演出。'
+            : castle ? '試玩城堡內部的五波戰鬥，檢查城堡背景、冒險者和迷霧哨兵的顯示。'
             : '檢查玩家攻擊、敵人攻擊、防禦成功、符音穿透與回音護盾的動畫時序。'}</p>
           <label>
             <span>冒險者頭像</span>

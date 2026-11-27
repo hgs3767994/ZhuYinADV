@@ -137,7 +137,7 @@ export function BattleGame({
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [tutorialQueue, setTutorialQueue] = useState<readonly BattleTutorialTip[]>([]);
   const continuationRef = useRef<(() => void) | null>(null);
-  const [bossIntroVisible, setBossIntroVisible] = useState(false);
+  const [bossEntering, setBossEntering] = useState(false);
   const busyRef = useRef(false);
   const pausedRef = useRef(paused);
   const mountedRef = useRef(true);
@@ -274,10 +274,11 @@ export function BattleGame({
     }
     if (variant === 'boss' && nextWaveIndex === 4) {
       changePhase('resolving');
-      setBossIntroVisible(true);
-      void waitWhileActive(1_200).then(() => {
+      setBossEntering(true);
+      const transitionMs = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 120 : 1_200;
+      void waitWhileActive(transitionMs).then(() => {
         if (!mountedRef.current) return;
-        setBossIntroVisible(false);
+        setBossEntering(false);
         continueNextWave();
       });
       return;
@@ -351,7 +352,9 @@ export function BattleGame({
   const targetReady = selectedEnemyId !== null && phase !== 'select-enemy';
   const controlsDisabled = !inputEnabled || phase !== 'answering' || audioPlaying || tutorialQueue.length > 0;
   const battleSceneStyle = {
-    background: variant === 'castle'
+    background: variant === 'boss'
+      ? '#4c4852'
+      : variant === 'castle'
       ? `url("${CAMPAIGN_IMAGES.battleCastleBackdrop}") center bottom / cover no-repeat #4c4852`
       : [
       'linear-gradient(rgb(18 39 32 / 12%), rgb(18 39 32 / 12%))',
@@ -362,8 +365,18 @@ export function BattleGame({
   } as CSSProperties;
 
   return (
-    <div className={`battle-game feedback-${feedback}`}>
+    <div className={`battle-game feedback-${feedback}${paused ? ' is-paused' : ''}`}>
       <div className="battle-scene" style={battleSceneStyle}>
+        {variant === 'boss' && (
+          <div className="battle-throne-stage">
+            <img className="battle-throne-backdrop" src={CAMPAIGN_IMAGES.castleThroneHall} alt="" draggable="false" />
+            <img className="battle-sealed-crystal" src={CAMPAIGN_IMAGES.battleSealedCrystal} alt="封印水晶" draggable="false" />
+            {(waveIndex < 4 || bossEntering) && (
+              <img className={`battle-boss-overseer${bossEntering ? ' is-departing' : ''}`}
+                src={CAMPAIGN_IMAGES.battleFogGeneral} alt="王座前的迷霧將軍" draggable="false" />
+            )}
+          </div>
+        )}
         <div className="battle-player-side">
           <div className={`battle-player ${feedback === 'echo-shield' ? 'echo-shield' : ''}`} aria-label="冒險者">
             <AdventurerPuppet recipe={avatarRecipe} className="battle-adventurer-puppet" />
@@ -378,21 +391,33 @@ export function BattleGame({
                 alt="" aria-hidden="true" draggable="false" />}
           </div>
         </div>
-        {variant === 'boss' && waveIndex < 4 && <div className="battle-boss-overseer" aria-label="迷霧將軍在封印水晶前指揮戰鬥">迷霧將軍</div>}
         <div className="battle-enemy-side">
-          <div key={`battle-wave-${waveIndex}`} className="battle-enemies" aria-label="迷霧哨兵">
-            {enemies.filter((enemy) => enemy.life > 0).map((enemy) => (
+          <div key={`battle-wave-${waveIndex}`}
+            className={`battle-enemies${variant === 'boss' && waveIndex === 4 ? ' battle-final-wave' : ''}${bossEntering ? ' is-entering' : ''}`}
+            aria-label={variant === 'boss' && waveIndex === 4 ? '迷霧將軍' : '迷霧哨兵'}>
+            {enemies.filter((enemy) => enemy.life > 0).map((enemy) => {
+              const shieldSlots = enemy.kind === 'boss' ? 2 : enemy.kind === 'shielded' ? 1 : 0;
+              return (
               <button type="button" key={enemy.id}
                 className={`battle-enemy ${enemy.kind === 'shielded' ? 'shielded' : ''} ${enemy.kind === 'boss' ? 'boss' : ''} ${selectedEnemyId === enemy.id ? 'selected' : ''}`}
                 disabled={!inputEnabled || phase === 'resolving' || audioPlaying}
                 onClick={() => selectEnemy(enemy.id)} aria-label={`${selectedEnemyId === enemy.id ? '已選定' : '選定'}${enemy.kind === 'boss' ? '迷霧將軍' : `${enemy.kind === 'shielded' ? '護盾' : ''}迷霧哨兵`}`}>
-                {enemy.kind === 'boss' ? (
-                  <span className="battle-enemy-figure battle-boss-figure" aria-hidden="true">♛</span>
-                ) : (
-                  <img className="battle-enemy-figure" src={enemy.kind === 'shielded'
+                <div className="battle-enemy-portrait">
+                  {shieldSlots > 0 && (
+                    <div className="battle-enemy-shields" role="img"
+                      aria-label={`${enemy.kind === 'boss' ? '迷霧將軍' : '敵人'}護盾 ${enemy.shield}／${shieldSlots}`}>
+                      {Array.from({ length: shieldSlots }, (_, index) => (
+                        <img key={index}
+                          className={index < shieldSlots - enemy.shield ? 'is-depleted' : undefined}
+                          src={CAMPAIGN_IMAGES.shieldFull} alt="" draggable="false" />
+                      ))}
+                    </div>
+                  )}
+                  <img className={`battle-enemy-figure${enemy.kind === 'boss' ? ' battle-boss-figure' : ''}`}
+                    src={enemy.kind === 'boss' ? CAMPAIGN_IMAGES.battleFogGeneral : enemy.kind === 'shielded'
                     ? CAMPAIGN_IMAGES.battleFogSoldierShielded
                     : CAMPAIGN_IMAGES.battleFogSoldier} alt="" aria-hidden="true" draggable="false" />
-                )}
+                </div>
                 {selectedEnemyId === enemy.id && feedback === 'player-attack' &&
                   <SlashRevealEffect className="battle-regular-attack-effect" source={CAMPAIGN_IMAGES.battleRegularAttack}
                     path="M 84 16 L 16 84" strokeWidth={28} />}
@@ -400,15 +425,11 @@ export function BattleGame({
                   <SlashRevealEffect className="battle-piercing-attack-effect" source={CAMPAIGN_IMAGES.battleSkillAttack}
                     path="M 7 35 C 35 13 77 14 91 37 C 101 54 91 73 62 84" strokeWidth={28} />}
                 <CampaignStatusSlots kind="life" current={enemy.life} maximum={enemy.kind === 'boss' ? 6 : 2} label={enemy.kind === 'boss' ? '迷霧將軍生命' : '敵人生命'} />
-                {enemy.shield > 0 && <CampaignStatusSlots kind="shield" current={enemy.shield} maximum={enemy.kind === 'boss' ? 2 : 1} label={enemy.kind === 'boss' ? '迷霧將軍護盾' : '敵人護盾'} />}
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
-        {bossIntroVisible && <div className="battle-boss-intro" role="status">
-          <strong>迷霧將軍親自上陣！</strong>
-          <span>6 點生命・2 層護盾</span>
-        </div>}
       </div>
 
       <div className="battle-turn-label-row" aria-live="polite">
