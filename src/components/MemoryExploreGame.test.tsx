@@ -68,7 +68,9 @@ describe('memory explore gameplay shell', () => {
     );
 
     expect((html.match(/memory-explore-card /g) ?? [])).toHaveLength(9);
-    expect(html).toContain('巨大迷霧結界');
+    expect(html).toContain('castle-throne-hall.webp');
+    expect(html).toContain('白色濃霧結界');
+    expect(html).not.toContain('聲音典籍魔法師');
     expect(html).toContain('尚餘 5 層結界護盾');
     expect((html.match(/<img[^>]+seal-locked\.png/g) ?? [])).toHaveLength(5);
     expect(html).not.toContain('目標符文');

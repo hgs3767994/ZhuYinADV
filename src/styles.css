@@ -2791,19 +2791,61 @@ button:disabled {
   }
 }
 
+.memory-battle-throne-scene {
+  isolation: isolate;
+  display: block;
+  overflow: hidden;
+  width: min(100%, 380px);
+  min-height: 0;
+  padding: 0;
+  aspect-ratio: 2 / 1;
+  border-color: #776984;
+  border-radius: 24px;
+  background: #4c4852;
+}
+
+.memory-battle-throne-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .memory-battle-barrier {
   position: absolute;
-  z-index: 0;
-  inset: 8px 4%;
-  display: grid;
-  border: 3px solid #826da3;
-  border-radius: 50%;
-  place-items: center;
-  background: radial-gradient(circle, rgb(73 55 91 / 18%), rgb(20 14 29 / 76%));
-  box-shadow: inset 0 0 26px rgb(168 85 247 / 30%), 0 0 20px rgb(88 28 135 / 38%);
-  color: rgb(221 214 254 / 34%);
-  font-size: 0.68rem;
-  font-weight: 950;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 55%) 0%,
+    rgb(255 255 255 / 85%) 10%,
+    rgb(255 255 255 / 85%) 85%,
+    rgb(255 255 255 / 55%) 100%
+  );
+}
+
+.memory-battle-throne-scene .memory-explore-seals {
+  inset: 0 7% 0;
+  width: auto;
+  align-items: center;
+  transform: translateY(12%);
+}
+
+.memory-battle-throne-scene .memory-explore-seals img {
+  position: relative;
+  width: min(85%, 42px);
+  height: auto;
+  transform: scale(1.3);
+}
+
+.memory-battle-throne-scene .memory-explore-seals img:nth-child(odd) {
+  top: -11%;
+}
+
+.memory-battle-throne-scene .memory-explore-seals img:nth-child(even) {
+  top: 11%;
 }
 
 .memory-battle-game.feedback-attack .memory-explore-npc-scene {
@@ -2832,22 +2874,6 @@ button:disabled {
   height: 36px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 34%));
-}
-
-.memory-explore-npc {
-  z-index: 1;
-  display: grid;
-  width: 68px;
-  height: 78px;
-  margin-left: 27px;
-  border: 2px solid #d8b4fe;
-  border-radius: 45% 45% 34% 34%;
-  place-items: center;
-  background: linear-gradient(160deg, #6c75a5, #3d335f);
-  box-shadow: 0 0 18px rgb(168 85 247 / 48%);
-  color: #fff1a8;
-  font-size: 0.78rem;
-  font-weight: 950;
 }
 
 .memory-explore-memory-cue {

@@ -22,6 +22,8 @@ createRoot(document.getElementById('root')!).render(
     <SoundMazePrototypePreview />
   ) : preview === 'memory-village' ? (
     <MemoryExplorePrototypePreview />
+  ) : preview === 'memory-barrier' ? (
+    <MemoryExplorePrototypePreview variant="battle" />
   ) : preview === 'pursuit-escort' ? (
     <PursuitEscortPrototypePreview />
   ) : preview === 'zhuyin-battle' ? (

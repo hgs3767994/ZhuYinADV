@@ -29,6 +29,7 @@ export const CAMPAIGN_IMAGES = {
   battleForestBackdrop: campaignImage('pursuit/level-04-forest-backdrop.jpg'),
   battleForestForeground: campaignImage('pursuit/level-04-forest-foreground.png'),
   battleCastleBackdrop: campaignImage('level-09-castle-guard-hall.webp'),
+  castleThroneHall: campaignImage('castle-throne-hall.webp'),
   star: campaignImage('star.png'),
   shieldFull: campaignImage('shield-full.png'),
   shieldBroken: campaignImage('shield-broken.png'),

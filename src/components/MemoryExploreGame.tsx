@@ -238,7 +238,7 @@ export function MemoryExploreGame({
 
   return (
     <div className={`memory-explore-game ${variant === 'battle' ? 'memory-battle-game' : 'memory-village-game'} feedback-${feedback} completion-${completionPhase} ${paused ? 'is-paused' : ''}`}>
-      <div className={`memory-explore-npc-scene ${variant === 'explore' ? 'memory-explore-village-scene' : ''}`}>
+      <div className={`memory-explore-npc-scene ${variant === 'explore' ? 'memory-explore-village-scene' : 'memory-battle-throne-scene'}`}>
         {variant === 'explore' && (
           <>
             <img
@@ -267,7 +267,12 @@ export function MemoryExploreGame({
             </div>
           </>
         )}
-        {variant === 'battle' && <div className="memory-battle-barrier" aria-label="巨大迷霧結界">巨大迷霧結界</div>}
+        {variant === 'battle' && (
+          <>
+            <img className="memory-battle-throne-art" src={CAMPAIGN_IMAGES.castleThroneHall} alt="" draggable={false} />
+            <div className="memory-battle-barrier" role="img" aria-label="白色濃霧結界" />
+          </>
+        )}
         <div className="memory-explore-seals" aria-label={`尚餘 ${MEMORY_GROUP_COUNT - displayedUnlockedSeals} ${variant === 'battle' ? '層結界護盾' : '道迷霧封印'}`}>
           {Array.from({ length: MEMORY_GROUP_COUNT }, (_, index) => (
             <img
@@ -278,7 +283,6 @@ export function MemoryExploreGame({
             />
           ))}
         </div>
-        {variant === 'battle' && <div className="memory-explore-npc" aria-label="聲音典籍魔法師">小亞</div>}
       </div>
 
       <CampaignAudioReplayButton
